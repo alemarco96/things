@@ -13,13 +13,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        myTogglebutton=(ToggleButton)findViewById(R.id.myToggleButton);
-        myTogglebutton.setOnClickListener(new View.OnClickListener() {
-                                              @Override
-                                              public void onClick(View v) {
-                                                  Toast.makeText(MainActivity.this,"prova",Toast.LENGTH_LONG).show();
-                                              }
-                                          }
+        myTogglebutton=findViewById(R.id.myToggleButton);
+        myTogglebutton.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(MainActivity.this,"prova",Toast.LENGTH_LONG).show();
+                    }
+                }
 
         );
 
