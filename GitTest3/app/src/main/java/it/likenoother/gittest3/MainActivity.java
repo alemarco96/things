@@ -18,9 +18,15 @@ public class MainActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+
                         //toast
 
-                        //add
+                        Toast.makeText(MainActivity.this,"Long",Toast.LENGTH_LONG).show();
+                        //Short
+
+                        //commento di marco
+
+                        Toast.makeText(MainActivity.this,"Short",Toast.LENGTH_SHORT).show();
                     }
                 }
         );
