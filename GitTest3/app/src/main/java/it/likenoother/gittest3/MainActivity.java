@@ -19,6 +19,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         Toast.makeText(MainActivity.this,"marco",Toast.LENGTH_LONG).show();
+                        //pietro
                     }
                 }
 
