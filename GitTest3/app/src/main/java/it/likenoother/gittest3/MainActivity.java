@@ -18,10 +18,8 @@ public class MainActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Toast.makeText(MainActivity.this,"Add",Toast.LENGTH_SHORT).show();
-                        //Short
-
-                        //Aggiunta
+                        //Short toast
+                        Toast.makeText(MainActivity.this,"Short",Toast.LENGTH_SHORT).show();
                     }
                 }
         );
