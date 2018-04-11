@@ -20,6 +20,8 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(View v) {
                         //Short toast
                         Toast.makeText(MainActivity.this,"Short",Toast.LENGTH_SHORT).show();
+
+                        //add
                     }
                 }
         );
