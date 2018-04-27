@@ -8,6 +8,9 @@ public class MainActivity extends Activity {
     Dwm dwm;
     int id;
 
+    //TODO (1) button collegato a AllertDialog il quale mostra gli id disponibili
+    //TODO (1) button che mostra misura su TextView
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
