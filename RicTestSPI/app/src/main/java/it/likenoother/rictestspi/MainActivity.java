@@ -29,14 +29,28 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 String myLog="";
-                transferData(new byte[] {0x0c,0x00});
-                //TODO
+                myLog+=transferData(new byte[] {0x0c,0x00}).toString();
+
+                byte length;
+                long timer =System.currentTimeMillis();
+                do{
+                   //attenzione alle conversioni per la lunghezza!!!
+                   length=transferData(new byte[] {-128})[0];
+                }while(length==0 && System.currentTimeMillis()-timer<100);
+
+                //dovresti creare un buffer di tutti 0xff
+                myLog+=transferData(new byte[length]).toString();
+
                 mTextView.setText(myLog);
             }
         });
     }
 
     private byte[] transferData(byte[] buffer){
+        if(buffer.length<=0 || buffer.length==255){
+            return null;
+        }
+
         byte[] response = new byte[buffer.length];
 
         try {
