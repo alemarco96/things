@@ -11,6 +11,8 @@ import com.google.android.things.pio.PeripheralManager;
 import com.google.android.things.pio.SpiDevice;
 
 import java.io.IOException;
+import java.util.Arrays;
+import static java.lang.Byte.toUnsignedInt;
 
 public class MainActivity extends Activity {
     // SPI Device Name
@@ -28,29 +30,36 @@ public class MainActivity extends Activity {
         mButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                String myLog="";
-                myLog+=transferData(new byte[] {0x0c,0x00}).toString();
+                mTextView.setText("working");
 
-                byte length;
+                String myLog="";
+                myLog+=transferData(new byte[] {(byte)0x0c,(byte)0x00},false).toString();
+                mTextView.setText(myLog);
+
+                int length;
                 long timer =System.currentTimeMillis();
                 do{
-                   //attenzione alle conversioni per la lunghezza!!!
-                   length=transferData(new byte[] {-128})[0];
+                    length=(transferData(new byte[1],true)[0]);
+                    myLog+="\n\n"+length;
+                    mTextView.setText(myLog);
                 }while(length==0 && System.currentTimeMillis()-timer<100);
-
-                //dovresti creare un buffer di tutti 0xff
-                myLog+=transferData(new byte[length]).toString();
+                
+                myLog+="\n\n"+transferData(new byte[length],true).toString();
 
                 mTextView.setText(myLog);
             }
         });
     }
 
-    private byte[] transferData(byte[] buffer){
+    private int[] transferData(byte[] buffer, boolean autoFill){
         if(buffer.length<=0 || buffer.length==255){
             return null;
         }
-
+        
+        if(autoFill==true) {
+            Arrays.fill(buffer, (byte) 0xff);
+        }
+        
         byte[] response = new byte[buffer.length];
 
         try {
@@ -66,23 +75,19 @@ public class MainActivity extends Activity {
 
             mDevice.close();
         } catch (IOException e) {
-            Log.w(TAG, "Unable to access SPI device", e);
+            return null;
+        }
+        
+        int[] intResponse=new int[response.length];
+        for (int i=0; i<response.length; i++) {
+            intResponse[i]=toUnsignedInt(response[i]);
         }
 
-        return response;
+        return intResponse;
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
-        if (mDevice != null) {
-            try {
-                mDevice.close();
-                mDevice = null;
-            } catch (IOException e) {
-                Log.w(TAG, "Unable to close SPI device", e);
-            }
-        }
     }
 }

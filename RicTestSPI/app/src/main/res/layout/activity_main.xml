@@ -17,8 +17,8 @@
     <TextView
         android:id="@+id/mytextview"
         android:layout_width="235dp"
-        android:layout_height="26dp"
+        android:layout_height="452dp"
         android:text="TextView"
         tools:layout_editor_absoluteX="133dp"
-        tools:layout_editor_absoluteY="242dp" />
+        tools:layout_editor_absoluteY="29dp" />
 </android.support.constraint.ConstraintLayout>
