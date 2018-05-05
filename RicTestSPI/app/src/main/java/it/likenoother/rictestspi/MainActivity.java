@@ -12,11 +12,12 @@ import com.google.android.things.pio.SpiDevice;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+
 import static java.lang.Byte.toUnsignedInt;
 
 public class MainActivity extends Activity {
     // SPI Device Name
-    private static final String TAG="MainActivity";
     private static final String SPI_DEVICE_NAME = "SPI0.0";
     private SpiDevice mDevice;
 
@@ -31,7 +32,7 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 mTextView.setText("working");
-
+/*
                 String myLog="";
                 myLog+=transferData(new byte[] {(byte)0x0c,(byte)0x00},false).toString();
                 mTextView.setText(myLog);
@@ -39,18 +40,29 @@ public class MainActivity extends Activity {
                 int length;
                 long timer =System.currentTimeMillis();
                 do{
+                    try {
+                        TimeUnit.MICROSECONDS.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     length=(transferData(new byte[1],true)[0]);
                     myLog+="\n\n"+length;
                     mTextView.setText(myLog);
                 }while(length==0 && System.currentTimeMillis()-timer<100);
-                
+
+                try {
+                    TimeUnit.MICROSECONDS.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
                 myLog+="\n\n"+transferData(new byte[length],true).toString();
 
-                mTextView.setText(myLog);
+                mTextView.setText(myLog);*/
             }
         });
     }
-
+/*
     private int[] transferData(byte[] buffer, boolean autoFill){
         if(buffer.length<=0 || buffer.length==255){
             return null;
@@ -85,7 +97,7 @@ public class MainActivity extends Activity {
 
         return intResponse;
     }
-
+*/
     @Override
     protected void onDestroy() {
         super.onDestroy();

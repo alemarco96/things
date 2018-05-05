@@ -20,5 +20,5 @@
         android:layout_height="452dp"
         android:text="TextView"
         tools:layout_editor_absoluteX="133dp"
-        tools:layout_editor_absoluteY="29dp" />
+        tools:layout_editor_absoluteY="25dp" />
 </android.support.constraint.ConstraintLayout>
