@@ -21,8 +21,10 @@ import com.google.android.things.pio.PeripheralManager;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static android.content.ContentValues.TAG;
+import static com.google.android.things.contrib.driver.apa102.Apa102.MAX_BRIGHTNESS;
 
 // RainbowHat driver
 import com.google.android.things.contrib.driver.rainbowhat.RainbowHat;
@@ -85,24 +87,22 @@ public class MainActivity extends Activity {
         Apa102 mApa102;
 
         try {
+
             mApa102 = new Apa102("SPI0.0", Apa102.Mode.BGR);
-        } catch (IOException e) {
-            Log.i("Apa102", "IOException nella creazione dell'oggetto Apa102");
-        }
+            for(int i = 0; i < MAX_BRIGHTNESS; i++) {
+                int[] colors = new int[]{Color.RED, Color.GREEN, Color.BLUE, Color.RED, Color.GREEN, Color.BLUE, Color.RED};
+                mApa102.write(colors);
 
+                mApa102.setBrightness(i);
 
-        int[] colors = new int[] {Color.RED, Color.GREEN, Color.BLUE};
-        try {
-            mApa102.write(colors);
-        } catch (IOException e) {
-            Log.i("Apa102", "IOException nell'impostazione dei led");
-        }
+                TimeUnit.SECONDS.sleep(1);
 
-        try {
+            }
             mApa102.close();
         } catch (IOException e) {
             Log.i("Apa102", "IOException nella chiusura di Apa102");
-
+        } catch ( InterruptedException f) {
+            Log.i("Apa102", "InterruptedException durante il while dei led");
         }
     }
 }
