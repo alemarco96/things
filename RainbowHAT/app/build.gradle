@@ -30,4 +30,7 @@ dependencies {
     implementation 'com.google.android.things.contrib:driver-rainbowhat:0.11'
     api 'com.google.android.things.contrib:driver-rainbowhat:0.11'
 
+    //Driver per LED apa102
+    implementation 'com.google.android.things.contrib:driver-apa102:0.7'
+    api 'com.google.android.things.contrib:driver-apa102:0.7'
 }
