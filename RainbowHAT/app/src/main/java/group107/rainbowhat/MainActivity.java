@@ -85,24 +85,51 @@ public class MainActivity extends Activity {
         }
 
         Apa102 mApa102;
+        int[] colors = new int[]{Color.RED, Color.GREEN, Color.BLUE, Color.RED, Color.GREEN, Color.BLUE, Color.RED};
 
         try {
 
             mApa102 = new Apa102("SPI0.0", Apa102.Mode.BGR);
-            for(int i = 0; i < MAX_BRIGHTNESS; i++) {
-                int[] colors = new int[]{Color.RED, Color.GREEN, Color.BLUE, Color.RED, Color.GREEN, Color.BLUE, Color.RED};
-                mApa102.write(colors);
+            mApa102.setBrightness(1);
+            int[] ledOff = new int[] {0, 0, 0, 0, 0, 0, 0};
+
+            for(int i = 0; i < 7; i++) {
+                ledOff[i] = colors[i];
+                mApa102.write(ledOff);
+                TimeUnit.SECONDS.sleep(1);
+            }
+
+            for(int i = 6; i >= 0; i--) {
+                ledOff[i] = 0;
+                mApa102.write(ledOff);
+                TimeUnit.SECONDS.sleep(1);
+            }
+
+            for(int i = 2; i < 5; i++) {mApa102.write(colors);
 
                 mApa102.setBrightness(i);
 
                 TimeUnit.SECONDS.sleep(1);
 
             }
+
             mApa102.close();
         } catch (IOException e) {
             Log.i("Apa102", "IOException nella chiusura di Apa102");
         } catch ( InterruptedException f) {
             Log.i("Apa102", "InterruptedException durante il while dei led");
+        }
+
+        try {
+            // Display a string on the segment display.
+            AlphanumericDisplay segment = RainbowHat.openDisplay();
+            segment.setBrightness(Ht16k33.HT16K33_BRIGHTNESS_MAX);
+            segment.display("YEAH");
+            segment.setEnabled(true);
+            // Close the device when done.
+            segment.close();
+        } catch (IOException e) {
+            Log.i("RainbowHAT", "IOException");
         }
     }
 }
