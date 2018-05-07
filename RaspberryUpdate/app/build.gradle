@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 27
     defaultConfig {
-        applicationId "group107.rainbowhat"
+        applicationId "group107.raspberryupdate"
         minSdkVersion 27
         targetSdkVersion 27
         versionCode 1
@@ -25,12 +25,4 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     compileOnly 'com.google.android.things:androidthings:+'
-
-    //Driver per rainbowHat ("implementation" e "api" sostituiscono "compile" ora deprecato)
-    implementation 'com.google.android.things.contrib:driver-rainbowhat:0.11'
-    api 'com.google.android.things.contrib:driver-rainbowhat:0.11'
-
-    //Driver per LED apa102
-    implementation 'com.google.android.things.contrib:driver-apa102:0.7'
-    api 'com.google.android.things.contrib:driver-apa102:0.7'
 }
