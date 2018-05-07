@@ -32,7 +32,25 @@ public class MainActivity extends Activity {
             mDevice.setFrequency(8000000);
             mDevice.setBitsPerWord(8);
             mDevice.setBitJustification(SpiDevice.BIT_JUSTIFICATION_MSB_FIRST);
+
+            //reset communications:
+            transferData(new byte[1],true);
+            transferData(new byte[1],true);
+            int tmp=transferData(new byte[1],true)[0];
+            //vedi se è presente il modulo
+            if(tmp!=0xff){
+                mDevice.close();
+                mDevice=null;
+                Log.e("mySPI","nessun modulo connesso");
+                return;
+            }
+
         } catch (IOException e) {
+            try {
+                mDevice.close();
+            } catch (IOException e1){
+            }
+            mDevice=null;
             Log.e("mySPI","errore in apertura");
             return;
         }
