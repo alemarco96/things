@@ -37,6 +37,9 @@ public class MainActivity extends Activity {
             transferData(new byte[1],true);
             transferData(new byte[1],true);
             int tmp=transferData(new byte[1],true)[0];
+
+            mTextView.setText("valore iniziale: "+tmp);
+
             //vedi se è presente il modulo
             if(tmp!=0xff){
                 mDevice.close();
@@ -74,7 +77,7 @@ public class MainActivity extends Activity {
                     }
                     */
                     length=(transferData(new byte[1],true)[0]);
-                    myLog+="Numero byte da ricevere: "+length;
+                    myLog+="\nNumero byte da ricevere: "+length;
                     mTextView.setText(myLog);
                 }while(length==0 && System.currentTimeMillis()-timer<10);
 /*
