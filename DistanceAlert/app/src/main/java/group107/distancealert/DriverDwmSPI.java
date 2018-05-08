@@ -12,9 +12,8 @@ public class DriverDwmSPI {
     private static SpiDevice mySPI;
 
     /**
-     * Costruttore riceve come parametro la string del bus SPI a cui è connesso il modulo,
-     * ovvero, per la raspberry: "SPI0.0" o "SPI0.1".
-     * @param bus
+     * @param bus stringa relativa al bus SPI a cui è connesso il modulo,
+     *            ovvero, per la raspberry: "SPI0.0" o "SPI0.1".
      * @throws IOException
      * @throws InterruptedException
      */
@@ -42,6 +41,7 @@ public class DriverDwmSPI {
      * Nel caso non ottenga una risposta corretta, ovvero ci sono dei problemi hardware,
      * lancia l'eccezione: "SPI device not connected".
      * @throws IOException
+     * @throws InterruptedException
      */
     private void resetDWM() throws IOException, InterruptedException {
         // Invio 3 byte 0xff al modulo DWM
@@ -60,10 +60,8 @@ public class DriverDwmSPI {
     }
 
     /**
-     * Riceve come parametri un buffer contenete i byte da inviare via SPI.
-     * Se l'opzione autoFill è abilitata riempie il buffer di 0xff.
-     * @param buffer
-     * @param autoFill
+     * @param buffer array contenete i byte da inviare via SPI
+     * @param autoFill l'opzione autoFill è abilitata riempie il buffer di 0xff
      * @return Array int[] contentente i valori ricevuti convertiti in unsigned int
      * @throws IOException
      */
