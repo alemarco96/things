@@ -15,7 +15,7 @@ public class DistanceController {
     //ogni secondo salva su variabile locale
     public int getDistance(int id) {
         int distance=1000;
-
+// da chiedere: 0x0c , 0x00 al metodo requestAPI
         return distance;
     }
 
@@ -23,7 +23,7 @@ public class DistanceController {
     //TODO scanID
     public int[] scanID(){
         int[] ids=new int[1];
-
+// da chiedere: 0x0c , 0x00 al metodo requestAPI
         return ids;
     }
 }
