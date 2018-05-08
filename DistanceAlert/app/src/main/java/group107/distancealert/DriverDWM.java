@@ -3,6 +3,8 @@ package group107.distancealert;
 import com.google.android.things.pio.PeripheralManager;
 import com.google.android.things.pio.SpiDevice;
 import com.google.android.things.pio.UartDevice;
+import com.google.android.things.pio.UartDeviceCallback;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -10,8 +12,10 @@ import static java.lang.Byte.toUnsignedInt;
 
 // classe model
 public class DriverDWM {
-    private static SpiDevice mySPI;
-    private static UartDevice myUART;
+    private SpiDevice mySPI;
+    private UartDevice myUART;
+
+    private byte[] uartBuffer;
 
     /**
      * @param busName stringa relativa al bus SPI o UART a cui è connesso il modulo,
@@ -76,19 +80,28 @@ public class DriverDWM {
      * @throws InterruptedException
      */
     private void resetCommunication() throws IOException, InterruptedException {
-    /*    // Invio 3 byte 0xff al modulo DWM
-        transferData(new byte[1],true);
-        TimeUnit.MICROSECONDS.sleep(50);
-        transferData(new byte[1],true);
-        TimeUnit.MICROSECONDS.sleep(50);
-        int response=transferData(new byte[1],true)[0];
+        // Caso SPI
+        if(mySPI!=null){
+            // Invio 3 byte 0xff al modulo DWM
+            transferViaSPI(new byte[1],true);
+            TimeUnit.MICROSECONDS.sleep(50);
+            transferViaSPI(new byte[1],true);
+            TimeUnit.MICROSECONDS.sleep(50);
+            int response=transferViaSPI(new byte[1],true)[0];
 
-        // Se l'ultimo byte ricevuto è diverso da 0xff significa che c'è un problema
-        if(response!=0xff) {
-            mySPI.close();
-            mySPI = null;
-            throw new IOException("SPI device not connected");
-        }*/
+            // Se l'ultimo byte ricevuto è diverso da 0xff significa che c'è un problema
+            if(response!=0xff) {
+                mySPI.close();
+                mySPI = null;
+                throw new IOException("SPI device not connected");
+            }
+        }
+
+        // Caso UART
+        else{
+            transferViaUART(new byte[2]);//TODO fare il reset/ wake up e vedere se c'è il modulo
+            myUART.flush(UartDevice.FLUSH_IN_OUT);
+        }
     }
 
     /**
@@ -138,6 +151,7 @@ public class DriverDWM {
             return result;
         }
 
+        // Caso UART
         else{
             int[] result = transferViaUART(buffer);
 
@@ -174,32 +188,55 @@ public class DriverDWM {
     }
 
     private int[] transferViaUART(byte[] buffer) throws IOException {
+        myUART.flush(UartDevice.FLUSH_IN_OUT);
         myUART.write(buffer,buffer.length);
 
-        // Istanzia l'array response
-        byte[] response = new byte[255];
-        int count=0;
-
-        /**
-         * usare callback o polling?
-         * io sono allergico al polling
-         */
+        uartBuffer=null;
+        myUART.registerUartDeviceCallback(null,myUartCallback);
+        long timer =System.currentTimeMillis();
+        while(uartBuffer==null && System.currentTimeMillis()-timer<10);
+        myUART.unregisterUartDeviceCallback(myUartCallback);
 
         // Nel caso ci siano problemi di comunicazione
-        if(count==0 || count>=255){
+        if(uartBuffer==null || uartBuffer.length==0 || uartBuffer.length>=255){
             throw new IOException("Communication error via UART");
         }
 
-        // Ritaglia array tenendo solo la parte interessante
-        response=Arrays.copyOfRange(response,0,count);
-
         // Conversione dei dati ricevuti a unsigned int
-        int[] intResponse=new int[response.length];
-        for (int i=0; i<response.length; i++) {
-            intResponse[i]=toUnsignedInt(response[i]);
+        int[] intResponse=new int[uartBuffer.length];
+        for (int i=0; i<uartBuffer.length; i++) {
+            intResponse[i]=toUnsignedInt(uartBuffer[i]);
         }
+        uartBuffer=null;
+
         return intResponse;
     }
+
+    private UartDeviceCallback myUartCallback = new UartDeviceCallback() {
+        @Override
+        public boolean onUartDeviceDataAvailable(UartDevice uart) {
+            byte[] response=new byte[255];
+            int count=0;
+            try {
+                while ((count = uart.read(response, response.length)) > 0);//TODO controllare cosa ritorna read e contare quanti byte ricevuti
+            } catch (IOException e) {
+                uartBuffer=new byte[0];
+            }
+
+            if(count>0) {
+                // Ritaglia array tenendo solo la parte interessante
+                uartBuffer = Arrays.copyOfRange(response, 0, count);
+            }
+
+            // Stop listening for more interrupts
+            return false;
+        }
+
+        @Override
+        public void onUartDeviceError(UartDevice uart, int error) {
+            uartBuffer=new byte[0];
+        }
+    };
 
     /**
      * Chiusura e rilascio della periferica SPI e/o UART
