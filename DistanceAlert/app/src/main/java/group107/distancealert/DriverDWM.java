@@ -99,7 +99,10 @@ public class DriverDWM {
 
         // Caso UART
         else{
+            myUART.flush(UartDevice.FLUSH_IN_OUT);
+
             transferViaUART(new byte[2]);//TODO fare il reset/ wake up e vedere se c'è il modulo
+
             myUART.flush(UartDevice.FLUSH_IN_OUT);
         }
     }
@@ -189,7 +192,7 @@ public class DriverDWM {
 
     private int[] transferViaUART(byte[] buffer) throws IOException {
         myUART.flush(UartDevice.FLUSH_IN_OUT);
-        myUART.write(buffer,buffer.length);
+        myUART.write(buffer,buffer.length);//TODO serve fargli un wake up?
 
         uartBuffer=null;
         myUART.registerUartDeviceCallback(null,myUartCallback);
@@ -216,16 +219,19 @@ public class DriverDWM {
         @Override
         public boolean onUartDeviceDataAvailable(UartDevice uart) {
             byte[] response=new byte[255];
-            int count=0;
+            int totalCount=0;
             try {
-                while ((count = uart.read(response, response.length)) > 0);//TODO controllare cosa ritorna read e contare quanti byte ricevuti
+                int count;
+                while ((count = uart.read(response, response.length)) > 0){
+                    totalCount+=count;
+                }
             } catch (IOException e) {
                 uartBuffer=new byte[0];
             }
 
-            if(count>0) {
+            if(totalCount>0) {
                 // Ritaglia array tenendo solo la parte interessante
-                uartBuffer = Arrays.copyOfRange(response, 0, count);
+                uartBuffer = Arrays.copyOfRange(response, 0, totalCount);
             }
 
             // Stop listening for more interrupts
