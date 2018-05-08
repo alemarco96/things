@@ -3,9 +3,9 @@ package group107.distancealert;
 import android.app.Activity;
 import android.os.Bundle;
 
+// classe view
 public class MainActivity extends Activity {
-
-    Dwm dwm;
+    DistanceController myController;
     int id;
 
     //TODO (1) button collegato a AllertDialog il quale mostra gli id disponibili
@@ -16,7 +16,8 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        dwm = new Dwm("SPI0.0");
+        //sceglie canale di comunicazione UART o SPI
+        myController = new DistanceController("SPI0.0");
 
     }
 }
