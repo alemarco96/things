@@ -7,11 +7,14 @@ public class Dwm {
 
 
     //TODO costruttore Dwm
+    //verifica che si sia un modulo collegato/resetta la comunicazione
+    // se tutto va a buon fine avvia la schedulazione di questo thread ogni secondo
     public Dwm(String busName) {
 
     }
     //TODO getDistance
     //metodi per la gestione SPI
+    //ogni secondo salva su variabile locale
     public int getDistance(int id) {
         int distance;
 
@@ -23,7 +26,7 @@ public class Dwm {
     }
 
     //TODO getPacket
-    //ricevi pacchetto
+    //ricevi pacchetto, Thread separato
     private List<Integer> getPacket(int type, int[] value) {
 
     }
