@@ -20,15 +20,9 @@ public class Dwm {
 
         return distance;
     }
+
     //TODO scanID
     public List<Integer> scanID(){
 
     }
-
-    //TODO getPacket
-    //ricevi pacchetto, Thread separato
-    private List<Integer> getPacket(int type, int[] value) {
-
-    }
-
 }

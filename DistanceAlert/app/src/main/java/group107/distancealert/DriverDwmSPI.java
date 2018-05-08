@@ -2,7 +2,6 @@ package group107.distancealert;
 
 import com.google.android.things.pio.PeripheralManager;
 import com.google.android.things.pio.SpiDevice;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -12,7 +11,14 @@ import static java.lang.Byte.toUnsignedInt;
 public class DriverDwmSPI {
     private static SpiDevice mySPI;
 
-    public DriverDwmSPI(String bus) throws IOException {
+    /**
+     * Costruttore riceve come parametro la string del bus SPI a cui è connesso il modulo,
+     * ovvero, per la raspberry: "SPI0.0" o "SPI0.1".
+     * @param bus
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public DriverDwmSPI(String bus) throws IOException, InterruptedException {
         PeripheralManager manager = PeripheralManager.getInstance();
         mySPI = manager.openSpiDevice(bus);
 
@@ -20,40 +26,61 @@ public class DriverDwmSPI {
         resetDWM();
     }
 
+    /**
+     * Configura i parametri della comunicazione SPI necessari per il modulo DWM
+     * @throws IOException
+     */
     private void setupSPI() throws IOException{
         mySPI.setMode(SpiDevice.MODE0);
         mySPI.setFrequency(8000000);
         mySPI.setBitsPerWord(8);
         mySPI.setBitJustification(SpiDevice.BIT_JUSTIFICATION_MSB_FIRST);
-        return;
     }
 
-    private void resetDWM() throws IOException{
+    /**
+     * Fa il reset dello stato della comunicazione del modulo DWM.
+     * Nel caso non ottenga una risposta corretta, ovvero ci sono dei problemi hardware,
+     * lancia l'eccezione: "SPI device not connected".
+     * @throws IOException
+     */
+    private void resetDWM() throws IOException, InterruptedException {
+        // Invio 3 byte 0xff al modulo DWM
         transferData(new byte[1],true);
+        TimeUnit.MICROSECONDS.sleep(50);
         transferData(new byte[1],true);
+        TimeUnit.MICROSECONDS.sleep(50);
         int response=transferData(new byte[1],true)[0];
 
-        if(response!=0xff){
+        // Se l'ultimo byte ricevuto è diverso da 0xff significa che c'è un problema
+        if(response!=0xff) {
             mySPI.close();
-            mySPI=null;
+            mySPI = null;
             throw new IOException("SPI device not connected");
         }
-        return;
     }
 
+    /**
+     * Riceve come parametri un buffer contenete i byte da inviare via SPI.
+     * Se l'opzione autoFill è abilitata riempie il buffer di 0xff.
+     * @param buffer
+     * @param autoFill
+     * @return Array int[] contentente i valori ricevuti convertiti in unsigned int
+     * @throws IOException
+     */
     private int[] transferData(byte[] buffer, boolean autoFill) throws IOException {
-        if(buffer.length<=0 || buffer.length==255){
-            return null;
-        }
-
-        if(autoFill==true) {
+        // Riempie l'array buffer di 0xff nel caso l'opzione autoFill sia true
+        if(autoFill) {
             Arrays.fill(buffer, (byte) 0xff);
         }
 
+        // Istanzia l'array response
         byte[] response = new byte[buffer.length];
 
+        // Trasferimento dati via SPI, i dati da inviare sono nell'array Buffer,
+        // i dati ricevuti vengono salvati nell'array response
         mySPI.transfer(buffer, response, buffer.length);
 
+        // Conversione dei dati ricevuti a unsigned int
         int[] intResponse=new int[response.length];
         for (int i=0; i<response.length; i++) {
             intResponse[i]=toUnsignedInt(response[i]);
@@ -63,27 +90,32 @@ public class DriverDwmSPI {
     }
 
     /**
-     * Receive as parameter the TAG of the API and the value of the API (Example: TAG=0x0C, Value=(0x00))
+     * Riceve come parametri il tag e il valore dell'API. (Esempio: tag=0x0c, value=(0x01,0x05))
+     * Il parametro value può anche essere un array vuoto nel caso l'API non preveda paramentri.
      * @param tag byte
      * @param value byte[]
-     * @return byte[] containing the packets received from DWM after the query
+     * @return array int[] contenente il pacchetto di byte ricevuti in risposta dal modulo DWM
      * @throws IOException
      * @throws InterruptedException
      */
-    public int[] query(int tag, int[] value) throws IOException, InterruptedException {
-        if(tag!=0 && value.length<255){//controlla tag e value
-
+    public int[] query(byte tag, byte[] value) throws IOException, InterruptedException {
+        // Controllo che il tag richiesto e i relativi valori abbiano senso
+        if(tag!=0 && value.length<255){
+            throw new IOException("Bad parameters");
         }
 
+        // Praparazione pacchetto TLV da inviare al modulo
         byte[] buffer= new byte[value.length+2];
-        buffer[0]=tag;//TODO converti int in byte hex
-        buffer[1]=value.length;//TODO converti int in byte hex
-        for(int i=0; i<value.length;i++){
-            buffer[2+i]=value[i];//TODO converti int in byte hex
+        buffer[0]=tag;
+        buffer[1]=(byte)value.length;
+        for(int i=0; i<value.length; i++){
+            buffer[2+i]=value[i];
         }
 
+        // Trasferimento pacchetto a DWM
         transferData(buffer,false);
 
+        // Attesa della costruzione della risposta da parte del modulo
         int length;
         long timer =System.currentTimeMillis();
         do{
@@ -92,8 +124,20 @@ public class DriverDwmSPI {
         }while(length==0 && System.currentTimeMillis()-timer<10);
         TimeUnit.MICROSECONDS.sleep(50);
 
+        // Ricezione della risposta
         int[] result = transferData(new byte[length],true);
 
         return result;
+    }
+
+    /**
+     * Chiusura e rilascio della periferica SPI
+     * @throws IOException
+     */
+    public void close() throws IOException {
+        if (mySPI != null) {
+            mySPI.close();
+            mySPI = null;
+        }
     }
 }
