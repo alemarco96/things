@@ -9,11 +9,11 @@
     <!--Per quanto riguarda le disposizioni aspetto la lezione di oggi,
      il prof ha detto che verterà su varie tipologie di schermo.
      In ogni caso per ora sto solo provando.-->
+
     <TextView
         android:id="@+id/distance"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/distance"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -23,14 +23,14 @@
         android:id="@+id/connection"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:text="@string/connection" />
+        />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/alarm_off"
-        tools:layout_editor_absoluteX="225dp"
-        tools:layout_editor_absoluteY="447dp" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
     <!--
     <EditText
         android:id="@+id/editText"
