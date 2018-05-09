@@ -225,11 +225,15 @@ public class DriverDWM {
     private UartDeviceCallback myUartCallback = new UartDeviceCallback() {
         @Override
         public boolean onUartDeviceDataAvailable(UartDevice uart) {
-            byte[] response=new byte[255];
+            byte[] totalResponse=new byte[255];
             int totalCount=0;
             try {
+                byte[] response=new byte[20];
                 int count;
-                while ((count = uart.read(response, response.length)) > 0){
+                while ((count = uart.read(response, response.length)) > 0 && totalCount<=255){
+                    for(int i=0;i<count;i++){
+                        totalResponse[totalCount+i]=response[i];
+                    }
                     totalCount+=count;
                 }
             } catch (IOException e) {
@@ -238,7 +242,7 @@ public class DriverDWM {
 
             if(totalCount>0) {
                 // Ritaglia array tenendo solo la parte interessante
-                uartBuffer = Arrays.copyOfRange(response, 0, totalCount);
+                uartBuffer = Arrays.copyOfRange(totalResponse, 0, totalCount);
             }
 
             // Stop listening for more interrupts
