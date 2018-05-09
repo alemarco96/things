@@ -3,6 +3,9 @@ package group107.distancealert;
 import android.util.Pair;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -11,13 +14,17 @@ public class DistanceController
 {
     //contiene le ultime distanze note
     private int[] lastKnownDistances;
-   //contiene gli UWB_Address dei tag. La relativa distanza è memorizzata allo stesso indice
+    //contiene gli UWB_Address dei tag. La relativa distanza è memorizzata allo stesso indice
     private int[] tagAddressList;
 
     //oggetto usato per gestire l'accesso in mutua esclusione ai dati
     private final Object dataLock = new Object();
+    //oggetto usato per gestire l'accesso in mutua esclusione ai listeners
+    private final Object listenersLock = new Object();
 
     private DriverDWM driverDWM;
+    //memorizza tutti coloro che vogliono rimanere aggiornati con il controller
+    private List<DistanceDataAvailableListener> exportToListeners;
 
     //oggetto che, usando un thread secondario che autogestisce la sua schedulazione periodica, si occupa di effettuare
     //il polling del modulo DWM per ottenere le distanze
@@ -33,11 +40,23 @@ public class DistanceController
 
                 Pair<int[], int[]> data = getDataFromDWMResponse(dwmResponse);
 
+                //clona gli array per non permettere la modifica dei dati memorizzati all'esterno
+                int[] clonedTagsAddresses = Arrays.copyOf(data.first, data.first.length);
+                int[] clonedDistances = Arrays.copyOf(data.second, data.second.length);
+
                 //salva i nuovi valori
                 synchronized (dataLock)
                 {
                     tagAddressList = data.first;
                     lastKnownDistances = data.second;
+                }
+
+                //notifica a tutti dei nuovi valori disponibili
+                synchronized (listenersLock)
+                {
+                    for (DistanceDataAvailableListener listener : exportToListeners) {
+                        listener.onDataAvailable(clonedTagsAddresses, clonedDistances);
+                    }
                 }
             } catch (Exception e)
             {
@@ -55,7 +74,32 @@ public class DistanceController
     public DistanceController(String busName) throws IllegalArgumentException, IOException, InterruptedException
     {
         driverDWM = new DriverDWM(busName);
+        exportToListeners = new ArrayList<DistanceDataAvailableListener>();
         lastKnownDistances = null;
+    }
+
+    /**
+     * Aggiunge un listener
+     * @param listener
+     */
+    public void addListener(DistanceDataAvailableListener listener)
+    {
+        synchronized (listenersLock)
+        {
+            exportToListeners.add(listener);
+        }
+    }
+
+    /**
+     * Rimuove il listener, se presente
+     * @param listener
+     */
+    public void removeListener(DistanceDataAvailableListener listener)
+    {
+        synchronized (listenersLock)
+        {
+            exportToListeners.remove(listener);
+        }
     }
 
     /**
@@ -80,6 +124,27 @@ public class DistanceController
         if(updateDistanceTimer != null) {
             updateDistanceTimer.cancel();
             updateDistanceTimer = null;
+        }
+    }
+
+    /**
+     * Chiude il DistanceController e rilascia le risorse
+     */
+    public void close()
+    {
+        try {
+            driverDWM.close();
+            driverDWM = null;
+        } catch (IOException e) {
+           //ignora errore
+        }
+
+        updateDistanceTimer.cancel();
+        updateDistanceTimer = null;
+
+        synchronized (listenersLock)
+        {
+            exportToListeners = null;
         }
     }
 
@@ -156,13 +221,5 @@ public class DistanceController
         }
 
         return new Pair<int[], int[]>(tags, distances);
-    }
-
-    //ogni secondo salva su variabile locale
-    //TODO scanID
-    public int[] scanID(){
-        int[] ids=new int[1];
-        // da chiedere: ((byte)0x0c , null) al metodo requestAPI
-        return ids;
     }
 }
