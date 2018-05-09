@@ -15,8 +15,6 @@ public class DriverDWM {
     private SpiDevice mySPI;
     private UartDevice myUART;
 
-    private byte[] uartBuffer;
-
     /**
      * @param busName stringa relativa al bus SPI o UART a cui è connesso il modulo,
      *            ovvero, per la raspberry: "SPI0.0" o "SPI0.1" o "MINIUART".
@@ -201,59 +199,44 @@ public class DriverDWM {
         myUART.flush(UartDevice.FLUSH_IN_OUT);
         myUART.write(buffer,buffer.length);//TODO serve fargli un wake up?
 
-        uartBuffer=null;
-        myUART.registerUartDeviceCallback(null,myUartCallback);
-        long timer =System.currentTimeMillis();
-        while(uartBuffer==null && System.currentTimeMillis()-timer<10);//TODO migliorare
-        myUART.unregisterUartDeviceCallback(myUartCallback);
+        byte[] totalResponse=new byte[255];
+        int totalCount=0;
+        long timer=System.currentTimeMillis();
 
-        // Nel caso ci siano problemi di comunicazione
-        if(uartBuffer==null || uartBuffer.length==0 || uartBuffer.length>=255){
-            throw new IOException("Communication error via UART");
+        while(totalCount==0 && System.currentTimeMillis()-timer<50) {
+            byte[] response=new byte[20];
+            int count;
+            while ((count=myUART.read(response, response.length))>0) {
+                // Nel caso ci siano problemi di comunicazione
+                if(totalCount+count>255){
+                    throw new IOException("Communication error via UART: endless communication");
+                }
+
+                for(int i=0; i<count; i++) {
+                    totalResponse[totalCount+i]=response[i];
+                }
+                totalCount+=count;
+            }
+        }
+
+        // Nel caso ci siano problemi di comunicazione ()
+        if(totalCount==0){
+            throw new IOException("Communication error via UART: nothing received");
+        }
+
+        // Ritaglia array tenendo solo la parte interessante
+        if(totalCount>0) {
+            totalResponse = Arrays.copyOfRange(totalResponse, 0, totalCount);
         }
 
         // Conversione dei dati ricevuti a unsigned int
-        int[] intResponse=new int[uartBuffer.length];
-        for (int i=0; i<uartBuffer.length; i++) {
-            intResponse[i]=toUnsignedInt(uartBuffer[i]);
+        int[] intResponse=new int[totalResponse.length];
+        for (int i=0; i<totalResponse.length; i++) {
+            intResponse[i]=toUnsignedInt(totalResponse[i]);
         }
-        uartBuffer=null;
 
         return intResponse;
     }
-
-    private UartDeviceCallback myUartCallback = new UartDeviceCallback() {
-        @Override
-        public boolean onUartDeviceDataAvailable(UartDevice uart) {
-            byte[] totalResponse=new byte[255];
-            int totalCount=0;
-            try {
-                byte[] response=new byte[20];
-                int count;
-                while ((count = uart.read(response, response.length)) > 0 && totalCount<=255){
-                    for(int i=0;i<count;i++){
-                        totalResponse[totalCount+i]=response[i];
-                    }
-                    totalCount+=count;
-                }
-            } catch (IOException e) {
-                uartBuffer=new byte[0];
-            }
-
-            if(totalCount>0) {
-                // Ritaglia array tenendo solo la parte interessante
-                uartBuffer = Arrays.copyOfRange(totalResponse, 0, totalCount);
-            }
-
-            // Stop listening for more interrupts
-            return false;
-        }
-
-        @Override
-        public void onUartDeviceError(UartDevice uart, int error) {
-            uartBuffer=new byte[0];
-        }
-    };
 
     /**
      * Chiusura e rilascio della periferica SPI e/o UART
