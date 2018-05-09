@@ -3,5 +3,7 @@
     <string name="connection">Connessione...</string>
     <string name="distance">Distanza rilevata in metri: </string>
     <string name="alarm_toast">Attenzione! Distanza superata!</string>
-    <string name="alarm_off">Spegni allarme.</string>
+    <string name="alarm_off">Spegni allarme</string>
+    <string name="connected_to">Connesso a modulo: </string>
+    <string name="selectModules">Selezione un modulo</string>
 </resources>
