@@ -23,7 +23,7 @@ public class DriverDWM {
      * @throws IOException
      * @throws InterruptedException
      */
-    public DriverDWM(String busName) throws IOException, InterruptedException {
+    public DriverDWM(String busName) throws IllegalArgumentException, IOException, InterruptedException {
         PeripheralManager manager = PeripheralManager.getInstance();
 
         if(busName.contains("SPI")) {
@@ -43,7 +43,7 @@ public class DriverDWM {
         }
 
         else{
-            throw new IOException("Unrecognized bus name");
+            throw new IllegalArgumentException("Unrecognized bus name");
         }
 
         configureCommunication();
