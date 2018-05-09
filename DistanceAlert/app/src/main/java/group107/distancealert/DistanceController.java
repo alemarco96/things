@@ -8,9 +8,9 @@ import java.util.TimerTask;
 public class DistanceController {
 
     //TODO: come gestiamo il fatto che si possono collegare più ancore al modulo?
-    private int[] lastKnownDistance;
-    //oggetto usato per gestire l'accesso in mutua esclusione a lastKnownDistance
-    private final Object lockOfLastKnownDistance = new Object();
+    private int[] lastKnownDistances;
+    //oggetto usato per gestire l'accesso in mutua esclusione a lastKnownDistances
+    private final Object lockOfLastKnownDistances = new Object();
 
     private DriverDWM driverDWM;
     private byte tag;
@@ -30,9 +30,9 @@ public class DistanceController {
                 int[] distances = getDistanceFromDWMResponse(dwmResponse);
 
                 //salva i nuovi valori
-                synchronized (lockOfLastKnownDistance)
+                synchronized (lockOfLastKnownDistances)
                 {
-                    lastKnownDistance = distances;
+                    lastKnownDistances = distances;
                 }
             } catch (Exception e)
             {
@@ -47,6 +47,15 @@ public class DistanceController {
     private void setupRequestForDriver()
     {
         //TODO: impostare tag e buffer con la richiesta
+
+        /*
+
+        //Il tag è relativo a dwm_pos_get?
+
+        tag = 0x02;
+        request = null; //non ci sono altri valori da dargli in pasto
+
+         */
     }
 
     /**
@@ -57,6 +66,80 @@ public class DistanceController {
     private int[] getDistanceFromDWMResponse(int[] dwmResponse)
     {
         //TODO: recuperare la distanza dalla risposta ottenuta
+
+        /*
+        Nota che il modulo adotta la convenzione Little Endian!
+
+        TLV response:
+        -8 bit: type(sempre 0x40)
+        -8 bit: length(numero di value che ti comunica, pari al numero di ancore connesse)
+        -8 bit: errcode(0 per ok)
+
+        value:
+            -8 bit: type(sempre 0x41)
+            -8 bit length(13 byte, sempre 0x0D)
+            -32 bit: posizione x
+            -32 bit: posizione y
+            -32 bit: posizione z
+            -8 bit: quality factor
+        */
+
+        /*
+
+        int numberOfValues = dwmResponse[1];
+        int errorCode = dwmResponse[2];
+
+        if(errorCode != 0 || numberOfValues == 0){
+            //è avvenuto un errore
+            //TODO: gestire errore
+        }
+
+        int[] distances = new int[numberOfValues];
+
+        int startIndex = 3;
+
+        for(int i = 0; i < numberOfValues; i++)
+        {
+            int index = startIndex + 15 * i + 2;
+            int x1 = dwmResponse[index];
+            int x2 = dwmResponse[index + 1];
+            int x3 = dwmResponse[index + 2];
+            int x4 = dwmResponse[index + 3];
+
+            //il modulo usa convenzione Little Endian!
+            long x = x4 << 24 + x3 <<16 + x2 << 8 + x1;
+
+            index = startIndex + 15 * i + 6;
+            int y1 = dwmResponse[index];
+            int y2 = dwmResponse[index + 1];
+            int y3 = dwmResponse[index + 2];
+            int y4 = dwmResponse[index + 3];
+
+            //il modulo usa convenzione Little Endian!
+            long y = y4 << 24 + y3 <<16 + y2 << 8 + y1;
+
+            index = startIndex + 15 * i + 10;
+            int z1 = dwmResponse[index];
+            int z2 = dwmResponse[index + 1];
+            int z3 = dwmResponse[index + 2];
+            int z4 = dwmResponse[index + 3];
+
+            //il modulo usa convenzione Little Endian!
+            long z = z4 << 24 + z3 <<16 + z2 << 8 + z1;
+
+            //come usarlo? per ora è inutile...
+            int qualityFactor = dwmResponse[startIndex + 15 * i + 14];
+
+            //calcolo della distanza
+            long modulo = (x * x) + (y * y) + (z * z);
+
+            int distance = (int) Math.round((long) modulo);
+            distances[i] = distance;
+        }
+
+        return distances;
+        */
+
         return null;
     }
 
@@ -78,7 +161,7 @@ public class DistanceController {
             //avvenuto errore nella creazione dell'istanza del driver
             //TODO: gestire eccezione
         }
-        lastKnownDistance = null;
+        lastKnownDistances = null;
     }
 
     /**
@@ -118,9 +201,9 @@ public class DistanceController {
             throw new IOException("Il modulo non stà controllando la distanza.");
         }
 
-        synchronized (lockOfLastKnownDistance)
+        synchronized (lockOfLastKnownDistances)
         {
-            return lastKnownDistance[getIndexOfID(id)];
+            return lastKnownDistances[getIndexOfID(id)];
         }
     }
 
