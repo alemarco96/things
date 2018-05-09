@@ -101,7 +101,7 @@ public class DriverDWM {
         else{
             myUART.flush(UartDevice.FLUSH_IN_OUT);
 
-            transferViaUART(new byte[2]);//TODO fare il reset/ wake up e vedere se c'è il modulo
+            //transferViaUART(new byte[2]);//TODO fare il reset/ wake up e vedere se c'è il modulo
 
             myUART.flush(UartDevice.FLUSH_IN_OUT);
         }
@@ -203,7 +203,7 @@ public class DriverDWM {
         uartBuffer=null;
         myUART.registerUartDeviceCallback(null,myUartCallback);
         long timer =System.currentTimeMillis();
-        while(uartBuffer==null && System.currentTimeMillis()-timer<10);
+        while(uartBuffer==null && System.currentTimeMillis()-timer<10);//TODO migliorare
         myUART.unregisterUartDeviceCallback(myUartCallback);
 
         // Nel caso ci siano problemi di comunicazione
