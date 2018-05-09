@@ -11,13 +11,11 @@ public class DistanceController
 {
     //contiene le ultime distanze note
     private int[] lastKnownDistances;
-    //oggetto usato per gestire l'accesso in mutua esclusione a lastKnownDistances
-    private final Object lockOfLastKnownDistances = new Object();
-
-    //contiene il UWB_Address del tag la cui distanza è memorizzata al medesimo indice in lastKnownDistance
+   //contiene gli UWB_Address dei tag. La relativa distanza è memorizzata allo stesso indice
     private int[] tagAddressList;
-    //oggetto usato per gestire l'accesso in mutua esclusione a tagAddressList
-    private final Object lockOfTagAddressList = new Object();
+
+    //oggetto usato per gestire l'accesso in mutua esclusione ai dati
+    private final Object dataLock = new Object();
 
     private DriverDWM driverDWM;
 
@@ -36,12 +34,9 @@ public class DistanceController
                 Pair<int[], int[]> data = getDataFromDWMResponse(dwmResponse);
 
                 //salva i nuovi valori
-                synchronized (lockOfTagAddressList)
+                synchronized (dataLock)
                 {
                     tagAddressList = data.first;
-                }
-                synchronized (lockOfLastKnownDistances)
-                {
                     lastKnownDistances = data.second;
                 }
             } catch (Exception e)
@@ -103,7 +98,7 @@ public class DistanceController
 
         int index = 0;
 
-        synchronized (lockOfTagAddressList)
+        synchronized (dataLock)
         {
             for(; index < tagAddressList.length; index++) {
                 if(tagID == tagAddressList[index]){
@@ -111,16 +106,13 @@ public class DistanceController
                     break;
                 }
             }
-        }
 
-        if(index == tagAddressList.length)
-        {
-            //tag con ID specificato per parametro non trovato
-            throw new IllegalArgumentException("Tag con ID: " + tagID + " non è connesso al modulo.");
-        }
+            if(index == tagAddressList.length)
+            {
+                //tag con ID specificato per parametro non trovato
+                throw new IllegalArgumentException("Tag con ID: " + tagID + " non è connesso al modulo.");
+            }
 
-        synchronized (lockOfLastKnownDistances)
-        {
             return lastKnownDistances[index];
         }
     }
@@ -170,7 +162,7 @@ public class DistanceController
     //TODO scanID
     public int[] scanID(){
         int[] ids=new int[1];
-// da chiedere: ((byte)0x0c , null) al metodo requestAPI
+        // da chiedere: ((byte)0x0c , null) al metodo requestAPI
         return ids;
     }
 }
