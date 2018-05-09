@@ -3,7 +3,6 @@ package group107.distancealert;
 import com.google.android.things.pio.PeripheralManager;
 import com.google.android.things.pio.SpiDevice;
 import com.google.android.things.pio.UartDevice;
-import com.google.android.things.pio.UartDeviceCallback;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -11,6 +10,10 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.Byte.toUnsignedInt;
 
 // classe model
+// TODO sistemare le eccezioni
+// TODO controllare i commenti
+// TODO commentare la classe
+// TODO forse è il caso che il metodo requestAPI venga eseguito automaticamente in un altro thread?
 public class DriverDWM {
     private SpiDevice mySPI;
     private UartDevice myUART;
@@ -45,7 +48,7 @@ public class DriverDWM {
         }
 
         configureCommunication();
-        resetCommunication();
+        checkCommunication();
     }
 
     /**
@@ -72,13 +75,15 @@ public class DriverDWM {
 
     /**
      * Fa il reset dello stato della comunicazione del modulo DWM.
-     * Nel caso non ottenga una risposta corretta, ovvero ci sono dei problemi hardware,
-     * lancia l'eccezione: "SPI device not connected".
+     * Fa la richiesta di una API e controlla la risposta ricevuta.
+     * Nel caso non ottenga una risposta corretta, ovvero ci sono dei problemi gravi,
+     * probabilmente nell'hardware. Dunque lancia le relative eccezioni.
      * @throws IOException
      * @throws InterruptedException
+     * @throws RuntimeException
      */
-    private void resetCommunication() throws IOException, InterruptedException {
-        // Caso SPI
+    private void checkCommunication() throws IOException, InterruptedException, RuntimeException {
+        // Reset: caso SPI
         if(mySPI!=null){
             // Invio 3 byte 0xff al modulo DWM
             transferViaSPI(new byte[1],true);
@@ -95,13 +100,15 @@ public class DriverDWM {
             }
         }
 
-        // Caso UART
+        // Reset: caso UART
         else{
             myUART.flush(UartDevice.FLUSH_IN_OUT);
+        }
 
-            //transferViaUART(new byte[2]);//TODO fare il reset/ wake up e vedere se c'è il modulo
-
-            myUART.flush(UartDevice.FLUSH_IN_OUT);
+        // Controllo che la comunicazione col modulo funzioni correttamente
+        int[] buffer=requestAPI((byte)0x04,null);
+        if(buffer[0]!=0x40 || buffer[1]!=0x01 || buffer[2]!=0x00){
+            throw new RuntimeException("Communication problem: check hardware and reset DWM");
         }
     }
 
@@ -145,7 +152,7 @@ public class DriverDWM {
             do{
                 TimeUnit.MICROSECONDS.sleep(50);
                 length=transferViaSPI(new byte[1],true)[0];
-            }while(length==0x00 && System.currentTimeMillis()-timer<10);
+            }while(length==0x00 && System.currentTimeMillis()-timer<10L);
             TimeUnit.MICROSECONDS.sleep(50);
 
             // Nel caso ci siano problemi di comunicazione
@@ -195,15 +202,20 @@ public class DriverDWM {
         return intResponse;
     }
 
+    /**
+     * @param buffer array contenete i byte da inviare via SPI
+     * @return Array int[] contentente i valori ricevuti convertiti in unsigned int
+     * @throws IOException
+     */
     private int[] transferViaUART(byte[] buffer) throws IOException {
         myUART.flush(UartDevice.FLUSH_IN_OUT);
-        myUART.write(buffer,buffer.length);//TODO serve fargli un wake up?
+        myUART.write(buffer,buffer.length);
 
         byte[] totalResponse=new byte[255];
         int totalCount=0;
         long timer=System.currentTimeMillis();
 
-        while(totalCount==0 && System.currentTimeMillis()-timer<50) {
+        while(totalCount==0 && System.currentTimeMillis()-timer<50L) {
             byte[] response=new byte[20];
             int count;
             while ((count=myUART.read(response, response.length))>0) {
