@@ -114,8 +114,9 @@ public class DriverDWM {
      * @return array int[] contenente il pacchetto di byte ricevuti in risposta dal modulo DWM
      * @throws IOException
      * @throws InterruptedException
+     * @throws IllegalArgumentException
      */
-    public int[] requestAPI(byte tag, byte[] value) throws IOException, InterruptedException {
+    public int[] requestAPI(byte tag, byte[] value) throws IOException, InterruptedException, IllegalArgumentException {
         // Ottengo la lunghezza dell'array dei valori della API
         int L=0;
         if(value!=null){
@@ -124,7 +125,7 @@ public class DriverDWM {
 
         // Controllo che il tag richiesto e i relativi valori abbiano senso
         if(tag!=0 && L>255){
-            throw new IOException("Bad parameters");
+            throw new IllegalArgumentException("Bad parameters");
         }
 
         // Praparazione pacchetto TLV da inviare al modulo
