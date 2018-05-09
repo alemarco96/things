@@ -150,14 +150,14 @@ public class DistanceController
         //Nota che il modulo DWM usa notazione Little Endian!
         for(int i = 0; i < numberOfValues; i++, startIndex += bytesPerEntry)
         {
-            int UWB_Address = dwmResponse[startIndex + 1] << 8 + dwmResponse[startIndex];
+            int UWB_Address = (dwmResponse[startIndex + 1] << 8) + dwmResponse[startIndex];
 
             int d1 = dwmResponse[startIndex + 2];
             int d2 = dwmResponse[startIndex + 3];
             int d3 = dwmResponse[startIndex + 4];
             int d4 = dwmResponse[startIndex + 5];
 
-            int distance = d4 << 24 + d3 << 16 + d2 << 8 + d1;
+            int distance = (d4 << 24) + (d3 << 16) + (d2 << 8) + d1;
 
             tags[i] = UWB_Address;
             distances[i] = distance;
