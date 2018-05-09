@@ -9,7 +9,6 @@ import java.io.IOException;
 // classe view
 public class MainActivity extends Activity {
     DistanceController myController;
-    int id;
 
     //TODO (1) button collegato a AllertDialog il quale mostra gli id disponibili
     //TODO (1) button che mostra misura su TextView
