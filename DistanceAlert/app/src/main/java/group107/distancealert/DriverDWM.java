@@ -110,22 +110,28 @@ public class DriverDWM {
     /**
      * @param tag byte relativo alla API da usare
      * @param value byte[] array di byte contente i valori da passare alla API.
-     *              Può anche essere un array vuouto nel caso non siano previsti valori da passare.
+     *              Può anche essere null nel caso non siano previsti valori da passare.
      * @return array int[] contenente il pacchetto di byte ricevuti in risposta dal modulo DWM
      * @throws IOException
      * @throws InterruptedException
      */
     public int[] requestAPI(byte tag, byte[] value) throws IOException, InterruptedException {
+        // Ottengo la lunghezza dell'array dei valori della API
+        int L=0;
+        if(value!=null){
+            L=value.length;
+        }
+
         // Controllo che il tag richiesto e i relativi valori abbiano senso
-        if(tag!=0 && value.length<255){
+        if(tag!=0 && L>255){
             throw new IOException("Bad parameters");
         }
 
         // Praparazione pacchetto TLV da inviare al modulo
-        byte[] buffer= new byte[value.length+2];
+        byte[] buffer= new byte[L+2];
         buffer[0]=tag;
-        buffer[1]=(byte)value.length;
-        for(int i=0; i<value.length; i++){
+        buffer[1]=(byte)L;
+        for(int i=0; i<L; i++){
             buffer[2+i]=value[i];
         }
 
