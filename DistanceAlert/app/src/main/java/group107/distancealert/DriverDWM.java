@@ -93,7 +93,7 @@ public class DriverDWM {
      * @throws InterruptedException
      * @throws RuntimeException
      */
-    private void checkCommunication() throws IOException, InterruptedException, RuntimeException {
+    private void checkCommunication() throws IOException, InterruptedException {
         // Reset: caso SPI
         if(mySPI!=null){
             // Invio 3 byte 0xff al modulo DWM per resettare lo stato della comunicazione SPI
@@ -124,7 +124,7 @@ public class DriverDWM {
          */
         int[] buffer=requestAPI((byte)0x04,null);
         if(buffer[0]!=0x40 || buffer[1]!=0x01 || buffer[2]!=0x00){
-            throw new RuntimeException("Communication problem: check hardware and reset DWM");
+            throw new IOException("Communication problem: check hardware and reset DWM");
         }
     }
 
