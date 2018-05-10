@@ -3,17 +3,12 @@ package group107.distancealert;
 import com.google.android.things.pio.PeripheralManager;
 import com.google.android.things.pio.SpiDevice;
 import com.google.android.things.pio.UartDevice;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import static java.lang.Byte.toUnsignedInt;
 
 // classe model
-// TODO sistemare le eccezioni
-// TODO controllare i commenti
-// TODO commentare la classe
-// TODO forse è il caso che il metodo requestAPI venga eseguito automaticamente in un altro thread?
 public class DriverDWM {
     private SpiDevice mySPI;
     private UartDevice myUART;
@@ -137,8 +132,8 @@ public class DriverDWM {
         byte[] buffer= new byte[L+2];
         buffer[0]=tag;
         buffer[1]=(byte)L;
-        for(int i=0; i<L; i++){
-            buffer[2+i]=value[i];
+        if(L>0) {
+            System.arraycopy(value, 0, buffer, 2, L);
         }
 
         // Caso SPI
@@ -161,16 +156,12 @@ public class DriverDWM {
             }
 
             // Ricezione della risposta
-            int[] result = transferViaSPI(new byte[length],true);
-
-            return result;
+            return transferViaSPI(new byte[length],true);
         }
 
         // Caso UART
         else{
-            int[] result = transferViaUART(buffer);
-
-            return result;
+            return transferViaUART(buffer);
         }
     }
 
@@ -181,19 +172,21 @@ public class DriverDWM {
      * @throws IOException
      */
     private int[] transferViaSPI(byte[] buffer, boolean autoFill) throws IOException {
-        // Riempie l'array buffer di 0xff nel caso l'opzione autoFill sia true
+        /* Riempie l'array buffer di 0xff nel caso l'opzione autoFill sia true */
         if(autoFill) {
             Arrays.fill(buffer, (byte) 0xff);
         }
 
-        // Istanzia l'array response
+        /* Istanzia l'array response */
         byte[] response = new byte[buffer.length];
 
-        // Trasferimento dati via SPI, i dati da inviare sono nell'array Buffer,
-        // i dati ricevuti vengono salvati nell'array response
+        /*
+        Trasferimento dati via SPI, i dati da inviare sono nell'array Buffer,
+        i dati ricevuti vengono salvati nell'array response
+        */
         mySPI.transfer(buffer, response, buffer.length);
 
-        // Conversione dei dati ricevuti a unsigned int
+        /* Conversione dei dati ricevuti a unsigned int */
         int[] intResponse=new int[response.length];
         for (int i=0; i<response.length; i++) {
             intResponse[i]=toUnsignedInt(response[i]);
@@ -224,9 +217,7 @@ public class DriverDWM {
                     throw new IOException("Communication error via UART: endless communication");
                 }
 
-                for(int i=0; i<count; i++) {
-                    totalResponse[totalCount+i]=response[i];
-                }
+                System.arraycopy(response,0,totalResponse,totalCount,count);
                 totalCount+=count;
             }
         }
@@ -238,7 +229,7 @@ public class DriverDWM {
 
         // Ritaglia array tenendo solo la parte interessante
         if(totalCount>0) {
-            totalResponse = Arrays.copyOfRange(totalResponse, 0, totalCount);
+            System.arraycopy(totalResponse,0,totalResponse,0,totalCount);
         }
 
         // Conversione dei dati ricevuti a unsigned int
