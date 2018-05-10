@@ -8,7 +8,12 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import static java.lang.Byte.toUnsignedInt;
 
-// classe model
+/**
+ * Classe "Model" del design pattern Model-View-Controller.
+ * Questa classe ha lo scopo di gestire completamente la comunicazione con il modulo DWM1001-DEV,
+ * sia che esso sia collegato via UART o via SPI.
+ * N.B. Invocare il metodo close quando si ha finito di usarla.
+ */
 public class DriverDWM {
     private SpiDevice mySPI;
     private UartDevice myUART;
@@ -22,6 +27,10 @@ public class DriverDWM {
     public DriverDWM(String busName) throws IllegalArgumentException, IOException, InterruptedException {
         PeripheralManager manager = PeripheralManager.getInstance();
 
+        /*
+        Se il busName è un bus SPI, prova ad ottenere un'istanza della periferica SPI.
+        Nel caso in precedenza fosse stata istanziata la UART, viene chiusa.
+         */
         if(busName.contains("SPI")) {
             mySPI = manager.openSpiDevice(busName);
             if(myUART!=null){
@@ -30,6 +39,8 @@ public class DriverDWM {
             myUART=null;
         }
 
+
+        // Se, invece, il busName è un bus UART faccio l'opposto.
         else if(busName.contains("UART")) {
             myUART = manager.openUartDevice(busName);
             if(mySPI!=null){
@@ -38,10 +49,15 @@ public class DriverDWM {
             mySPI=null;
         }
 
+        // Se il busName non viene riconosciuto, lancia un'eccezione
         else{
             throw new IllegalArgumentException("Unrecognized bus name");
         }
 
+        /*
+        Configurazione, reset e controllo della comunicazione.
+        Se ci sono problemi vengono lanciate le relative eccezioni
+         */
         configureCommunication();
         checkCommunication();
     }
@@ -80,7 +96,7 @@ public class DriverDWM {
     private void checkCommunication() throws IOException, InterruptedException, RuntimeException {
         // Reset: caso SPI
         if(mySPI!=null){
-            // Invio 3 byte 0xff al modulo DWM
+            // Invio 3 byte 0xff al modulo DWM per resettare lo stato della comunicazione SPI
             transferViaSPI(new byte[1],true);
             TimeUnit.MICROSECONDS.sleep(50);
             transferViaSPI(new byte[1],true);
@@ -97,10 +113,15 @@ public class DriverDWM {
 
         // Reset: caso UART
         else{
+            // La semplice pulizia dei buffer di input e di output è sufficiente
             myUART.flush(UartDevice.FLUSH_IN_OUT);
         }
 
-        // Controllo che la comunicazione col modulo funzioni correttamente
+        /*
+         Controllo che la comunicazione col modulo funzioni correttamente richiedendo l'API 0x04,
+         ovvero quella per ricevere le frequenze di aggiornamento del modulo.
+         Poi controllo che l'operazione sia andata a buon fine, se no lancia un'eccezione.
+         */
         int[] buffer=requestAPI((byte)0x04,null);
         if(buffer[0]!=0x40 || buffer[1]!=0x01 || buffer[2]!=0x00){
             throw new RuntimeException("Communication problem: check hardware and reset DWM");
@@ -108,6 +129,9 @@ public class DriverDWM {
     }
 
     /**
+     * Effettua la richiesta della API e con i relativi valori al modulo DWM e ritorna la rispota
+     * ottenuta convertita in unsigned int.
+     * N.B. Questo metodo è bloccante e può richiedere fino a 50ms per essere completato.
      * @param tag byte relativo alla API da usare
      * @param value byte[] array di byte contente i valori da passare alla API.
      *              Può anche essere null nel caso non siano previsti valori da passare.
@@ -118,17 +142,14 @@ public class DriverDWM {
      */
     public int[] requestAPI(byte tag, byte[] value) throws IOException, InterruptedException, IllegalArgumentException {
         // Ottengo la lunghezza dell'array dei valori della API
-        int L=0;
-        if(value!=null){
-            L=value.length;
-        }
+        int L = value!=null ? 0 :value.length;
 
         // Controllo che il tag richiesto e i relativi valori abbiano senso
         if(tag!=0 && L>255){
             throw new IllegalArgumentException("Bad parameters");
         }
 
-        // Praparazione pacchetto TLV da inviare al modulo
+        // Praparo il pacchetto TLV da inviare al modulo
         byte[] buffer= new byte[L+2];
         buffer[0]=tag;
         buffer[1]=(byte)L;
@@ -141,7 +162,12 @@ public class DriverDWM {
             // Trasferimento pacchetto a DWM
             transferViaSPI(buffer,false);
 
-            // Attesa della costruzione della risposta da parte del modulo
+            /*
+            Attesa della costruzione della risposta da parte del modulo.
+            Finché non è pronta lui risponde sempre 0x00.
+            Quando è pronta, invece, comunica la lunghezza totale della risposta da leggere.
+            Se l'attesa va oltre i 10ms significa che ci sono dei problemi.
+             */
             int length;
             long timer =System.currentTimeMillis();
             do{
@@ -150,7 +176,7 @@ public class DriverDWM {
             }while(length==0x00 && System.currentTimeMillis()-timer<10L);
             TimeUnit.MICROSECONDS.sleep(50);
 
-            // Nel caso ci siano problemi di comunicazione
+            // Nel caso ci siano stati problemi di comunicazione
             if(length==0x00 || length==0xff){
                 throw new IOException("Communication error via SPI");
             }
@@ -166,44 +192,50 @@ public class DriverDWM {
     }
 
     /**
-     * @param buffer array contenete i byte da inviare via SPI
+     * Gestisce lo scambio di dati  via SPI, con l'opzione (utile per le specifiche del DWM) di
+     * riempire automaticamente di 0xff l'array di byte da inviare.
+     * @param trasmit array contenete i byte da inviare via SPI
      * @param autoFill l'opzione autoFill è abilitata riempie il buffer di 0xff
      * @return Array int[] contentente i valori ricevuti convertiti in unsigned int
      * @throws IOException
      */
-    private int[] transferViaSPI(byte[] buffer, boolean autoFill) throws IOException {
-        /* Riempie l'array buffer di 0xff nel caso l'opzione autoFill sia true */
+    private int[] transferViaSPI(byte[] trasmit, boolean autoFill) throws IOException {
+        // Nel caso l'opzione autoFill sia true, riempio l'array trasmit di 0xff
         if(autoFill) {
-            Arrays.fill(buffer, (byte) 0xff);
+            Arrays.fill(trasmit, (byte) 0xff);
         }
 
-        /* Istanzia l'array response */
-        byte[] response = new byte[buffer.length];
+        // Istanzio l'array receive di lunghezza pari a quella di trasmit
+        byte[] receive = new byte[trasmit.length];
 
         /*
-        Trasferimento dati via SPI, i dati da inviare sono nell'array Buffer,
-        i dati ricevuti vengono salvati nell'array response
-        */
-        mySPI.transfer(buffer, response, buffer.length);
+        Trasferimento dati via SPI, i dati da inviare sono nell'array trasmit,
+        i dati ricevuti vengono salvati nell'array receive
+         */
+        mySPI.transfer(trasmit, receive, trasmit.length);
 
-        /* Conversione dei dati ricevuti a unsigned int */
-        int[] intResponse=new int[response.length];
-        for (int i=0; i<response.length; i++) {
-            intResponse[i]=toUnsignedInt(response[i]);
+        // Conversione dei dati ricevuti a unsigned int
+        int[] intReceive=new int[receive.length];
+        for (int i=0; i<receive.length; i++) {
+            intReceive[i]=toUnsignedInt(receive[i]);
         }
 
-        return intResponse;
+        return intReceive;
     }
 
     /**
-     * @param buffer array contenete i byte da inviare via SPI
+     * Gestisce le varie fasei dello scambio di dati via UART, ovvero l'invio della richiesta e
+     * l'attesa della risposta dal modulo DWM.
+     * Se non riceve alcuna risposta entro 50ms lancia la relativa eccezione.
+     * @param trasmit array contenete i byte da inviare via UART
      * @return Array int[] contentente i valori ricevuti convertiti in unsigned int
      * @throws IOException
      */
-    private int[] transferViaUART(byte[] buffer) throws IOException {
+    private int[] transferViaUART(byte[] trasmit) throws IOException {
+        // Reset della comunicazione e invio della richiesta
         myUART.flush(UartDevice.FLUSH_IN_OUT);
-        myUART.write(buffer,buffer.length);
-
+        myUART.write(trasmit,trasmit.length);
+        //TODO rinomina variabili con senso relativo ai commenti e completa commenti
         byte[] totalResponse=new byte[255];
         int totalCount=0;
         long timer=System.currentTimeMillis();
@@ -212,17 +244,18 @@ public class DriverDWM {
             byte[] response=new byte[20];
             int count;
             while ((count=myUART.read(response, response.length))>0) {
-                // Nel caso ci siano problemi di comunicazione
+                // Nel caso ci siano problemi di comunicazione, lancia eccezione
                 if(totalCount+count>255){
                     throw new IOException("Communication error via UART: endless communication");
                 }
 
+                // Se ha letto qualche byte li trasferisce dall'array temporaneo all'array
                 System.arraycopy(response,0,totalResponse,totalCount,count);
                 totalCount+=count;
             }
         }
 
-        // Nel caso ci siano problemi di comunicazione ()
+        // Nel caso ci siano problemi di comunicazione, lancia eccezione
         if(totalCount==0){
             throw new IOException("Communication error via UART: nothing received");
         }
