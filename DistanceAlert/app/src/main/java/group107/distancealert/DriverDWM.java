@@ -142,7 +142,7 @@ public class DriverDWM {
      */
     public int[] requestAPI(byte tag, byte[] value) throws IOException, InterruptedException, IllegalArgumentException {
         // Ottengo la lunghezza dell'array dei valori della API
-        int L = value!=null ? 0 :value.length;
+        int L = value==null ? 0 :value.length;
 
         // Controllo che il tag richiesto e i relativi valori abbiano senso
         if(tag!=0 && L>255){
@@ -235,23 +235,27 @@ public class DriverDWM {
         // Reset della comunicazione e invio della richiesta
         myUART.flush(UartDevice.FLUSH_IN_OUT);
         myUART.write(trasmit,trasmit.length);
-        //TODO rinomina variabili con senso relativo ai commenti e completa commenti
-        byte[] totalResponse=new byte[255];
+
+        byte[] totalReceive=new byte[255];
         int totalCount=0;
         long timer=System.currentTimeMillis();
 
         while(totalCount==0 && System.currentTimeMillis()-timer<50L) {
-            byte[] response=new byte[20];
-            int count;
-            while ((count=myUART.read(response, response.length))>0) {
+            byte[] tempReceive=new byte[20];
+            int tempCount;
+            while ((tempCount=myUART.read(tempReceive, tempReceive.length))>0) {
                 // Nel caso ci siano problemi di comunicazione, lancia eccezione
-                if(totalCount+count>255){
+                if(totalCount+tempCount>255){
                     throw new IOException("Communication error via UART: endless communication");
                 }
 
-                // Se ha letto qualche byte li trasferisce dall'array temporaneo all'array
-                System.arraycopy(response,0,totalResponse,totalCount,count);
-                totalCount+=count;
+                /*
+                Se ha letto qualche byte li trasferisce dall'array temporaneo all'array complessivo.
+                Questo perché i byte non vengono ricevuti tutti assieme, ma in gruppi di
+                lunghezza variabile. La lunghezza massima è di 20 byte per ogni gruppo.
+                 */
+                System.arraycopy(tempReceive,0, totalReceive, totalCount, tempCount);
+                totalCount+=tempCount;
             }
         }
 
@@ -262,16 +266,16 @@ public class DriverDWM {
 
         // Ritaglia array tenendo solo la parte interessante
         if(totalCount>0) {
-            System.arraycopy(totalResponse,0,totalResponse,0,totalCount);
+            System.arraycopy(totalReceive,0, totalReceive,0,totalCount);
         }
 
         // Conversione dei dati ricevuti a unsigned int
-        int[] intResponse=new int[totalResponse.length];
-        for (int i=0; i<totalResponse.length; i++) {
-            intResponse[i]=toUnsignedInt(totalResponse[i]);
+        int[] intReceive=new int[totalReceive.length];
+        for (int i=0; i<totalReceive.length; i++) {
+            intReceive[i]=toUnsignedInt(totalReceive[i]);
         }
 
-        return intResponse;
+        return intReceive;
     }
 
     /**
