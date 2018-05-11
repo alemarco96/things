@@ -136,8 +136,8 @@ public class DriverDWM {
     /**
      * Effettua la richiesta della API e con i relativi valori al modulo DWM e ritorna la rispota
      * ottenuta convertita in unsigned int.
-     * N.B. Questo metodo è bloccante e può richiedere fino a 50ms per essere completato.
-     * (Attenzione che la durata dipende anche da condizioni esterne al modulo)
+     * N.B. Questo metodo è bloccante e può richiedere fino a 50ms per essere completato, tuttavia,
+     * mediamente dura 10ms. (Attenzione che la durata dipende anche da condizioni esterne al modulo)
      *
      * @param tag   byte relativo alla API da usare
      * @param value byte[] array di byte contente i valori da passare alla API.
