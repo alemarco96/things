@@ -183,7 +183,9 @@ public class DistanceController
                         public void run() {
                             //notifica su thread separato
                             List<Entry> connectedCopy = new ArrayList<>(connected.size());
-                            Collections.copy(connectedCopy, connected);
+//                            Collections.copy(connectedCopy, connected);
+                            for(int i = 0; i < connected.size();i++)
+                                connectedCopy.add(new Entry(connected.get(i)));
                             listener.onTagHasConnected(connectedCopy);
                         }
                     }).start();
@@ -196,7 +198,9 @@ public class DistanceController
                         public void run() {
                             //notifica su thread separato
                             List<Entry> disconnectedCopy = new ArrayList<>(disconnected.size());
-                            Collections.copy(disconnectedCopy, disconnected);
+                            //Collections.copy(disconnectedCopy, disconnected);
+                            for(int i = 0; i < disconnected.size();i++)
+                                disconnectedCopy.add(new Entry(disconnected.get(i)));
                             listener.onTagHasDisconnected(disconnectedCopy);
                         }
                     }).start();
@@ -209,7 +213,9 @@ public class DistanceController
                         public void run() {
                             //notifica su thread separato
                             List<Entry> dataCopy = new ArrayList<>(data.size());
-                            Collections.copy(dataCopy, data);
+                            //Collections.copy(dataCopy, data);
+                            for(int i = 0; i < data.size();i++)
+                                dataCopy.add(new Entry(data.get(i)));
                             listener.onTagDataAvailable(dataCopy);
                         }
                     }).start();

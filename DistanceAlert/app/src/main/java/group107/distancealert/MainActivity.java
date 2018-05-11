@@ -48,6 +48,7 @@ public class MainActivity extends Activity {
         myController.startUpdate(1000L); //*10^(-6)s
 
         //collegamento a listeners di un solo tag id
+        /*
         myController.addTagListener(id, new TagListener() {
             @Override
             public void onTagHasConnected(final int tagDistance) {
@@ -81,6 +82,53 @@ public class MainActivity extends Activity {
                     public void run() {
                         distanceView.setText(getString(R.string.distance) +
                                 " " + (tagDistance/1000) + "." + (tagDistance%1000));
+                    }
+                });
+            }
+        });
+        */
+
+        myController.addAllTagsListener(new AllTagsListener() {
+            @Override
+            public void onTagHasConnected(final List<DistanceController.Entry> tagDistance) {
+                final int idReceived = tagDistance.get(0).tagID;
+                final int distanceReceived = tagDistance.get(0).tagDistance;
+
+                Log.i(TAG, "Connessione a " + id + " avvenuta.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.i(TAG, "Distanza ricevuta da " + idReceived + " = " + distanceReceived);
+                        distanceView.setText(getString(R.string.distance) +
+                                " " + (distanceReceived / 1000) + "." + (distanceReceived % 1000));
+                    }
+                });
+            }
+
+            @Override
+            public void onTagHasDisconnected(final List<DistanceController.Entry> tagDistance) {
+                int idReceived = tagDistance.get(0).tagID;
+                final int distanceReceived = tagDistance.get(0).tagDistance;
+                Log.i(TAG, idReceived + " disconnesso.");
+                distanceView.setText(R.string.noConnection);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        distanceView.setText(R.string.noConnection);
+                    }
+                });
+            }
+
+            @Override
+            public void onTagDataAvailable(final List<DistanceController.Entry> tagDistance) {
+                int idReceived = tagDistance.get(0).tagID;
+                final int distanceReceived = tagDistance.get(0).tagDistance;
+                Log.i(TAG, "Distanza ricevuta da " + idReceived + " = " + distanceReceived);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        distanceView.setText(getString(R.string.distance) +
+                                " " + (distanceReceived/1000) + "." + (distanceReceived%1000));
                     }
                 });
             }
