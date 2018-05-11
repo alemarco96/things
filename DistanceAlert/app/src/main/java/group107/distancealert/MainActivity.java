@@ -147,4 +147,11 @@ public class MainActivity extends Activity {
         super.onPause();
     }
 
+
+    /*
+    TODO pulsante per tornare alla schermata di iniziale in modo programmatico (utile per configurare connessione e altro)
+    Intent startMain = new Intent( ... );
+    finish();
+    Poi come tornare alla app senza lanciarla da adb? Dal menu general -> restart device
+     */
 }

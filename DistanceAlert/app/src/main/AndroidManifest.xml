@@ -12,13 +12,15 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name">
+
+            <!-- Activity di default da lanciare come entry poin dell'applicazione -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Serve per lanciare automaticamente l'activity dopo che il sistema ha fatto il boot
-                 e a riavviare automaticamente l'activity se l'app viene chiusa -->
+            <!-- Serve per lanciare automaticamente l'activity dopo che il sistema ha fatto
+                 il boot e a riavviare automaticamente l'activity se l'app viene chiusa -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <!--<category android:name="android.intent.category.HOME" />-->
