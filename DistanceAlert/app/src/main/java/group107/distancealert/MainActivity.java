@@ -1,6 +1,9 @@
 package group107.distancealert;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -12,80 +15,87 @@ import java.io.IOException;
 
 // classe view
 public class MainActivity extends Activity {
-    DistanceController myController;
-    int id;
-    boolean alert;
-    int maxUserDistance;
-    int measuredDistance;
+    public static final String TAG = "107G";
+    private DistanceController myController;
+    private int id;
+    private boolean alert;
+    private int maxUserDistance;
+    private int measuredDistance;
 
     //TODO (1) button collegato a AllertDialog il quale mostra gli id disponibili
     //TODO (1) button che mostra misura su TextView
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        
-        final TextView distanceView = (TextView) findViewById(R.id.distance);
+
+        //riferimento alla TextView che mostra la distanza ricevuta
+        final TextView distanceView = findViewById(R.id.distance);
 
         //sceglie canale di comunicazione UART o SPI
         try {
             myController = new DistanceController("SPI0.0");
         } catch (Exception e) {
-            Log.e(MainActivity.class.getCanonicalName(), "Errore:\n", e);
+            Log.e(TAG, "Errore:\n", e);
         }
-        
-         alert = false;
 
-        //TODO Bottone per la connessione ad un modulo specifico
-        final Button button = findViewById(R.id.connection);
-        button.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
+        //allarme attiva?
+        alert = false;
 
+        //Start polling
+        myController.startUpdate(1000000L); //*10^(-6)s
 
+        //collegamento a listeners di un solo tag id
+        myController.addTagListener(id, new TagListener() {
+            @Override
+            public void onTagHasConnected(final int tagDistance) {
+                Log.i(TAG, "Connessione a " + id + " avvenuta.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        distanceView.setText(getString(R.string.distance) +
+                                " " + (tagDistance/1000) + "." + (tagDistance%1000));
+                    }
+                });
+            }
 
+            @Override
+            public void onTagHasDisconnected(final int tagLastKnownDistance) {
+                Log.i(TAG, id + " disconnesso.");
+                distanceView.setText(R.string.noConnection);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        distanceView.setText(R.string.noConnection);
+                    }
+                });
+            }
+
+            @Override
+            public void onTagDataAvailable(final int tagDistance) {
+                Log.i(TAG, "Distanza ricevuta da " + id + " = " + tagDistance);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        distanceView.setText(getString(R.string.distance) +
+                                " " + (tagDistance/1000) + "." + (tagDistance%1000));
+                    }
+                });
             }
         });
 
-        // Visualizza dato di distanza
-        new Thread(new Runnable() {
-            public void run() {
-                while (true) {
-                        measuredDistance = myController.getDistance(id);
-                        distanceView.setText(R.string.distance + measuredDistance);
-
-                        //controllo distanza superata
-                        if (measuredDistance > maxUserDistance && !alert) {
-                            //Distanza superata e allarme non ancora attivo
-                            // quindi attivo allarme
-                            new Thread(new Runnable() {
-                                public void run() {
-                                    while (alert) {
-                                        // TODO allarme
-                                        Toast.makeText(MainActivity.this,R.string.alarm_toast,Toast.LENGTH_LONG);
-                                    }
-                                }
-                            }).start();
-                        }
-
-                }
-            }
-        }).start();
 
 
     }
-        /*TODO lifecycle activity
-        protected void onStart();
 
-        protected void onRestart();
+    @Override
+    public void onPause() {
+        //chiusura controller
+        myController.close();
 
-        protected void onResume();
-
-        protected void onPause();
-
-        protected void onStop();
-
-        protected void onDestroy();*/
+        //passaggio di stato
+        super.onPause();
     }
 
 }

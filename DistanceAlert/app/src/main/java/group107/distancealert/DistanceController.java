@@ -372,15 +372,15 @@ public class DistanceController
      */
     public void close()
     {
+        updateDataTimer.cancel();
+        updateDataTimer = null;
+
         try {
             driverDWM.close();
             driverDWM = null;
         } catch (IOException e) {
             //ignora errore
         }
-
-        updateDataTimer.cancel();
-        updateDataTimer = null;
 
         synchronized (listenersLock)
         {

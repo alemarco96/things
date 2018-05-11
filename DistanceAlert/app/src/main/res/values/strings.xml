@@ -6,4 +6,5 @@
     <string name="alarm_off">Spegni allarme</string>
     <string name="connected_to">Connesso a modulo: </string>
     <string name="selectModules">Selezione un modulo</string>
+    <string name="noConnection">Nessuna connessione.</string>
 </resources>

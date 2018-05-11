@@ -4,7 +4,7 @@ import java.util.List;
 
 public interface AllTagsListener
 {
-    void onTagHasConnected(List<DistanceController.Entry> tags);
-    void onTagHasDisconnected(List<DistanceController.Entry> tags);
-    void onTagDataAvailable(List<DistanceController.Entry> tags);
+    void onTagHasConnected(final List<DistanceController.Entry> tags);
+    void onTagHasDisconnected(final List<DistanceController.Entry> tags);
+    void onTagDataAvailable(final List<DistanceController.Entry> tags);
 }

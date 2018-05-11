@@ -6,9 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <!--Per quanto riguarda le disposizioni aspetto la lezione di oggi,
-     il prof ha detto che verterà su varie tipologie di schermo.
-     In ogni caso per ora sto solo provando.-->
 
     <TextView
         android:id="@+id/distance"
@@ -31,6 +28,16 @@
         android:text="@string/alarm_off"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
+
+    <!--<com.jjoe64.graphview.GraphView
+        android:id="@+id/graphDistance"
+        android:layout_width="match_parent"
+        android:layout_height="200dip"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        />-->
     <!--
     <EditText
         android:id="@+id/editText"

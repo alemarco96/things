@@ -2,7 +2,7 @@ package group107.distancealert;
 
 public interface TagListener
 {
-    void onTagHasConnected(int tagDistance);
-    void onTagHasDisconnected(int tagLastKnownDistance);
-    void onTagDataAvailable(int tagDistance);
+    void onTagHasConnected(final int tagDistance);
+    void onTagHasDisconnected(final int tagLastKnownDistance);
+    void onTagDataAvailable(final int tagDistance);
 }
