@@ -3,9 +3,11 @@ package group107.distancealert;
 import com.google.android.things.pio.PeripheralManager;
 import com.google.android.things.pio.SpiDevice;
 import com.google.android.things.pio.UartDevice;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+
 import static java.lang.Byte.toUnsignedInt;
 
 /**
@@ -200,25 +202,25 @@ public class DriverDWM {
      * Gestisce lo scambio di dati  via SPI, con l'opzione (utile per le specifiche del DWM) di
      * riempire automaticamente di 0xff l'array di byte da inviare.
      *
-     * @param trasmit  array contenete i byte da inviare via SPI
+     * @param transmit array contenete i byte da inviare via SPI
      * @param autoFill l'opzione autoFill è abilitata riempie il buffer di 0xff
      * @return Array int[] contentente i valori ricevuti convertiti in unsigned int
      * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      */
-    private int[] transferViaSPI(byte[] trasmit, boolean autoFill) throws IOException {
+    private int[] transferViaSPI(byte[] transmit, boolean autoFill) throws IOException {
         // Nel caso l'opzione autoFill sia true, riempio l'array trasmit di 0xff
         if (autoFill) {
-            Arrays.fill(trasmit, (byte) 0xff);
+            Arrays.fill(transmit, (byte) 0xff);
         }
 
         // Istanzio l'array receive di lunghezza pari a quella di trasmit
-        byte[] receive = new byte[trasmit.length];
+        byte[] receive = new byte[transmit.length];
 
         /*
         Trasferimento dati via SPI, i dati da inviare sono nell'array trasmit,
         i dati ricevuti vengono salvati nell'array receive
          */
-        mySPI.transfer(trasmit, receive, trasmit.length);
+        mySPI.transfer(transmit, receive, transmit.length);
 
         // Conversione dei dati ricevuti a unsigned int
         int[] intReceive = new int[receive.length];
@@ -234,14 +236,14 @@ public class DriverDWM {
      * l'attesa della risposta dal modulo DWM.
      * Se non riceve alcuna risposta entro 50ms lancia la relativa eccezione.
      *
-     * @param trasmit array contenete i byte da inviare via UART
+     * @param transmit array contenete i byte da inviare via UART
      * @return Array int[] contentente i valori ricevuti convertiti in unsigned int
      * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      */
-    private int[] transferViaUART(byte[] trasmit) throws IOException {
+    private int[] transferViaUART(byte[] transmit) throws IOException {
         // Reset della comunicazione e invio della richiesta
         myUART.flush(UartDevice.FLUSH_IN_OUT);
-        myUART.write(trasmit, trasmit.length);
+        myUART.write(transmit, transmit.length);
 
         byte[] totalReceive = new byte[255];
         int totalCount = 0;
