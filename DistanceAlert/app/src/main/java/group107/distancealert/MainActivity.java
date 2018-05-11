@@ -12,12 +12,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.List;
 
 // classe view
 public class MainActivity extends Activity {
     public static final String TAG = "107G";
     private DistanceController myController;
-    private int id;
+    private int id = 53774;
     private boolean alert;
     private int maxUserDistance;
     private int measuredDistance;
@@ -44,7 +45,7 @@ public class MainActivity extends Activity {
         alert = false;
 
         //Start polling
-        myController.startUpdate(1000000L); //*10^(-6)s
+        myController.startUpdate(1000L); //*10^(-6)s
 
         //collegamento a listeners di un solo tag id
         myController.addTagListener(id, new TagListener() {

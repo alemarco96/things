@@ -1,5 +1,6 @@
 package group107.distancealert;
 
+import android.util.Log;
 import android.util.Pair;
 
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import static group107.distancealert.MainActivity.TAG;
 
 //classe controller
 public class DistanceController
@@ -23,6 +25,11 @@ public class DistanceController
         {
             tagID = id;
             tagDistance = distance;
+        }
+
+        private Entry(Entry e) {
+            tagID = e.tagID;
+            tagDistance = e.tagDistance;
         }
 
         public boolean equals(Object obj)
@@ -63,21 +70,39 @@ public class DistanceController
                 int[] dwmResponse = driverDWM.requestAPI((byte) 0x0C, null);
 
                 List<Entry> newData = getDataFromDWMResponse(dwmResponse);
-                //ordina gli elementi per tagID crescente, in modo tale da velocizzare le operazioni successive
-                Collections.sort(newData, entryComparator);
+                Log.i(MainActivity.TAG, "Dati dal modulo:\n");
+                String logs = "";
+                for(int i = 0; i < newData.size(); i++)
+                    logs += (Integer.toHexString(newData.get(i).tagID) + ":"
+                            + Integer.toHexString(newData.get(i).tagDistance) + "   ");
 
+                Log.i(MainActivity.TAG, logs);
+                //ordina gli elementi per tagID crescente, in modo tale da velocizzare le operazioni successive
+                Log.i(MainActivity.TAG, "ID: " + newData.get(0).tagID);
+                Collections.sort(newData, entryComparator);
+                Log.i(MainActivity.TAG, "Distance: " + newData.get(0).tagDistance);
                 //copia i dati per poter essere utilizzati senza avere la mutua esclusione dataLock
                 List<Entry> actualDataCopy;
-                List<Entry> newDataCopy = new ArrayList<>(newData.size());
-                Collections.copy(newDataCopy, newData);
+                List<Entry> newDataCopy = new ArrayList<>(1000);
+                Log.i(MainActivity.TAG, "newDataCopy.size(): " + newDataCopy.size());
+                Log.i(MainActivity.TAG, "newData.size(): " + newData.size());
+
+                //Collections.copy(newDataCopy, newData);
+                for(int i = 0; i < newData.size();i++)
+                    newDataCopy.add(new Entry(newData.get(i)));
+                Log.i(MainActivity.TAG, "Dopo Collections newDataCopy.size(): " + newDataCopy.size());
+                Log.i(MainActivity.TAG, "Dopo Collections newData.size(): " + newData.size());
 
                 //salva i nuovi valori
                 synchronized (dataLock)
                 {
+                    Log.i(MainActivity.TAG, "Inizio di dataLock");
                     actualDataCopy = new ArrayList<>(actualData.size());
-                    Collections.copy(actualDataCopy, actualData);
+                    for(int i = 0; i < actualData.size();i++)
+                        actualDataCopy.add(new Entry(actualData.get(i)));
 
                     actualData = newData;
+                    Log.i(MainActivity.TAG, "Fine di dataLock");
                 }
 
                 //svolge il lavoro di notifica su thread separato per non bloccare il thread di aggiornamento
@@ -86,6 +111,7 @@ public class DistanceController
             } catch (Exception e)
             {
                 //TODO: gestire eccezione
+                Log.e(MainActivity.TAG, "Avvenuta eccezione in updateDataTask", e);
             }
         }
     };
@@ -110,6 +136,7 @@ public class DistanceController
 
         public void run()
         {
+            Log.i(MainActivity.TAG, "run avviato");
             List<Entry> common = new ArrayList<>(actData.size() > prevData.size() ? actData.size() : prevData.size());
             List<Entry> connected = new ArrayList<>();
 
@@ -118,7 +145,7 @@ public class DistanceController
 
                 //ricerca di entry in prevData con lo stesso tagID
                 int result = Collections.binarySearch(prevData, entry, entryComparator);
-
+                Log.i(MainActivity.TAG, "result = " + result);
                 if(result >= 0) {
                     //tagID dell'entry presente anche in prevData =>tag che è rimasto connesso
                     common.add(new Entry(entry.tagID, entry.tagDistance));
@@ -128,6 +155,7 @@ public class DistanceController
                 } else {
                     //tag appena connesso
                     connected.add(new Entry(entry.tagID, entry.tagDistance));
+                    Log.i(TAG, "Tag connesso: " + entry.tagID);
                 }
             }
 
@@ -135,8 +163,11 @@ public class DistanceController
             List<Entry> disconnected = prevData;
 
             synchronized (listenersLock) {
+                Log.i(TAG, "Notifica ai AllTagsListeners");
                 notifyToAllTagsListeners(connected, disconnected, common);
+                Log.i(TAG, "Notifica ai TagsListeners");
                 notifyToTagsListeners(connected, disconnected, common);
+                Log.i(TAG, "Notifiche fatte");
             }
         }
 
@@ -193,10 +224,12 @@ public class DistanceController
             for(Pair<Integer, TagListener> pair:tagListeners) {
                 int ID = pair.first;
                 final TagListener listener = pair.second;
+                Log.i(TAG, "ID associato a listener: " + ID);
 
                 //connected, disconnected e data DOVREBBERO essere ordinati, per costruzione
                 final int r1 = Collections.binarySearch(connected, new Entry(ID, -1), entryComparator);
-                if(r1 > 0) {
+                Log.i(TAG, "r1 = " + r1);
+                if(r1 >= 0) {
                     //il tag si è appena connesso
                     new Thread(new Runnable() {
                         @Override
@@ -209,7 +242,7 @@ public class DistanceController
                 }
 
                 final int r2 = Collections.binarySearch(disconnected, new Entry(ID, -1), entryComparator);
-                if(r2 > 0) {
+                if(r2 >= 0) {
                     //il tag si è appena disconnesso
                     new Thread(new Runnable() {
                         @Override
@@ -222,7 +255,8 @@ public class DistanceController
                 }
 
                 final int r3 = Collections.binarySearch(data, new Entry(ID, -1), entryComparator);
-                if(r3 > 0) {
+                Log.i(TAG, "r3 = " + r3);
+                if(r3 >= 0) {
                     //il tag è ancora connesso e si notifica la nuova posizione
                     new Thread(new Runnable() {
                         @Override
@@ -341,6 +375,7 @@ public class DistanceController
 
         if(updateDataTimer == null) {
             updateDataTimer = new Timer(true);
+            //updateDataTimer.schedule(updateDataTask, 0L);
             updateDataTimer.scheduleAtFixedRate(updateDataTask, initialDelay > 0 ? initialDelay : 0, period);
         }else{
             throw new IllegalStateException("Timer già avviato");
@@ -453,11 +488,11 @@ public class DistanceController
             throw new RuntimeException("Errore nella risposta del modulo.");
         }
 
-        int numberOfValues = dwmResponse[21];
+        int numberOfValues = dwmResponse[20];
         final int bytesPerEntry = 20;
 
         List<Entry> newData = new ArrayList<>(numberOfValues);
-        int startIndex = 22;
+        int startIndex = 21;
 
         //Nota che il modulo DWM usa notazione Little Endian!
         for(int i = 0; i < numberOfValues; i++, startIndex += bytesPerEntry)
