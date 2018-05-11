@@ -17,17 +17,16 @@ import static java.lang.Byte.toUnsignedInt;
  * N.B. Invocare il metodo close quando si ha finito di usarla.
  */
 public class DriverDWM {
-    // Oggetti riferiti alle periferiche SPI e UART
     private SpiDevice mySPI;
     private UartDevice myUART;
 
     /**
      * @param busName stringa relativa al bus SPI o UART a cui è connesso il modulo,
      *                ovvero, per la raspberry: "SPI0.0" o "SPI0.1" o "MINIUART".
-     * @throws IOException
-     * @throws InterruptedException
+     * @throws IOException          Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
+     * @throws InterruptedException Lanciata se viene interrotto lo sleep nella comunicazione SPI
      */
-    public DriverDWM(String busName) throws IllegalArgumentException, IOException, InterruptedException {
+    public DriverDWM(String busName) throws IOException, InterruptedException {
         PeripheralManager manager = PeripheralManager.getInstance();
 
         /*
@@ -41,7 +40,6 @@ public class DriverDWM {
             }
             myUART = null;
         }
-
 
         // Se, invece, il busName è un bus UART faccio l'opposto.
         else if (busName.contains("UART")) {
@@ -68,7 +66,7 @@ public class DriverDWM {
     /**
      * Configura i parametri della comunicazione SPI o UART necessari per il modulo DWM
      *
-     * @throws IOException
+     * @throws IOException Lanciata se ci sono problemi di accesso alla periferica
      */
     private void configureCommunication() throws IOException {
         // Caso SPI
@@ -94,9 +92,8 @@ public class DriverDWM {
      * Nel caso non ottenga una risposta corretta, ovvero ci sono dei problemi gravi,
      * probabilmente nell'hardware. Dunque lancia le relative eccezioni.
      *
-     * @throws IOException
-     * @throws InterruptedException
-     * @throws RuntimeException
+     * @throws IOException          Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
+     * @throws InterruptedException Lanciata se viene interrotto lo sleep nella comunicazione SPI
      */
     private void checkCommunication() throws IOException, InterruptedException {
         // Reset: caso SPI
@@ -137,14 +134,15 @@ public class DriverDWM {
      * Effettua la richiesta della API e con i relativi valori al modulo DWM e ritorna la rispota
      * ottenuta convertita in unsigned int.
      * N.B. Questo metodo è bloccante e può richiedere fino a 50ms per essere completato.
+     * (Attenzione che la durata dipende anche da condizioni esterne al modulo)
      *
      * @param tag   byte relativo alla API da usare
      * @param value byte[] array di byte contente i valori da passare alla API.
      *              Può anche essere null nel caso non siano previsti valori da passare.
      * @return array int[] contenente il pacchetto di byte ricevuti in risposta dal modulo DWM
-     * @throws IOException
-     * @throws InterruptedException
-     * @throws IllegalArgumentException
+     * @throws IOException              Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
+     * @throws InterruptedException     Lanciata se viene interrotto lo sleep nella comunicazione SPI
+     * @throws IllegalArgumentException Lanciata se vengono passati parametri insensati
      */
     public int[] requestAPI(byte tag, byte[] value) throws IOException, InterruptedException, IllegalArgumentException {
         // Ottengo la lunghezza dell'array dei valori della API
@@ -204,7 +202,7 @@ public class DriverDWM {
      * @param trasmit  array contenete i byte da inviare via SPI
      * @param autoFill l'opzione autoFill è abilitata riempie il buffer di 0xff
      * @return Array int[] contentente i valori ricevuti convertiti in unsigned int
-     * @throws IOException
+     * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      */
     private int[] transferViaSPI(byte[] trasmit, boolean autoFill) throws IOException {
         // Nel caso l'opzione autoFill sia true, riempio l'array trasmit di 0xff
@@ -237,7 +235,7 @@ public class DriverDWM {
      *
      * @param trasmit array contenete i byte da inviare via UART
      * @return Array int[] contentente i valori ricevuti convertiti in unsigned int
-     * @throws IOException
+     * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      */
     private int[] transferViaUART(byte[] trasmit) throws IOException {
         // Reset della comunicazione e invio della richiesta
@@ -289,7 +287,7 @@ public class DriverDWM {
     /**
      * Chiusura e rilascio della periferica SPI e/o UART
      *
-     * @throws IOException
+     * @throws IOException Lanciata se ci sono problemi nella chiusura della periferica
      */
     public void close() throws IOException {
         if (mySPI != null) {
