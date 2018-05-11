@@ -275,7 +275,7 @@ public class DriverDWM {
 
         // Ritaglia array tenendo solo la parte interessante
         if (totalCount > 0) {
-            System.arraycopy(totalReceive, 0, totalReceive, 0, totalCount);
+            totalReceive = Arrays.copyOfRange(totalReceive, 0, totalCount);
         }
 
         // Conversione dei dati ricevuti a unsigned int
