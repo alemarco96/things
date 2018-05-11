@@ -3,11 +3,9 @@ package group107.distancealert;
 import com.google.android.things.pio.PeripheralManager;
 import com.google.android.things.pio.SpiDevice;
 import com.google.android.things.pio.UartDevice;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
-
 import static java.lang.Byte.toUnsignedInt;
 
 /**
@@ -17,6 +15,9 @@ import static java.lang.Byte.toUnsignedInt;
  * N.B. Invocare il metodo close quando si ha finito di usarla.
  */
 public class DriverDWM {
+    /**
+     * Oggetti riferiti alle periferiche SPI e UART
+     */
     private SpiDevice mySPI;
     private UartDevice myUART;
 
