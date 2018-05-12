@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -18,18 +19,26 @@ import java.util.List;
 public class MainActivity extends Activity {
     public static final String TAG = "107G";
     private DistanceController myController;
-    private int id = 53774;
     private boolean alert;
     private int maxUserDistance;
-    private int measuredDistance;
-
-    //TODO (1) button collegato a AllertDialog il quale mostra gli id disponibili
-    //TODO (1) button che mostra misura su TextView
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //bottone per tornare alla connesione
+
+        final Button connectTo = findViewById(R.id.connection);
+        connectTo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i(TAG, "Click eseguito in PostActivity");
+                Intent toIDActivity = new Intent(getApplicationContext(), IDActivity.class);
+                startActivity(toIDActivity);
+            }
+        });
+
 
         //riferimento alla TextView che mostra la distanza ricevuta
         final TextView distanceView = findViewById(R.id.distance);
@@ -45,26 +54,27 @@ public class MainActivity extends Activity {
         alert = false;
 
         //Start polling
-        myController.startUpdate(1000L); //*10^(-6)s
+        myController.startUpdate(1000L);
 
         //collegamento a listeners di un solo tag id
-        /*
-        myController.addTagListener(id, new TagListener() {
+        myController.addTagListener(IDActivity.id, new TagListener() {
             @Override
             public void onTagHasConnected(final int tagDistance) {
-                Log.i(TAG, "Connessione a " + id + " avvenuta.");
+                Log.i(TAG, "Connessione a " + IDActivity.id + " avvenuta.");
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        distanceView.setText(getString(R.string.distance) +
-                                " " + (tagDistance/1000) + "." + (tagDistance%1000));
+                        String newText =    getString(R.string.distance) +
+                                            " " + (tagDistance/1000) +
+                                            "." + (tagDistance%1000);
+                        distanceView.setText(newText);
                     }
                 });
             }
 
             @Override
             public void onTagHasDisconnected(final int tagLastKnownDistance) {
-                Log.i(TAG, id + " disconnesso.");
+                Log.i(TAG, IDActivity.id + " disconnesso.");
                 distanceView.setText(R.string.noConnection);
                 runOnUiThread(new Runnable() {
                     @Override
@@ -76,18 +86,21 @@ public class MainActivity extends Activity {
 
             @Override
             public void onTagDataAvailable(final int tagDistance) {
-                Log.i(TAG, "Distanza ricevuta da " + id + " = " + tagDistance);
+                Log.i(TAG, "Distanza ricevuta da " + IDActivity.id + " = " + tagDistance);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        distanceView.setText(getString(R.string.distance) +
-                                " " + (tagDistance/1000) + "." + (tagDistance%1000));
+                        String newText =    getString(R.string.distance) +
+                                            " " + (tagDistance/1000) +
+                                            "." + (tagDistance%1000);
+                        distanceView.setText(newText);
                     }
                 });
             }
         });
-        */
 
+        /*
+        //Test funzionamento con metodi richiedenti informazioni a tutti i TAGs
         myController.addAllTagsListener(new AllTagsListener() {
             @Override
             public void onTagHasConnected(final List<DistanceController.Entry> tagDistance) {
@@ -133,9 +146,7 @@ public class MainActivity extends Activity {
                 });
             }
         });
-
-
-
+        */
     }
 
     @Override

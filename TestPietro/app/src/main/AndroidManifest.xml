@@ -1,42 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="group107.distancealert">
-
-    <!-- Permesso necessario per usare le periferiche hardware come SPI, UART e GPIO -->
-    <uses-permission android:name="com.google.android.things.permission.USE_PERIPHERAL_IO" />
+    package="group107.testpietro">
 
     <application>
         <uses-library android:name="com.google.android.things" />
 
-        <activity
-            android:name=".MainActivity"
-            android:label="@string/app_name">
-
-            <!--ATTENZIONE questa parte è commentata perchè prima c'è l'activity di scelta dell'ID-->
-
-            <!-- Activity di default da lanciare come entry point dell'applicazione -->
-            <!--
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-            -->
-            <!--
-                 Serve per lanciare automaticamente l'activity dopo che il sistema ha fatto
-                 il boot e a riavviare automaticamente l'activity se l'app viene chiusa
-            -->
-            <!--
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                -->
-                <!-- <category android:name="android.intent.category.HOME" /> -->
-            <!--
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            -->
-        </activity>
-        <activity android:name=".IDActivity">
+        <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -48,6 +17,19 @@
                 <category android:name="android.intent.category.IOT_LAUNCHER" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+        </activity>
+        <activity android:name=".PostActivity">
+            <!--<intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.IOT_LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>-->
         </activity>
     </application>
 
