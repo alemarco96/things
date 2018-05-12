@@ -103,9 +103,9 @@ public class MainActivity extends Activity {
         //Test funzionamento con metodi richiedenti informazioni a tutti i TAGs
         myController.addAllTagsListener(new AllTagsListener() {
             @Override
-            public void onTagHasConnected(final List<DistanceController.Entry> tagDistance) {
-                final int idReceived = tagDistance.get(0).tagID;
-                final int distanceReceived = tagDistance.get(0).tagDistance;
+            public void onTagHasConnected(final List<DistanceController.Entry> tags) {
+                final int idReceived = tags.get(0).tagID;
+                final int distanceReceived = tags.get(0).tagDistance;
 
                 Log.i(TAG, "Connessione a " + id + " avvenuta.");
                 runOnUiThread(new Runnable() {
@@ -119,9 +119,9 @@ public class MainActivity extends Activity {
             }
 
             @Override
-            public void onTagHasDisconnected(final List<DistanceController.Entry> tagDistance) {
-                int idReceived = tagDistance.get(0).tagID;
-                final int distanceReceived = tagDistance.get(0).tagDistance;
+            public void onTagHasDisconnected(final List<DistanceController.Entry> tags) {
+                int idReceived = tags.get(0).tagID;
+                final int distanceReceived = tags.get(0).tagDistance;
                 Log.i(TAG, idReceived + " disconnesso.");
                 distanceView.setText(R.string.noConnection);
                 runOnUiThread(new Runnable() {
@@ -133,9 +133,9 @@ public class MainActivity extends Activity {
             }
 
             @Override
-            public void onTagDataAvailable(final List<DistanceController.Entry> tagDistance) {
-                int idReceived = tagDistance.get(0).tagID;
-                final int distanceReceived = tagDistance.get(0).tagDistance;
+            public void onTagDataAvailable(final List<DistanceController.Entry> tags) {
+                int idReceived = tags.get(0).tagID;
+                final int distanceReceived = tags.get(0).tagDistance;
                 Log.i(TAG, "Distanza ricevuta da " + idReceived + " = " + distanceReceived);
                 runOnUiThread(new Runnable() {
                     @Override

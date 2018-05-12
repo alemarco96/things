@@ -32,6 +32,7 @@ public class DistanceController
             tagDistance = e.tagDistance;
         }
 
+        @Override
         public boolean equals(Object obj)
         {
             if(!(obj instanceof Entry))
@@ -40,6 +41,22 @@ public class DistanceController
             Entry entry = (Entry) obj;
             return (tagID == entry.tagID) && (tagDistance == entry.tagDistance);
         }
+
+        @Override
+        public String toString() {
+            return "ID: " + tagID + "  Distanza: " + tagDistance;
+        }
+    }
+
+    private static <T extends Cloneable> List<T> cloneList(List<T> source)
+    {
+        List<T> dest = new ArrayList<>(source.size());
+        for(int i = 0; i < source.size(); i++) {
+            Cloneable value = source.get(i);
+            dest.add(value);
+        }
+
+        return dest;
     }
 
     //memorizza i dati attuali
@@ -497,7 +514,7 @@ public class DistanceController
         int numberOfValues = dwmResponse[20];
         final int bytesPerEntry = 20;
 
-        List<Entry> newData = new ArrayList<>(numberOfValues);
+        List<Entry> newData = new ArrayList<>(numberOfValues > 0 ? numberOfValues : 1);
         int startIndex = 21;
 
         //Nota che il modulo DWM usa notazione Little Endian!
