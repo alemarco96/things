@@ -4,7 +4,9 @@ import android.util.Log;
 import android.util.Pair;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -16,7 +18,7 @@ import static group107.distancealert.MainActivity.TAG;
 public class DistanceController
 {
     //rappresenta i dati del controller. creata per non creare confusione usando la classe standard Pair
-    public class Entry
+    public static class Entry
     {
         public final int tagID;
         public final int tagDistance;
@@ -35,7 +37,7 @@ public class DistanceController
         @Override
         public boolean equals(Object obj)
         {
-            if(!(obj instanceof Entry))
+            if (!(obj instanceof Entry))
                 return false;
 
             Entry entry = (Entry) obj;
@@ -44,19 +46,31 @@ public class DistanceController
 
         @Override
         public String toString() {
-            return "ID: " + tagID + "  Distanza: " + tagDistance;
+            return "ID: " + tagID + "  Distanza: " + tagDistance / 1000 + "." + tagDistance % 1000;
         }
     }
 
-    private static <T extends Cloneable> List<T> cloneList(List<T> source)
+    private static List<Entry> cloneList(List<Entry> source)
     {
-        List<T> dest = new ArrayList<>(source.size());
-        for(int i = 0; i < source.size(); i++) {
-            Cloneable value = source.get(i);
-            dest.add(value);
+        List<Entry> dest = new ArrayList<>(source.size());
+        for (Entry entry:source) {
+            dest.add(new DistanceController.Entry(entry));
+        }
+        return dest;
+    }
+
+    private static void logEntryData(String tag, String message, String separator, List<Entry> data) {
+        String result = "" + message;
+
+        if (data == null || data.size() == 0) {
+            result.concat("<nessuno>");
         }
 
-        return dest;
+        for (int i = 0; i < data.size(); i++) {
+            result.concat(data.toString() + separator);
+        }
+
+        Log.d(tag, result);
     }
 
     //memorizza i dati attuali
@@ -87,39 +101,20 @@ public class DistanceController
                 int[] dwmResponse = driverDWM.requestAPI((byte) 0x0C, null);
 
                 List<Entry> newData = getDataFromDWMResponse(dwmResponse);
-                Log.i(MainActivity.TAG, "Dati dal modulo:\n");
-                String logs = "";
-                for(int i = 0; i < newData.size(); i++)
-                    logs += (Integer.toHexString(newData.get(i).tagID) + ":"
-                            + Integer.toHexString(newData.get(i).tagDistance) + "   ");
 
-                Log.i(MainActivity.TAG, logs);
+                logEntryData(TAG, "\nDati dal modulo:\n", "\n", newData);
+
                 //ordina gli elementi per tagID crescente, in modo tale da velocizzare le operazioni successive
-                Log.i(MainActivity.TAG, "ID: " + newData.get(0).tagID);
                 Collections.sort(newData, entryComparator);
-                Log.i(MainActivity.TAG, "Distance: " + newData.get(0).tagDistance);
                 //copia i dati per poter essere utilizzati senza avere la mutua esclusione dataLock
                 List<Entry> actualDataCopy;
-                List<Entry> newDataCopy = new ArrayList<>(1000);
-                Log.i(MainActivity.TAG, "newDataCopy.size(): " + newDataCopy.size());
-                Log.i(MainActivity.TAG, "newData.size(): " + newData.size());
-
-                //Collections.copy(newDataCopy, newData);
-                for(int i = 0; i < newData.size();i++)
-                    newDataCopy.add(new Entry(newData.get(i)));
-                Log.i(MainActivity.TAG, "Dopo Collections newDataCopy.size(): " + newDataCopy.size());
-                Log.i(MainActivity.TAG, "Dopo Collections newData.size(): " + newData.size());
+                List<Entry> newDataCopy = cloneList(newData);
 
                 //salva i nuovi valori
                 synchronized (dataLock)
                 {
-                    Log.i(MainActivity.TAG, "Inizio di dataLock");
-                    actualDataCopy = new ArrayList<>(actualData.size());
-                    for(int i = 0; i < actualData.size();i++)
-                        actualDataCopy.add(new Entry(actualData.get(i)));
-
+                    actualDataCopy = cloneList(actualData);
                     actualData = newData;
-                    Log.i(MainActivity.TAG, "Fine di dataLock");
                 }
 
                 //svolge il lavoro di notifica su thread separato per non bloccare il thread di aggiornamento
@@ -133,6 +128,7 @@ public class DistanceController
         }
     };
 
+    //Oggetto che serve per ordinare in ordine crescente per tagID le entry
     private Comparator<Entry> entryComparator = new Comparator<Entry>() {
         @Override
         public int compare(Entry e1, Entry e2) {
@@ -149,21 +145,21 @@ public class DistanceController
         {
             prevData = previous;
             actData = actual;
+            setDaemon(true);
         }
 
         public void run()
         {
-            Log.i(MainActivity.TAG, "run avviato");
             List<Entry> common = new ArrayList<>(actData.size() > prevData.size() ? actData.size() : prevData.size());
             List<Entry> connected = new ArrayList<>();
 
-            for(int i = 0; i < actData.size(); i++) {
+            for (int i = 0; i < actData.size(); i++) {
                 Entry entry = actData.get(i);
 
                 //ricerca di entry in prevData con lo stesso tagID
                 int result = Collections.binarySearch(prevData, entry, entryComparator);
-                Log.i(MainActivity.TAG, "result = " + result);
-                if(result >= 0) {
+                if (result >= 0) {
+                    //TODO: implementare il detection dei tag disconnessi
                     //tagID dell'entry presente anche in prevData =>tag che è rimasto connesso
                     common.add(new Entry(entry.tagID, entry.tagDistance));
 
@@ -172,19 +168,22 @@ public class DistanceController
                 } else {
                     //tag appena connesso
                     connected.add(new Entry(entry.tagID, entry.tagDistance));
-                    Log.i(TAG, "Tag connesso: " + entry.tagID);
                 }
             }
 
             //usato solo per chiarezza di lettura del codice
             List<Entry> disconnected = prevData;
 
+            logEntryData(TAG, "\nTag appena connessi:\n", "\n", connected);
+            logEntryData(TAG, "\nTag appena disconnessi:\n", "\n", disconnected);
+            logEntryData(TAG, "\nTag ancora connessi:\n", "\n", common);
+
             synchronized (listenersLock) {
-                Log.i(TAG, "Notifica ai AllTagsListeners");
+                Log.i(TAG, "Notifica ai AllTagsListeners.");
                 notifyToAllTagsListeners(connected, disconnected, common);
-                Log.i(TAG, "Notifica ai TagsListeners");
+                Log.i(TAG, "Notifica ai TagsListeners.");
                 notifyToTagsListeners(connected, disconnected, common);
-                Log.i(TAG, "Notifiche fatte");
+                Log.i(TAG, "Notifiche fatte.");
             }
         }
 
@@ -192,47 +191,38 @@ public class DistanceController
         {
             //lock già ottenuto
 
-            for(final AllTagsListener listener:allListeners) {
-                if(connected != null && connected.size() > 0) {
+            for (final AllTagsListener listener:allListeners) {
+                if (connected != null && connected.size() > 0) {
                     //presenti tags connessi nell'ultimo aggiornamento dei dati
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
                             //notifica su thread separato
-                            List<Entry> connectedCopy = new ArrayList<>(connected.size());
-//                            Collections.copy(connectedCopy, connected);
-                            for(int i = 0; i < connected.size();i++)
-                                connectedCopy.add(new Entry(connected.get(i)));
+                            List<Entry> connectedCopy = cloneList(connected);
                             listener.onTagHasConnected(connectedCopy);
                         }
                     }).start();
                 }
 
-                if(disconnected != null && disconnected.size() > 0) {
+                if (disconnected != null && disconnected.size() > 0) {
                     //presenti tags disconnessi nell'ultimo aggiornamento dei dati
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
                             //notifica su thread separato
-                            List<Entry> disconnectedCopy = new ArrayList<>(disconnected.size());
-                            //Collections.copy(disconnectedCopy, disconnected);
-                            for(int i = 0; i < disconnected.size();i++)
-                                disconnectedCopy.add(new Entry(disconnected.get(i)));
+                            List<Entry> disconnectedCopy = cloneList(disconnected);
                             listener.onTagHasDisconnected(disconnectedCopy);
                         }
                     }).start();
                 }
 
-                if(data != null && data.size() > 0) {
+                if (data != null && data.size() > 0) {
                     //notifica i nuovi valori
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
                             //notifica su thread separato
-                            List<Entry> dataCopy = new ArrayList<>(data.size());
-                            //Collections.copy(dataCopy, data);
-                            for(int i = 0; i < data.size();i++)
-                                dataCopy.add(new Entry(data.get(i)));
+                            List<Entry> dataCopy = cloneList(data);
                             listener.onTagDataAvailable(dataCopy);
                         }
                     }).start();
@@ -244,15 +234,13 @@ public class DistanceController
         {
             //lock già ottenuto
 
-            for(Pair<Integer, TagListener> pair:tagListeners) {
+            for (Pair<Integer, TagListener> pair:tagListeners) {
                 int ID = pair.first;
                 final TagListener listener = pair.second;
-                Log.i(TAG, "ID associato a listener: " + ID);
 
                 //connected, disconnected e data DOVREBBERO essere ordinati, per costruzione
                 final int r1 = Collections.binarySearch(connected, new Entry(ID, -1), entryComparator);
-                Log.i(TAG, "r1 = " + r1);
-                if(r1 >= 0) {
+                if (r1 >= 0) {
                     //il tag si è appena connesso
                     new Thread(new Runnable() {
                         @Override
@@ -265,7 +253,7 @@ public class DistanceController
                 }
 
                 final int r2 = Collections.binarySearch(disconnected, new Entry(ID, -1), entryComparator);
-                if(r2 >= 0) {
+                if (r2 >= 0) {
                     //il tag si è appena disconnesso
                     new Thread(new Runnable() {
                         @Override
@@ -278,8 +266,7 @@ public class DistanceController
                 }
 
                 final int r3 = Collections.binarySearch(data, new Entry(ID, -1), entryComparator);
-                Log.i(TAG, "r3 = " + r3);
-                if(r3 >= 0) {
+                if (r3 >= 0) {
                     //il tag è ancora connesso e si notifica la nuova posizione
                     new Thread(new Runnable() {
                         @Override
@@ -295,18 +282,57 @@ public class DistanceController
     }
 
     /**
+     * Recupera le informazioni dal pacchetto di risposta del modulo DWM
+     * @param dwmResponse Il pacchetto di risposta del modulo DWM
+     * @return La lista di coppie id-distanza dei tag
+     * @throws IllegalArgumentException Se i dati ricevuti dal modulo DWM non sono validi
+     */
+    private List<Entry> getDataFromDWMResponse(int[] dwmResponse) throws IllegalArgumentException
+    {
+        if (dwmResponse == null || dwmResponse.length < 21 || dwmResponse[2] != 0) {
+            //dati non validi
+            throw new IllegalArgumentException("Dati ricevuti dal modulo non validi.");
+        }
+
+        final int bytesPerEntry = 20;
+        int numberOfValues = dwmResponse[20];
+
+        List<Entry> newData = new ArrayList<>(numberOfValues);
+        int startIndex = 21;
+
+        //Nota che il modulo DWM usa notazione Little Endian!
+        for (int i = 0; i < numberOfValues; i++, startIndex += bytesPerEntry)
+        {
+            int id = (dwmResponse[startIndex + 1] << 8) + dwmResponse[startIndex];
+
+            int d1 = dwmResponse[startIndex + 2];
+            int d2 = dwmResponse[startIndex + 3];
+            int d3 = dwmResponse[startIndex + 4];
+            int d4 = dwmResponse[startIndex + 5];
+
+            int distance = (d4 << 24) + (d3 << 16) + (d2 << 8) + d1;
+
+            newData.add(new Entry(id, distance));
+        }
+
+        return newData;
+    }
+
+    /**
      * Imposta il controller. Non avvia il polling con il modulo, che deve essere fatto manualmente tramite il metodo start()
      * @param busName Il nome del pin a cui è collegato fisicamente il modulo
      * @throws IllegalArgumentException Se il busName non è valido
      * @throws IOException Se avviene un errore nella creazione del driver DWM
      */
-    public DistanceController(String busName) throws IllegalArgumentException, IOException, InterruptedException
-    {
+    public DistanceController(String busName) throws IllegalArgumentException, IOException, InterruptedException {
         driverDWM = new DriverDWM(busName);
         tagListeners = new ArrayList<>();
         allListeners = new ArrayList<>();
 
         actualData = new ArrayList<>();
+
+        //controlla lo stato della connessione del modulo
+        driverDWM.checkDWM();
     }
 
     /**
@@ -317,11 +343,10 @@ public class DistanceController
      * @throws IllegalArgumentException Se il busName non è valido, oppure il periodo è negativo
      * @throws IOException Se avviene un errore nella creazione del driver DWM
      */
-    public DistanceController(String busName, long initialDelay, long period) throws IllegalArgumentException, IOException, InterruptedException
-    {
+    public DistanceController(String busName, long initialDelay, long period) throws IllegalArgumentException, IOException, InterruptedException {
         this(busName);
 
-        if(period < 0) {
+        if (period < 0) {
             throw new IllegalArgumentException("Il periodo di aggiornamento deve essere positivo.");
         }
 
@@ -349,11 +374,11 @@ public class DistanceController
     {
         synchronized (listenersLock)
         {
-            for(int i = 0; i < tagListeners.size(); i++)
+            for (int i = 0; i < tagListeners.size(); i++)
             {
                 Pair<Integer, TagListener> pair = tagListeners.get(i);
 
-                if(pair.second.equals(listener))
+                if (pair.second.equals(listener))
                 {
                     tagListeners.remove(i);
                 }
@@ -392,13 +417,12 @@ public class DistanceController
      */
     public void startUpdate(long initialDelay, long period) throws IllegalStateException
     {
-        if(period < 0) {
+        if (period < 0) {
             throw new IllegalArgumentException("Il periodo di aggiornamento deve essere positivo.");
         }
 
-        if(updateDataTimer == null) {
+        if (updateDataTimer == null) {
             updateDataTimer = new Timer(true);
-            //updateDataTimer.schedule(updateDataTask, 0L);
             updateDataTimer.scheduleAtFixedRate(updateDataTask, initialDelay > 0 ? initialDelay : 0, period);
         }else{
             throw new IllegalStateException("Timer già avviato");
@@ -419,7 +443,7 @@ public class DistanceController
      * */
     public void stopUpdate()
     {
-        if(updateDataTimer != null) {
+        if (updateDataTimer != null) {
             updateDataTimer.cancel();
             updateDataTimer = null;
         }
@@ -430,14 +454,17 @@ public class DistanceController
      */
     public void close()
     {
-        updateDataTimer.cancel();
-        updateDataTimer = null;
+        if (updateDataTimer != null) {
+            updateDataTimer.cancel();
+            updateDataTimer = null;
+        }
 
         try {
             driverDWM.close();
             driverDWM = null;
         } catch (IOException e) {
             //ignora errore
+            driverDWM = null;
         }
 
         synchronized (listenersLock)
@@ -448,19 +475,19 @@ public class DistanceController
     }
 
     /**
-     * Ottiene l'ultima distanza nota di uno specifico tag, scelto tramite il tagID passato come parametro
+     * Ottiene l'ultima distanza nota di uno specifico tag, scelto tramite il tagID passato come parametro. Da usare esclusivamente una-tantum.
      * @param tagID ID del tag da cui ottenere la distanza
      * @return Ultima distanza nota del tag richiesto
      * @throws IllegalArgumentException Se il tagID specificato come parametro non è disponibile
      * @throws IllegalStateException Se il polling sul modulo DWM non è stato avviato con startUpdate()
      */
     public int getTagDistance(int tagID) throws IllegalArgumentException, IllegalStateException {
-        if(tagID < 0 || ((tagID & 0xFFFF) != 0))
+        if (tagID < 0 || ((tagID & 0xFFFF) != 0))
         {
             //id non valido (id numero senza segno a 16bit)
             throw new IllegalArgumentException("ID: " + tagID + " non è valido.");
         }
-        if(updateDataTimer == null){
+        if (updateDataTimer == null){
             //il polling del modulo DWM non è attivo, perciò non è possibile restituire un valore appropriato
             throw new IllegalStateException("Per poter ricevere un valore è necessario attivare il polling con il metodo startUpdate().");
         }
@@ -468,7 +495,7 @@ public class DistanceController
         synchronized (dataLock)
         {
             int result = Collections.binarySearch(actualData, new Entry(tagID, -1), entryComparator);
-            if(result < 0) {
+            if (result < 0) {
                 //tagID non presente
                 throw new IllegalArgumentException("ID: " + tagID + " non è collegato.");
             }
@@ -478,7 +505,7 @@ public class DistanceController
     }
 
     /**
-     * Ottiene una lista contenente tutti gli id dei tag
+     * Ottiene una lista contenente tutti gli id dei tag. Da usare esclusivamente una-tantum.
      * @return Lista con tutti gli id dei tag
      */
     public List<Integer> getTagIDs()
@@ -487,51 +514,12 @@ public class DistanceController
 
         synchronized (dataLock)
         {
-            for(Entry entry:actualData)
+            for (int i = 0; i < actualData.size(); i++)
             {
-                idsList.add(entry.tagID);
+                idsList.add(actualData.get(i).tagID);
             }
         }
 
         return idsList;
-    }
-
-    /**
-     * Recupera le informazioni dal pacchetto di risposta del modulo DWM
-     * @param dwmResponse Il pacchetto di risposta del modulo DWM
-     * @return La distanza dei tag
-     * @throws RuntimeException Se il modulo DWM riporta un errore nella risposta
-     */
-    private List<Entry> getDataFromDWMResponse(int[] dwmResponse) throws RuntimeException
-    {
-        int errorCode = dwmResponse[2];
-
-        if(errorCode != 0){
-            //è avvenuto un errore
-            throw new RuntimeException("Errore nella risposta del modulo.");
-        }
-
-        int numberOfValues = dwmResponse[20];
-        final int bytesPerEntry = 20;
-
-        List<Entry> newData = new ArrayList<>(numberOfValues > 0 ? numberOfValues : 1);
-        int startIndex = 21;
-
-        //Nota che il modulo DWM usa notazione Little Endian!
-        for(int i = 0; i < numberOfValues; i++, startIndex += bytesPerEntry)
-        {
-            int id = (dwmResponse[startIndex + 1] << 8) + dwmResponse[startIndex];
-
-            int d1 = dwmResponse[startIndex + 2];
-            int d2 = dwmResponse[startIndex + 3];
-            int d3 = dwmResponse[startIndex + 4];
-            int d4 = dwmResponse[startIndex + 5];
-
-            int distance = (d4 << 24) + (d3 << 16) + (d2 << 8) + d1;
-
-            newData.add(new Entry(id, distance));
-        }
-
-        return newData;
     }
 }
