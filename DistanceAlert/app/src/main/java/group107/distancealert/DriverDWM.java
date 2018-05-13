@@ -14,9 +14,10 @@ import static java.lang.Byte.toUnsignedInt;
  * Classe "Model" del design pattern Model-View-Controller.
  * Questa classe ha lo scopo di gestire completamente la comunicazione con il modulo DWM1001-DEV,
  * sia che esso sia collegato via UART o via SPI.
+ * TODO * Questa classe estende l'interfaccia AutoClose...
  * N.B. Invocare il metodo close quando si ha finito di usarla.
  */
-public class DriverDWM {
+public class DriverDWM implements AutoCloseable {
     /**
      * Oggetti riferiti alle periferiche SPI e UART
      */
@@ -24,12 +25,21 @@ public class DriverDWM {
     private UartDevice myUART;
 
     /**
+     * Parametri costanti usati per gestire la temporizzazione durante le comunicazioni SPI e UART
+     */
+    private static final long MAX_SPI_WAIT = 10L;   // millisecondi
+    private static final long SPI_SLEEP_TIME = 50L; // microsecondi
+    private static final long MAX_UART_WAIT = 50L;  // millisecondi
+
+    /**
+     * Costruttore: verica la validità del busName richiesto e configura la comunicazione
+     *
      * @param busName stringa relativa al bus SPI o UART a cui è connesso il modulo,
      *                ovvero, per la raspberry: "SPI0.0" o "SPI0.1" o "MINIUART".
-     * @throws IOException          Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
-     * @throws InterruptedException Lanciata se viene interrotto lo sleep nella comunicazione SPI
+     * @throws IOException Lanciata se ci sono problemi di accesso alla periferica
      */
-    public DriverDWM(String busName) throws IOException, InterruptedException {
+    public DriverDWM(String busName) throws IOException {
+        // Ottengo istanza di PeripheralManager per poter gestire le periferiche
         PeripheralManager manager = PeripheralManager.getInstance();
 
         /*
@@ -58,12 +68,8 @@ public class DriverDWM {
             throw new IllegalArgumentException("Unrecognized bus name");
         }
 
-        /*
-        Configurazione, reset e controllo della comunicazione.
-        Se ci sono problemi vengono lanciate le relative eccezioni
-         */
+        // Configurazione dei parametri della comunicazione per il modulo DWM
         configureCommunication();
-        checkCommunication();
     }
 
     /**
@@ -72,7 +78,7 @@ public class DriverDWM {
      * @throws IOException Lanciata se ci sono problemi di accesso alla periferica
      */
     private void configureCommunication() throws IOException {
-        // Caso SPI
+        // Caso SPI: modalità 0, clock = 8MHz, 8 bit, ordine dei bit = prima quelli più significativi.
         if (mySPI != null) {
             mySPI.setMode(SpiDevice.MODE0);
             mySPI.setFrequency(8000000);
@@ -80,7 +86,7 @@ public class DriverDWM {
             mySPI.setBitJustification(SpiDevice.BIT_JUSTIFICATION_MSB_FIRST);
         }
 
-        // Caso UART
+        // Caso UART: baud-rate = 115200, 8 bit, nessun bit di parità e un bit di stop.
         else {
             myUART.setBaudrate(115200);
             myUART.setDataSize(8);
@@ -98,14 +104,14 @@ public class DriverDWM {
      * @throws IOException          Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      * @throws InterruptedException Lanciata se viene interrotto lo sleep nella comunicazione SPI
      */
-    private void checkCommunication() throws IOException, InterruptedException {
+    public void checkDWM() throws IOException, InterruptedException {
         // Reset: caso SPI
         if (mySPI != null) {
             // Invio 3 byte 0xff al modulo DWM per resettare lo stato della comunicazione SPI
             transferViaSPI(new byte[1], true);
-            TimeUnit.MICROSECONDS.sleep(50);
+            TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
             transferViaSPI(new byte[1], true);
-            TimeUnit.MICROSECONDS.sleep(50);
+            TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
             int response = transferViaSPI(new byte[1], true)[0];
 
             // Se l'ultimo byte ricevuto è diverso da 0xff significa che c'è un problema
@@ -136,8 +142,8 @@ public class DriverDWM {
     /**
      * Effettua la richiesta della API e con i relativi valori al modulo DWM e ritorna la rispota
      * ottenuta convertita in unsigned int.
-     * N.B. Questo metodo è bloccante e può richiedere fino a 50ms per essere completato, tuttavia,
-     * mediamente dura 10ms. (Attenzione che la durata dipende anche da condizioni esterne al modulo)
+     * N.B. Questo metodo è bloccante e può richiedere fino a 50ms per essere completato.
+     * (Attenzione che la durata dipende anche da condizioni esterne al modulo)
      *
      * @param tag   byte relativo alla API da usare
      * @param value byte[] array di byte contente i valori da passare alla API.
@@ -178,10 +184,10 @@ public class DriverDWM {
             int length;
             long timer = System.currentTimeMillis();
             do {
-                TimeUnit.MICROSECONDS.sleep(50);
+                TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
                 length = transferViaSPI(new byte[1], true)[0];
-            } while (length == 0x00 && System.currentTimeMillis() - timer < 10L);
-            TimeUnit.MICROSECONDS.sleep(50);
+            } while ((length == 0x00) && ((System.currentTimeMillis() - timer) < MAX_SPI_WAIT));
+            TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
 
             // Nel caso ci siano stati problemi di comunicazione
             if (length == 0x00 || length == 0xff) {
@@ -249,7 +255,7 @@ public class DriverDWM {
         int totalCount = 0;
         long timer = System.currentTimeMillis();
 
-        while (totalCount == 0 && System.currentTimeMillis() - timer < 50L) {
+        while ((totalCount == 0) && ((System.currentTimeMillis() - timer) < MAX_UART_WAIT)) {
             byte[] tempReceive = new byte[20];
             int tempCount;
             while ((tempCount = myUART.read(tempReceive, tempReceive.length)) > 0) {
