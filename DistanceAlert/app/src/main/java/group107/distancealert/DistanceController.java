@@ -154,6 +154,7 @@ public class DistanceController
 
                 logEntryData(TAG, "\nDati dal modulo:\n", "\n", newData);
 
+                time = System.currentTimeMillis();
                 //ordina gli elementi per tagID crescente, in modo tale da velocizzare le operazioni successive
                 Collections.sort(newData, matchingIDEntryComparator);
 
@@ -175,6 +176,7 @@ public class DistanceController
                         }
                     }
                 }
+                logTimeElapsed(TAG, "\nTempo impiegato per ordinare ed eliminare i dati dei tag disconnessi: ", System.currentTimeMillis() - time);
 
                 //copia i dati per poter essere utilizzati senza avere la mutua esclusione dataLock
                 List<Entry> actualDataCopy;
@@ -224,6 +226,8 @@ public class DistanceController
             List<Entry> connected = new ArrayList<>();
             List<Entry> disconnected = new ArrayList<>();
 
+            long time = System.currentTimeMillis();
+
             for (int i = 0; i < actData.size(); i++) {
                 Entry actEntry = actData.get(i);
 
@@ -245,12 +249,14 @@ public class DistanceController
                 }
             }
 
+            logTimeElapsed(TAG, "\nTempo impiegato per classificare le entry: ", System.currentTimeMillis() - time);
+
             logEntryData(TAG, "\nTag appena connessi: " + connected.size() + "\n", "\n", connected);
             logEntryData(TAG, "\nTag appena disconnessi: " + disconnected.size() + "\n", "\n", disconnected);
             logEntryData(TAG, "\nTag ancora connessi: " + common.size() + "\n", "\n", common);
 
             synchronized (listenersLock) {
-                long time = System.currentTimeMillis();
+                time = System.currentTimeMillis();
                 notifyToAllTagsListeners(connected, disconnected, common);
                 logTimeElapsed(TAG, "\nTempo impiegato per le notifiche ai AllTagsListeners: ", System.currentTimeMillis() - time);
 
