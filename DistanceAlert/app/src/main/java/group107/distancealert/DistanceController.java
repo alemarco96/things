@@ -107,6 +107,16 @@ public class DistanceController
         Log.d(tag, result);
     }
 
+    /**
+     * Logga il tempo trascorso per svolgere una operazione
+     * @param tag Il tag con cui fare il log
+     * @param message Il messaggio da anteporre ai dati
+     * @param timeElapsedInMs Il tempo in millisecondi trascorsi
+     */
+    private static void logTimeElapsed(String tag, String message, long timeElapsedInMs) {
+        Log.d(tag, message + timeElapsedInMs / 1000 + "." + timeElapsedInMs % 1000 + " s.");
+    }
+
     //memorizza i dati attuali
     private List<Entry> actualData;
     //memorizza i dati dei tag che sono disconnessi
@@ -134,14 +144,38 @@ public class DistanceController
         @Override
         public void run() {
             try {
+                long time = System.currentTimeMillis();
                 int[] dwmResponse = driverDWM.requestAPI((byte) 0x0C, null);
+                logTimeElapsed(TAG, "\nTempo impiegato per ricevere i dati dal modulo: ", System.currentTimeMillis() - time);
 
+                time = System.currentTimeMillis();
                 List<Entry> newData = getDataFromDWMResponse(dwmResponse);
+                logTimeElapsed(TAG, "\nTempo impiegato per decodificare i dati ricevuti: ", System.currentTimeMillis() - time);
 
                 logEntryData(TAG, "\nDati dal modulo:\n", "\n", newData);
 
                 //ordina gli elementi per tagID crescente, in modo tale da velocizzare le operazioni successive
                 Collections.sort(newData, matchingIDEntryComparator);
+
+                //elimina i dati dei tag disconnessi
+                for (int i = 0; i < disconnectedData.size(); i++) {
+                    Entry discEntry = disconnectedData.get(i);
+                    int result = Collections.binarySearch(newData, discEntry, matchingIDEntryComparator);
+                    if (result >= 0) {
+                        //dato dello stesso tag presente
+                        Entry newEntry = newData.get(result);
+
+                        if(newEntry.tagDistance == discEntry.tagDistance) {
+                            //tag disconnesso. eliminare entry dai dati attuali
+                            newData.remove(result);
+                        } else {
+                            //tag prima disconnesso, ed ora si è riconnesso. rimuovere dalla lista dei tag disconnessi
+                            disconnectedData.remove(i);
+                            i--;
+                        }
+                    }
+                }
+
                 //copia i dati per poter essere utilizzati senza avere la mutua esclusione dataLock
                 List<Entry> actualDataCopy;
                 List<Entry> newDataCopy = cloneList(newData);
@@ -188,38 +222,41 @@ public class DistanceController
         {
             List<Entry> common = new ArrayList<>(actData.size() > prevData.size() ? actData.size() : prevData.size());
             List<Entry> connected = new ArrayList<>();
+            List<Entry> disconnected = new ArrayList<>();
 
             for (int i = 0; i < actData.size(); i++) {
-                Entry entry = actData.get(i);
+                Entry actEntry = actData.get(i);
 
                 //ricerca di entry in prevData con lo stesso tagID
-                int result = Collections.binarySearch(prevData, entry, matchingIDEntryComparator);
+                int result = Collections.binarySearch(prevData, actEntry, matchingIDEntryComparator);
                 if (result >= 0) {
-                    //TODO: implementare il detection dei tag disconnessi
-                    //tagID dell'entry presente anche in prevData =>tag che è rimasto connesso
-                    common.add(new Entry(entry.tagID, entry.tagDistance));
+                    Entry prevEntry = prevData.get(result);
 
-                    //serve per far rimanere in prevData solo le entry dei tag disconnessi
-                    prevData.remove(result);
+                    if (actEntry.tagDistance == prevEntry.tagDistance) {
+                        //tag appena disconnesso
+                        disconnected.add(actEntry);
+                        disconnectedData.add(actEntry);
+                    } else {
+                        common.add(new Entry(actEntry));
+                    }
                 } else {
                     //tag appena connesso
-                    connected.add(new Entry(entry.tagID, entry.tagDistance));
+                    connected.add(new Entry(actEntry));
                 }
             }
 
-            //usato solo per chiarezza di lettura del codice
-            List<Entry> disconnected = prevData;
-
-            logEntryData(TAG, "\nTag appena connessi:\n", "\n", connected);
-            logEntryData(TAG, "\nTag appena disconnessi:\n", "\n", disconnected);
-            logEntryData(TAG, "\nTag ancora connessi:\n", "\n", common);
+            logEntryData(TAG, "\nTag appena connessi: " + connected.size() + "\n", "\n", connected);
+            logEntryData(TAG, "\nTag appena disconnessi: " + disconnected.size() + "\n", "\n", disconnected);
+            logEntryData(TAG, "\nTag ancora connessi: " + common.size() + "\n", "\n", common);
 
             synchronized (listenersLock) {
-                Log.i(TAG, "Notifica ai AllTagsListeners.");
+                long time = System.currentTimeMillis();
                 notifyToAllTagsListeners(connected, disconnected, common);
-                Log.i(TAG, "Notifica ai TagsListeners.");
+                logTimeElapsed(TAG, "\nTempo impiegato per le notifiche ai AllTagsListeners: ", System.currentTimeMillis() - time);
+
+                time = System.currentTimeMillis();
                 notifyToTagsListeners(connected, disconnected, common);
-                Log.i(TAG, "Notifiche fatte.");
+                logTimeElapsed(TAG, "\nTempo impiegato per le notifiche ai TagsListeners: ", System.currentTimeMillis() - time);
             }
         }
 
@@ -274,7 +311,7 @@ public class DistanceController
                 int ID = pair.first;
                 final TagListener listener = pair.second;
 
-                //connected, disconnected e data DOVREBBERO essere ordinati, per costruzione
+                //connected, disconnected e data sono ordinati, per costruzione
                 final int r1 = Collections.binarySearch(connected, new Entry(ID, -1), matchingIDEntryComparator);
                 if (r1 >= 0) {
                     //il tag si è appena connesso
@@ -311,8 +348,6 @@ public class DistanceController
                         }
                     }).start();
                 }
-
-                //tag non più connesso. Non c'è niente da fare
             }
         }
     }
