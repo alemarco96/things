@@ -14,26 +14,44 @@ import java.util.Timer;
 import java.util.TimerTask;
 import static group107.distancealert.MainActivity.TAG;
 
-//classe controller
+/**
+ * Classe che rappresenta un sensore di distanza.
+ */
 public class DistanceController
 {
-    //rappresenta i dati del controller. creata per non creare confusione usando la classe standard Pair
+    /**
+     * Classe che rappresenta una coppia id-distanza. E' implementata in modo tale da essere un oggetto immutabile
+     */
     public static class Entry
     {
         public final int tagID;
         public final int tagDistance;
 
+        /**
+         * Crea una nuova entry con id del tag e distanza specificata per parametro
+         * @param id L'id del tag a cui è associata l'entry
+         * @param distance La distanza misurata
+         */
         private Entry(int id, int distance)
         {
             tagID = id;
             tagDistance = distance;
         }
 
+        /**
+         * Crea una copia dell'entry passata per parametro
+         * @param e Entry da copiare
+         */
         private Entry(Entry e) {
             tagID = e.tagID;
             tagDistance = e.tagDistance;
         }
 
+        /**
+         * Effettua un confronto per stabilire se l'entry passata per parametro è uguale, sia come id del tag che come distanza misurata
+         * @param obj L'altra entry con cui effettuare il confronto
+         * @return true se le due entry sono uguali, altrimenti false
+         */
         @Override
         public boolean equals(Object obj)
         {
@@ -44,12 +62,21 @@ public class DistanceController
             return (tagID == entry.tagID) && (tagDistance == entry.tagDistance);
         }
 
+        /**
+         * Ottiene una rappresentazione testuale dell'entry
+         * @return Una stringa che rappresenta l'entry
+         */
         @Override
         public String toString() {
             return "ID: " + tagID + "  Distanza: " + tagDistance / 1000 + "." + tagDistance % 1000;
         }
     }
 
+    /**
+     * Clona la lista di entry id-distanza passata per argomento. Viene effettuata una copia dei dati
+     * @param source La lista con i dati da copiare
+     * @return Una lista copia di quella passata per parametro
+     */
     private static List<Entry> cloneList(List<Entry> source)
     {
         List<Entry> dest = new ArrayList<>(source.size());
@@ -59,6 +86,13 @@ public class DistanceController
         return dest;
     }
 
+    /**
+     * Logga tutte le entry presenti nella lista, anteponendoci un messaggio
+     * @param tag Il tag con cui fare il log
+     * @param message Il messaggio da anteporre ai dati
+     * @param separator Una stringa usata per separare visivamente i dati
+     * @param data Lista con le entry da loggare
+     */
     private static void logEntryData(String tag, String message, String separator, List<Entry> data) {
         String result = "" + message;
 
@@ -75,6 +109,8 @@ public class DistanceController
 
     //memorizza i dati attuali
     private List<Entry> actualData;
+    //memorizza i dati dei tag che sono disconnessi
+    private List<Entry> disconnectedData;
 
     //memorizza tutti i listeners associati a tutti i tag
     private List<AllTagsListener> allListeners;
@@ -105,7 +141,7 @@ public class DistanceController
                 logEntryData(TAG, "\nDati dal modulo:\n", "\n", newData);
 
                 //ordina gli elementi per tagID crescente, in modo tale da velocizzare le operazioni successive
-                Collections.sort(newData, entryComparator);
+                Collections.sort(newData, matchingIDEntryComparator);
                 //copia i dati per poter essere utilizzati senza avere la mutua esclusione dataLock
                 List<Entry> actualDataCopy;
                 List<Entry> newDataCopy = cloneList(newData);
@@ -129,7 +165,7 @@ public class DistanceController
     };
 
     //Oggetto che serve per ordinare in ordine crescente per tagID le entry
-    private Comparator<Entry> entryComparator = new Comparator<Entry>() {
+    private Comparator<Entry> matchingIDEntryComparator = new Comparator<Entry>() {
         @Override
         public int compare(Entry e1, Entry e2) {
             return e1.tagID - e2.tagID;
@@ -157,7 +193,7 @@ public class DistanceController
                 Entry entry = actData.get(i);
 
                 //ricerca di entry in prevData con lo stesso tagID
-                int result = Collections.binarySearch(prevData, entry, entryComparator);
+                int result = Collections.binarySearch(prevData, entry, matchingIDEntryComparator);
                 if (result >= 0) {
                     //TODO: implementare il detection dei tag disconnessi
                     //tagID dell'entry presente anche in prevData =>tag che è rimasto connesso
@@ -239,7 +275,7 @@ public class DistanceController
                 final TagListener listener = pair.second;
 
                 //connected, disconnected e data DOVREBBERO essere ordinati, per costruzione
-                final int r1 = Collections.binarySearch(connected, new Entry(ID, -1), entryComparator);
+                final int r1 = Collections.binarySearch(connected, new Entry(ID, -1), matchingIDEntryComparator);
                 if (r1 >= 0) {
                     //il tag si è appena connesso
                     new Thread(new Runnable() {
@@ -252,7 +288,7 @@ public class DistanceController
                     continue;
                 }
 
-                final int r2 = Collections.binarySearch(disconnected, new Entry(ID, -1), entryComparator);
+                final int r2 = Collections.binarySearch(disconnected, new Entry(ID, -1), matchingIDEntryComparator);
                 if (r2 >= 0) {
                     //il tag si è appena disconnesso
                     new Thread(new Runnable() {
@@ -265,7 +301,7 @@ public class DistanceController
                     continue;
                 }
 
-                final int r3 = Collections.binarySearch(data, new Entry(ID, -1), entryComparator);
+                final int r3 = Collections.binarySearch(data, new Entry(ID, -1), matchingIDEntryComparator);
                 if (r3 >= 0) {
                     //il tag è ancora connesso e si notifica la nuova posizione
                     new Thread(new Runnable() {
@@ -330,6 +366,7 @@ public class DistanceController
         allListeners = new ArrayList<>();
 
         actualData = new ArrayList<>();
+        disconnectedData = new ArrayList<>();
 
         //controlla lo stato della connessione del modulo
         driverDWM.checkDWM();
@@ -494,7 +531,7 @@ public class DistanceController
 
         synchronized (dataLock)
         {
-            int result = Collections.binarySearch(actualData, new Entry(tagID, -1), entryComparator);
+            int result = Collections.binarySearch(actualData, new Entry(tagID, -1), matchingIDEntryComparator);
             if (result < 0) {
                 //tagID non presente
                 throw new IllegalArgumentException("ID: " + tagID + " non è collegato.");
