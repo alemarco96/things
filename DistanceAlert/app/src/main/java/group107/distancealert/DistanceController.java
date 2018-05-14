@@ -17,7 +17,7 @@ import static group107.distancealert.MainActivity.TAG;
 /**
  * Classe che rappresenta un sensore di distanza.
  */
-public class DistanceController
+public class DistanceController implements AutoCloseable
 {
     /**
      * Classe che rappresenta una coppia id-distanza. E' implementata in modo tale da essere un oggetto immutabile
@@ -111,10 +111,10 @@ public class DistanceController
      * Logga il tempo trascorso per svolgere una operazione
      * @param tag Il tag con cui fare il log
      * @param message Il messaggio da anteporre ai dati
-     * @param timeElapsedInMs Il tempo in millisecondi trascorsi
+     * @param timeElapsed Il tempo in nanoecondi trascorsi
      */
-    private static void logTimeElapsed(String tag, String message, long timeElapsedInMs) {
-        Log.d(tag, message + timeElapsedInMs / 1000 + "." + timeElapsedInMs % 1000 + " s.");
+    private static void logTimeElapsed(String tag, String message, long timeElapsed) {
+        Log.d(tag, message + timeElapsed / 1000 + " us");
     }
 
     //memorizza i dati attuali
@@ -144,17 +144,17 @@ public class DistanceController
         @Override
         public void run() {
             try {
-                long time = System.currentTimeMillis();
+                long time = System.nanoTime();
                 int[] dwmResponse = driverDWM.requestAPI((byte) 0x0C, null);
-                logTimeElapsed(TAG, "\nTempo impiegato per ricevere i dati dal modulo: ", System.currentTimeMillis() - time);
+                logTimeElapsed(TAG, "\nTempo impiegato per ricevere i dati dal modulo: ", System.nanoTime() - time);
 
-                time = System.currentTimeMillis();
+                time = System.nanoTime();
                 List<Entry> newData = getDataFromDWMResponse(dwmResponse);
-                logTimeElapsed(TAG, "\nTempo impiegato per decodificare i dati ricevuti: ", System.currentTimeMillis() - time);
+                logTimeElapsed(TAG, "\nTempo impiegato per decodificare i dati ricevuti: ", System.nanoTime() - time);
 
                 logEntryData(TAG, "\nDati dal modulo:\n", "\n", newData);
 
-                time = System.currentTimeMillis();
+                time = System.nanoTime();
                 //ordina gli elementi per tagID crescente, in modo tale da velocizzare le operazioni successive
                 Collections.sort(newData, matchingIDEntryComparator);
 
@@ -176,7 +176,7 @@ public class DistanceController
                         }
                     }
                 }
-                logTimeElapsed(TAG, "\nTempo impiegato per ordinare ed eliminare i dati dei tag disconnessi: ", System.currentTimeMillis() - time);
+                logTimeElapsed(TAG, "\nTempo impiegato per ordinare ed eliminare i dati dei tag disconnessi: ", System.nanoTime() - time);
 
                 //copia i dati per poter essere utilizzati senza avere la mutua esclusione dataLock
                 List<Entry> actualDataCopy;
@@ -226,7 +226,7 @@ public class DistanceController
             List<Entry> connected = new ArrayList<>();
             List<Entry> disconnected = new ArrayList<>();
 
-            long time = System.currentTimeMillis();
+            long time = System.nanoTime();
 
             for (int i = 0; i < actData.size(); i++) {
                 Entry actEntry = actData.get(i);
@@ -249,20 +249,20 @@ public class DistanceController
                 }
             }
 
-            logTimeElapsed(TAG, "\nTempo impiegato per classificare le entry: ", System.currentTimeMillis() - time);
+            logTimeElapsed(TAG, "\nTempo impiegato per classificare le entry: ", System.nanoTime() - time);
 
             logEntryData(TAG, "\nTag appena connessi: " + connected.size() + "\n", "\n", connected);
             logEntryData(TAG, "\nTag appena disconnessi: " + disconnected.size() + "\n", "\n", disconnected);
             logEntryData(TAG, "\nTag ancora connessi: " + common.size() + "\n", "\n", common);
 
             synchronized (listenersLock) {
-                time = System.currentTimeMillis();
+                time = System.nanoTime();
                 notifyToAllTagsListeners(connected, disconnected, common);
-                logTimeElapsed(TAG, "\nTempo impiegato per le notifiche ai AllTagsListeners: ", System.currentTimeMillis() - time);
+                logTimeElapsed(TAG, "\nTempo impiegato per le notifiche ai AllTagsListeners: ", System.nanoTime() - time);
 
-                time = System.currentTimeMillis();
+                time = System.nanoTime();
                 notifyToTagsListeners(connected, disconnected, common);
-                logTimeElapsed(TAG, "\nTempo impiegato per le notifiche ai TagsListeners: ", System.currentTimeMillis() - time);
+                logTimeElapsed(TAG, "\nTempo impiegato per le notifiche ai TagsListeners: ", System.nanoTime() - time);
             }
         }
 
