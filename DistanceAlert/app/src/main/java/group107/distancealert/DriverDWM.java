@@ -14,8 +14,10 @@ import static java.lang.Byte.toUnsignedInt;
  * Classe "Model" del design pattern Model-View-Controller.
  * Questa classe ha lo scopo di gestire completamente la comunicazione con il modulo DWM1001-DEV,
  * sia che esso sia collegato via UART o via SPI.
- * TODO * Questa classe implementa l'interfaccia AutoClose...
- * N.B. Invocare il metodo close quando si ha finito di usarla.
+ * Quando si ha finito di usare un oggetto di questa classe è importante invocare il metodo close
+ * per rilasciare le periferiche hardware utilizzate.
+ * Questa classe implementa l'interfaccia AutoCloseable che permette di invocare automaticamente
+ * il metodo close quando avvengono delle eccezioni alla creazione dell'oggetto
  */
 public class DriverDWM implements AutoCloseable {
     /**
