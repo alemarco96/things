@@ -4,14 +4,13 @@ import android.util.Log;
 import android.util.Pair;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+
 import static group107.distancealert.MainActivity.TAG;
 
 /**
@@ -88,12 +87,11 @@ public class DistanceController implements AutoCloseable
 
     /**
      * Logga tutte le entry presenti nella lista, anteponendoci un messaggio
-     * @param tag Il tag con cui fare il log
      * @param message Il messaggio da anteporre ai dati
      * @param separator Una stringa usata per separare visivamente i dati
      * @param data Lista con le entry da loggare
      */
-    private static void logEntryData(String tag, String message, String separator, List<Entry> data) {
+    private static void logEntryData(String message, String separator, List<Entry> data) {
         String result = "" + message;
 
         if (data == null || data.size() == 0) {
@@ -104,17 +102,16 @@ public class DistanceController implements AutoCloseable
             result.concat(data.toString() + separator);
         }
 
-        Log.d(tag, result);
+        Log.d(TAG, result);
     }
 
     /**
      * Logga il tempo trascorso per svolgere una operazione
-     * @param tag Il tag con cui fare il log
      * @param message Il messaggio da anteporre ai dati
      * @param timeElapsed Il tempo in nanoecondi trascorsi
      */
-    private static void logTimeElapsed(String tag, String message, long timeElapsed) {
-        Log.d(tag, message + timeElapsed / 1000 + " us");
+    private static void logTimeElapsed(String message, long timeElapsed) {
+        Log.d(TAG, message + timeElapsed / 1000 + " us");
     }
 
     //memorizza i dati attuali
@@ -146,13 +143,13 @@ public class DistanceController implements AutoCloseable
             try {
                 long time = System.nanoTime();
                 int[] dwmResponse = driverDWM.requestAPI((byte) 0x0C, null);
-                logTimeElapsed(TAG, "\nTempo impiegato per ricevere i dati dal modulo: ", System.nanoTime() - time);
+                logTimeElapsed("\nTempo impiegato per ricevere i dati dal modulo: ", System.nanoTime() - time);
 
                 time = System.nanoTime();
                 List<Entry> newData = getDataFromDWMResponse(dwmResponse);
-                logTimeElapsed(TAG, "\nTempo impiegato per decodificare i dati ricevuti: ", System.nanoTime() - time);
+                logTimeElapsed("\nTempo impiegato per decodificare i dati ricevuti: ", System.nanoTime() - time);
 
-                logEntryData(TAG, "\nDati dal modulo:\n", "\n", newData);
+                logEntryData("\nDati dal modulo:\n", "\n", newData);
 
                 time = System.nanoTime();
                 //ordina gli elementi per tagID crescente, in modo tale da velocizzare le operazioni successive
@@ -176,7 +173,7 @@ public class DistanceController implements AutoCloseable
                         }
                     }
                 }
-                logTimeElapsed(TAG, "\nTempo impiegato per ordinare ed eliminare i dati dei tag disconnessi: ", System.nanoTime() - time);
+                logTimeElapsed("\nTempo impiegato per ordinare ed eliminare i dati dei tag disconnessi: ", System.nanoTime() - time);
 
                 //copia i dati per poter essere utilizzati senza avere la mutua esclusione dataLock
                 List<Entry> actualDataCopy;
@@ -195,7 +192,7 @@ public class DistanceController implements AutoCloseable
             } catch (Exception e)
             {
                 //TODO: gestire eccezione
-                Log.e(MainActivity.TAG, "Avvenuta eccezione in updateDataTask", e);
+                Log.e(TAG, "Avvenuta eccezione in updateDataTask", e);
             }
         }
     };
@@ -249,20 +246,20 @@ public class DistanceController implements AutoCloseable
                 }
             }
 
-            logTimeElapsed(TAG, "\nTempo impiegato per classificare le entry: ", System.nanoTime() - time);
+            logTimeElapsed("\nTempo impiegato per classificare le entry: ", System.nanoTime() - time);
 
-            logEntryData(TAG, "\nTag appena connessi: " + connected.size() + "\n", "\n", connected);
-            logEntryData(TAG, "\nTag appena disconnessi: " + disconnected.size() + "\n", "\n", disconnected);
-            logEntryData(TAG, "\nTag ancora connessi: " + common.size() + "\n", "\n", common);
+            logEntryData("\nTag appena connessi: " + connected.size() + "\n", "\n", connected);
+            logEntryData("\nTag appena disconnessi: " + disconnected.size() + "\n", "\n", disconnected);
+            logEntryData("\nTag ancora connessi: " + common.size() + "\n", "\n", common);
 
             synchronized (listenersLock) {
                 time = System.nanoTime();
                 notifyToAllTagsListeners(connected, disconnected, common);
-                logTimeElapsed(TAG, "\nTempo impiegato per le notifiche ai AllTagsListeners: ", System.nanoTime() - time);
+                logTimeElapsed("\nTempo impiegato per le notifiche ai AllTagsListeners: ", System.nanoTime() - time);
 
                 time = System.nanoTime();
                 notifyToTagsListeners(connected, disconnected, common);
-                logTimeElapsed(TAG, "\nTempo impiegato per le notifiche ai TagsListeners: ", System.nanoTime() - time);
+                logTimeElapsed("\nTempo impiegato per le notifiche ai TagsListeners: ", System.nanoTime() - time);
             }
         }
 
