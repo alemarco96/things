@@ -13,6 +13,10 @@ import android.widget.TextView;
 
 import java.util.List;
 
+/**
+ * Classe che implementa il "fragment" relativo alla lista degli id disponibili.
+ */
+
 public class ListIdFragment extends Fragment {
     protected static DistanceController mController;
     protected static final String TAG = "107G";
@@ -37,10 +41,13 @@ public class ListIdFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
+
+        //Operazioni di gestione del fragment
         View viewIdFragment = inflater.inflate(R.layout.fragment_ids_list, container,false);
         mIdsListView = (RecyclerView) viewIdFragment.findViewById(R.id.ids_recycler_view);
         mIdsListView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
+        //Implementazione dei listeners
         mController.addAllTagsListener(new AllTagsListener() {
             @Override
             public void onTagHasConnected(List<DistanceController.Entry> tags) {
@@ -63,12 +70,21 @@ public class ListIdFragment extends Fragment {
         return viewIdFragment;
     }
 
+    /**
+     * Metodo utile all'aggiornamento della lista degli "ids" disponibili.
+     * @param tagIds La lista con gli "ids" disponibili
+     */
     private void updateViewList(List<Integer> tagIds){
         listIds = tagIds;
         mAdapter = new idAdapter(listIds);
         mIdsListView.setAdapter(mAdapter);
     }
 
+    /**
+     * Classe che implementa la parte "Holder" di "RecyclerView".
+     * "RecyclerView" serve per manipolare e gestire una lista di "View", in particolare una lista
+     * di "holders"
+     */
     private class idHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         private TextView mIdNameTextView;
         private int mDwmId;
@@ -95,6 +111,9 @@ public class ListIdFragment extends Fragment {
         }
     }
 
+    /**
+     * Classe utile per creare gli "holders" che servono (uno per ogni id rilevato)
+     */
     private class idAdapter extends RecyclerView.Adapter<idHolder>{
         private List<Integer> mListIds;
 

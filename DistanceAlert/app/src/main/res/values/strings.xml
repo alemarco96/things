@@ -5,6 +5,7 @@
     <string name="alarm_toast">Attenzione! Distanza superata!</string>
     <string name="alarm_off">Spegni allarme</string>
     <string name="connected_to">Connesso a modulo: </string>
-    <string name="selectModules">Selezione un modulo</string>
+    <string name="selectModules">Seleziona un modulo</string>
     <string name="noConnection">Nessuna connessione.</string>
+    <string name="idsScanned">IDs rilevati</string>
 </resources>

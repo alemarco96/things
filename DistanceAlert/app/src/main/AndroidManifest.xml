@@ -24,7 +24,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".DistanceAlert"/>
         <activity android:name=".DwmActivity"/>
     </application>
 

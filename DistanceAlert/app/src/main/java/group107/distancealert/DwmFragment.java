@@ -12,6 +12,11 @@ import static group107.distancealert.ListIdFragment.mController;
 import static group107.distancealert.ListIdFragment.TAG;
 import static group107.distancealert.ListIdFragment.dwmId;
 
+/**
+ * Classe che implementa il "fragment" relativo alla visualizzazione dei dati rilevati dal "DWM" in
+ * relazione ad uno specifico "id"
+ */
+
 public class DwmFragment extends Fragment {
 
     private boolean alert;
@@ -57,6 +62,12 @@ public class DwmFragment extends Fragment {
 
         return viewDwmFragment;
     }
+
+    /**
+     * Metodo utile per l'aggiornamento della "TextView" che mostra la distanza rilevata
+     * @param distanceView Riferimento alla "TextView"
+     * @param tagDistance Distanza rilevata
+     */
 
     private void viewDistances(final TextView distanceView, final int tagDistance){
         new Thread(new Runnable() {
