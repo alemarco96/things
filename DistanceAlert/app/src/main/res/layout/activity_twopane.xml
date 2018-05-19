@@ -4,13 +4,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:divider="?android:attr/dividerHorizontal"
-    android:showDividers="middle">
+    android:showDividers="middle"
+    android:baselineAligned="false">
 
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_wheight="1">
+        android:layout_weight="1">
     </FrameLayout>
 
     <FrameLayout
