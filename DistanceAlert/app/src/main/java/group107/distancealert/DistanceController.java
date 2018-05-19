@@ -12,7 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import static group107.distancealert.MainActivity.TAG;
+import static group107.distancealert.ListIdFragment.TAG;
 
 /**
  * Classe che rappresenta un sensore di distanza.
@@ -195,7 +195,7 @@ public class DistanceController implements AutoCloseable
             } catch (Exception e)
             {
                 //TODO: gestire eccezione
-                Log.e(MainActivity.TAG, "Avvenuta eccezione in updateDataTask", e);
+                Log.e(TAG, "Avvenuta eccezione in updateDataTask", e);
             }
         }
     };
