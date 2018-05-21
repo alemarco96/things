@@ -11,6 +11,6 @@ public class DwmActivity extends SingleFragmentActivity {
 
     @Override
     protected Fragment createFragment() {
-        return new DwmFragment();
+        return DwmFragment.newInstance();
     }
 }

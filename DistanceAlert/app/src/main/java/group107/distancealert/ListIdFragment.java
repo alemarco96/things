@@ -3,6 +3,7 @@ package group107.distancealert;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -102,12 +103,18 @@ public class ListIdFragment extends Fragment {
 
         }
 
+        /*
+            @TODO rendere generale questo onClick (pag. 1152 libro bignerdranch)
+         */
         @Override
         public void onClick(View view){
             Log.i(TAG, "idHolder -> onClick");
             dwmId = mDwmId;
-            Intent intentDwmActivity = new Intent(getActivity(), DwmActivity.class);
-            startActivity(intentDwmActivity);
+            //Intent intentDwmActivity = new Intent(getActivity(), DwmActivity.class);
+            //startActivity(intentDwmActivity);
+            Fragment fragment = DwmFragment.newInstance();
+            FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+            fragmentManager.beginTransaction().add(R.id.detail_fragment_container, fragment).commit();
         }
     }
 
@@ -139,4 +146,5 @@ public class ListIdFragment extends Fragment {
         }
 
     }
+
 }

@@ -1,5 +1,6 @@
 package group107.distancealert;
 
+import android.support.annotation.LayoutRes;
 import android.support.v4.app.Fragment;
 
 /**
@@ -13,4 +14,10 @@ public class ListIdActivity extends SingleFragmentActivity {
     protected Fragment createFragment() {
         return new ListIdFragment();
     }
+
+    @LayoutRes
+    protected int getLayoutResId() {
+        return R.layout.activity_master;
+    }
+
 }

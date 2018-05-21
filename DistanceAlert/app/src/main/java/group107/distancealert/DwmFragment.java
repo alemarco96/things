@@ -22,6 +22,11 @@ public class DwmFragment extends Fragment {
     private boolean alert;
     private int maxUserDistance;
 
+    public static DwmFragment newInstance(){
+        DwmFragment fragment = new DwmFragment();
+        return fragment;
+    }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState){
@@ -70,7 +75,7 @@ public class DwmFragment extends Fragment {
      */
 
     private void viewDistances(final TextView distanceView, final int tagDistance){
-        new Thread(new Runnable() {
+        getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 String newText =    getString(R.string.distance) +
@@ -78,6 +83,6 @@ public class DwmFragment extends Fragment {
                                     "." + (tagDistance%1000);
                 distanceView.setText(newText);
             }
-        }).start();
+        });
     }
 }
