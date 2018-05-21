@@ -75,10 +75,15 @@ public class ListIdFragment extends Fragment {
      * Metodo utile all'aggiornamento della lista degli "ids" disponibili.
      * @param tagIds La lista con gli "ids" disponibili
      */
-    private void updateViewList(List<Integer> tagIds){
-        listIds = tagIds;
-        mAdapter = new idAdapter(listIds);
-        mIdsListView.setAdapter(mAdapter);
+    private void updateViewList(final List<Integer> tagIds){
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                listIds = tagIds;
+                mAdapter = new idAdapter(listIds);
+                mIdsListView.setAdapter(mAdapter);
+            }
+        });
     }
 
     /**
