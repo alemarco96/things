@@ -11,20 +11,32 @@
         <activity
             android:name=".ListIdActivity"
             android:label="DistanceAlert">
+
+            <!-- Activity di default da lanciare come entry point dell'applicazione -->
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!--
+                 Serve per lanciare automaticamente l'activity dopo che il sistema ha fatto
+                 il boot e a riavviare automaticamente l'activity se l'app viene chiusa
+            -->
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
-                <!--<category android:name="android.intent.category.HOME" />-->
+                <!-- <category android:name="android.intent.category.HOME" /> -->
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+
         </activity>
 
         <activity android:name=".DwmActivity"/>
+
     </application>
 
 </manifest>
