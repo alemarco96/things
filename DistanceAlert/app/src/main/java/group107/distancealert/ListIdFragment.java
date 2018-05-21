@@ -11,6 +11,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import static group107.distancealert.ListIdFragment.TAG;
+
 
 import java.util.List;
 
@@ -29,6 +31,7 @@ public class ListIdFragment extends Fragment {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.i(TAG, "ListIdFragment -> onCreate");
         super.onCreate(savedInstanceState);
         //sceglie canale di comunicazione UART o SPI
         try {
@@ -43,6 +46,7 @@ public class ListIdFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
 
+        Log.i(TAG, "ListIdFragment -> onCreateView");
         //Operazioni di gestione del fragment
         View viewIdFragment = inflater.inflate(R.layout.fragment_ids_list, container,false);
         mIdsListView = (RecyclerView) viewIdFragment.findViewById(R.id.ids_recycler_view);
@@ -79,6 +83,7 @@ public class ListIdFragment extends Fragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Log.i(TAG, "ListIdFragment -> updateViewList");
                 listIds = tagIds;
                 mAdapter = new idAdapter(listIds);
                 mIdsListView.setAdapter(mAdapter);
@@ -97,13 +102,14 @@ public class ListIdFragment extends Fragment {
 
         public idHolder(LayoutInflater inflater, ViewGroup parent) {
             super(inflater.inflate(R.layout.list_item_id, parent, false));
+            Log.i(TAG,"ListIdFragment -> idHolder -> idHolder constructor");
             itemView.setOnClickListener(this);
             mIdNameTextView = (TextView) itemView.findViewById(R.id.itemId);
         }
 
         public void bind(int id) {
             mDwmId = id;
-            Log.i(TAG, "idHolder -> bind id = " + Integer.toString(id));
+            Log.i(TAG, "ListIdFragment -> idHolder -> bind id = " + Integer.toString(id));
             mIdNameTextView.setText(Integer.toString(id));
 
         }
@@ -113,7 +119,7 @@ public class ListIdFragment extends Fragment {
          */
         @Override
         public void onClick(View view){
-            Log.i(TAG, "idHolder -> onClick");
+            Log.i(TAG, "ListIdFragment -> idHolder -> onClick");
             dwmId = mDwmId;
             //Intent intentDwmActivity = new Intent(getActivity(), DwmActivity.class);
             //startActivity(intentDwmActivity);
@@ -135,18 +141,21 @@ public class ListIdFragment extends Fragment {
 
         @Override
         public idHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            Log.i(TAG, "ListIdFragment -> idAdapter -> onCreateViewHolder");
             LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
             return new idHolder(layoutInflater, parent);
         }
 
         @Override
         public void onBindViewHolder(idHolder holder,int index){
+            Log.i(TAG, "ListIdFragment -> idAdapter -> onBindViewHolder: id = " + mListIds.get(index));
             int id = mListIds.get(index);
             holder.bind(id);
         }
 
         @Override
         public int getItemCount() {
+            Log.i(TAG, "ListIdFragment -> idAdapter -> getItemCount: mListIds.size() = " + mListIds.size());
             return mListIds.size();
         }
 

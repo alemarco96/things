@@ -1,6 +1,10 @@
 package group107.distancealert;
 
 import android.support.v4.app.Fragment;
+import android.util.Log;
+
+import static group107.distancealert.ListIdFragment.TAG;
+
 
 /**
  * Classe ospitante il "fragment" relativo al modulo DWM.
@@ -11,6 +15,7 @@ public class DwmActivity extends SingleFragmentActivity {
 
     @Override
     protected Fragment createFragment() {
+        Log.i(TAG, "DwmActivity -> createFragment");
         return DwmFragment.newInstance();
     }
 }

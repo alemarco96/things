@@ -23,6 +23,7 @@ public class DwmFragment extends Fragment {
     private int maxUserDistance;
 
     public static DwmFragment newInstance(){
+        Log.i(TAG, "DwmFragment -> newInstance()");
         DwmFragment fragment = new DwmFragment();
         return fragment;
     }
@@ -37,7 +38,7 @@ public class DwmFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         Log.i(TAG, "DwmFragment -> OnCreateView");
-
+        Log.i(TAG, "DwmFragment -> dwmId = " + dwmId);
         View viewDwmFragment = inflater.inflate(R.layout.fragment_dwm, container,false);
 
         final TextView connectedTo = viewDwmFragment.findViewById(R.id.connectedTo);
@@ -78,6 +79,7 @@ public class DwmFragment extends Fragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Log.i(TAG, "DwmFragment -> viewDistances");
                 String newText =    getString(R.string.distance) +
                                     " " + (tagDistance/1000) +
                                     "." + (tagDistance%1000);
