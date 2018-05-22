@@ -11,8 +11,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import static group107.distancealert.ListIdFragment.TAG;
-
 
 import java.util.List;
 
@@ -49,7 +47,7 @@ public class ListIdFragment extends Fragment {
         Log.i(TAG, "ListIdFragment -> onCreateView");
         //Operazioni di gestione del fragment
         View viewIdFragment = inflater.inflate(R.layout.fragment_ids_list, container,false);
-        mIdsListView = (RecyclerView) viewIdFragment.findViewById(R.id.ids_recycler_view);
+        //mIdsListView = (RecyclerView) viewIdFragment.findViewById(R.id.ids_recycler_view);
         mIdsListView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         //Implementazione dei listeners
