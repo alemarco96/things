@@ -1,81 +1,120 @@
 package group107.distancealert;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 // classe view
 public class MainActivity extends Activity {
     public static final String TAG = "107G";
     private DistanceController myController;
-    private boolean alert;
-    private int maxUserDistance;
+    private int id = -1;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //bottone per tornare alla connesione
+        //riferimento alla TextView che mostra la distanza ricevuta
+        final LinearLayout idLayout = findViewById(R.id.idLayout);
 
-        final Button connectTo = findViewById(R.id.connection);
-        connectTo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.i(TAG, "Click eseguito in PostActivity");
-                Intent toIDActivity = new Intent(getApplicationContext(), IDActivity.class);
-                startActivity(toIDActivity);
-            }
-        });
+        //Creazione di RadioGroup, ospiterà i RadioButtons
+        final RadioGroup listIDsGroup = new RadioGroup(getApplicationContext());
 
+        final TextView connectedToId = findViewById(R.id.connectedTo_id);
 
         //riferimento alla TextView che mostra la distanza ricevuta
         final TextView distanceView = findViewById(R.id.distance);
 
-        //sceglie canale di comunicazione UART o SPI
         try {
+            //sceglie canale di comunicazione UART o SPI
             myController = new DistanceController("SPI0.0");
-        } catch (Exception e) {
+            //Start polling
+            myController.startUpdate(1000L);
+            //Connessione ai listener generali
+            myController.addAllTagsListener(new AllTagsListener() {
+                @Override
+                public void onTagHasConnected(List<DistanceController.Entry> tags) {
+                    Log.i(TAG,"MainActivity -> addAllTagListener -> onTagHasConnected");
+                    regenerateRagioGroup(listIDsGroup, idLayout, distanceView);
+                }
+
+                @Override
+                public void onTagHasDisconnected(List<DistanceController.Entry> tags) {
+                    Log.i(TAG,"MainActivity -> addAllTagListener -> onTagHasDisconnected");
+                    regenerateRagioGroup(listIDsGroup, idLayout, distanceView);
+                }
+
+                @Override
+                public void onTagDataAvailable(List<DistanceController.Entry> tags) {
+                    Log.i(TAG,"MainActivity -> addAllTagListener -> onTagDataAvailable");
+                }
+            });
+        } catch (java.io.IOException | InterruptedException e) {
             Log.e(TAG, "Errore:\n", e);
+            connectedToId.setText(R.string.noDwm);
         }
+    }
 
-        //allarme attiva?
-        alert = false;
+    /**
+     * Rigenera la lista che gestisce gli IDs disponibili
+     * @param listIDsGroup RadioGroup da aggiornare
+     * @param idLayout LinearLayout contenente il RadioGroup da aggiornare
+     */
 
-        //Start polling
-        myController.startUpdate(1000L);
+    private void regenerateRagioGroup(final RadioGroup listIDsGroup, final LinearLayout idLayout, final TextView distanceView){
+        Log.i(TAG, "MainActivity -> regenerateRadioGroup");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.i(TAG,"MainActivity -> regenerateRadioGroup: running thread");
+                List<Integer> ids = myController.getTagIDs();
+                final RadioButton[] item = new RadioButton[ids.size()];
+                for(int i = 0; i < ids.size(); i++) {
+                    Log.i(TAG, "MainActivity -> regenerateRadioGroup: ciclo for, i = " + i);
+                    item[i] = new RadioButton(getApplicationContext());
+                    final int singleId = ids.get(i);
+                    String idText = Integer.toString(singleId);
+                    item[i].setText(idText);
 
+                    //Click specifico di ogni singolo RadioButton
+                    item[singleId].setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Log.i(TAG, "MainActivity -> regenerateRadioGroup:"
+                                    + " onClick " + item[singleId]);
+                            id = singleId;
+                            connectToSpecificListener(distanceView);
+                        }
+                    });
+                    //Aggiunta del bottone in fondo alla lista
+                    listIDsGroup.addView(item[i], -1, ViewGroup.LayoutParams.WRAP_CONTENT);
+                }
+                //pubblicazione RadioGroup sul layout
+                idLayout.addView(listIDsGroup);
+            }
+        });
+    }
+
+    private void connectToSpecificListener(final TextView distanceView) {
         //collegamento a listeners di un solo tag id
-        myController.addTagListener(IDActivity.id, new TagListener() {
+        myController.addTagListener(id, new TagListener() {
             @Override
             public void onTagHasConnected(final int tagDistance) {
-                Log.i(TAG, "Connessione a " + IDActivity.id + " avvenuta.");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        String newText =    getString(R.string.distance) +
-                                            " " + (tagDistance/1000) +
-                                            "." + (tagDistance%1000);
-                        distanceView.setText(newText);
-                    }
-                });
+                Log.i(TAG, "Connessione a " + id + " avvenuta.");
+                setDistanceText(tagDistance, distanceView);
             }
 
             @Override
             public void onTagHasDisconnected(final int tagLastKnownDistance) {
-                Log.i(TAG, IDActivity.id + " disconnesso.");
+                Log.i(TAG, id + " disconnesso.");
                 distanceView.setText(R.string.noConnection);
                 runOnUiThread(new Runnable() {
                     @Override
@@ -87,67 +126,22 @@ public class MainActivity extends Activity {
 
             @Override
             public void onTagDataAvailable(final int tagDistance) {
-                Log.i(TAG, "Distanza ricevuta da " + IDActivity.id + " = " + tagDistance);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        String newText =    getString(R.string.distance) +
-                                            " " + (tagDistance/1000) +
-                                            "." + (tagDistance%1000);
-                        distanceView.setText(newText);
-                    }
-                });
+                Log.i(TAG, "Distanza ricevuta da " + id + " = " + tagDistance);
+                setDistanceText(tagDistance, distanceView);
             }
         });
+    }
 
-        /*
-        //Test funzionamento con metodi richiedenti informazioni a tutti i TAGs
-        myController.addAllTagsListener(new AllTagsListener() {
+    public void setDistanceText (final int tagDistance, final TextView distanceView) {
+        Log.i(TAG, "Distanza ricevuta da " + id + " = " + tagDistance);
+        runOnUiThread(new Runnable() {
             @Override
-            public void onTagHasConnected(final List<DistanceController.Entry> tags) {
-                final int idReceived = tags.get(0).tagID;
-                final int distanceReceived = tags.get(0).tagDistance;
-
-                Log.i(TAG, "Connessione a " + id + " avvenuta.");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.i(TAG, "Distanza ricevuta da " + idReceived + " = " + distanceReceived);
-                        distanceView.setText(getString(R.string.distance) +
-                                " " + (distanceReceived / 1000) + "." + (distanceReceived % 1000));
-                    }
-                });
-            }
-
-            @Override
-            public void onTagHasDisconnected(final List<DistanceController.Entry> tags) {
-                int idReceived = tags.get(0).tagID;
-                final int distanceReceived = tags.get(0).tagDistance;
-                Log.i(TAG, idReceived + " disconnesso.");
-                distanceView.setText(R.string.noConnection);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        distanceView.setText(R.string.noConnection);
-                    }
-                });
-            }
-
-            @Override
-            public void onTagDataAvailable(final List<DistanceController.Entry> tags) {
-                int idReceived = tags.get(0).tagID;
-                final int distanceReceived = tags.get(0).tagDistance;
-                Log.i(TAG, "Distanza ricevuta da " + idReceived + " = " + distanceReceived);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        distanceView.setText(getString(R.string.distance) +
-                                " " + (distanceReceived/1000) + "." + (distanceReceived%1000));
-                    }
-                });
+            public void run() {
+                String newText =    (tagDistance/1000) +
+                        "." + (tagDistance%1000);
+                distanceView.setText(newText);
             }
         });
-        */
     }
 
     @Override
@@ -158,14 +152,4 @@ public class MainActivity extends Activity {
         //passaggio di stato
         super.onPause();
     }
-
-
-    /*
-    TODO pulsante per tornare alla schermata di iniziale in modo programmatico (utile per configurare connessione e altro)
-    Intent startMain = new Intent( ... );
-    ...
-    finish();
-    Poi come tornare alla app senza lanciarla da adb? Dal menu general -> restart device
-    valutare...
-     */
 }
