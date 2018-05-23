@@ -9,8 +9,10 @@
         <uses-library android:name="com.google.android.things" />
 
         <activity
-            android:name=".ListIdActivity"
-            android:label="DistanceAlert">
+            android:name=".MainActivity"
+            android:label="@string/app_name">
+
+            <!--ATTENZIONE questa parte è commentata perchè prima c'è l'activity di scelta dell'ID-->
 
             <!-- Activity di default da lanciare come entry point dell'applicazione -->
 
@@ -34,9 +36,6 @@
             </intent-filter>
 
         </activity>
-
-        <activity android:name=".DwmActivity"/>
-
     </application>
 
 </manifest>

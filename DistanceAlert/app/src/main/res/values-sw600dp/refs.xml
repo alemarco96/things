@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--sw significa smallest width ma si riferisce più precisamente alla dimensione più piccola dello schermo-->
-<resources>
-    <item name="activity_master"
-        type="layout">@layout/activity_twopane</item>
-</resources>
