@@ -85,11 +85,11 @@ public class MainActivity extends Activity {
                     item[i].setText(idText);
 
                     //Click specifico di ogni singolo RadioButton
-                    item[singleId].setOnClickListener(new View.OnClickListener() {
+                    item[i].setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             Log.i(TAG, "MainActivity -> regenerateRadioGroup:"
-                                    + " onClick " + item[singleId]);
+                                    + " onClick " + singleId);
                             id = singleId;
                             connectToSpecificListener(distanceView);
                         }
