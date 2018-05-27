@@ -136,13 +136,13 @@ public class MainActivity extends Activity {
         myController.addTagListener(id, new TagListener() {
             @Override
             public void onTagHasConnected(final int tagDistance) {
-                Log.i(TAG, "Connessione a " + id + " avvenuta.");
+                Log.i(TAG, "MainActivity -> onTagHasConnected: Connesso a " + id);
                 setDistanceText(tagDistance, distanceView);
             }
 
             @Override
             public void onTagHasDisconnected(final int tagLastKnownDistance) {
-                Log.i(TAG, id + " disconnesso.");
+                Log.i(TAG, "MainActivity -> onTagHasDisconnected: disconnesso id = " + id);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -153,14 +153,14 @@ public class MainActivity extends Activity {
 
             @Override
             public void onTagDataAvailable(final int tagDistance) {
-                Log.i(TAG, "Distanza ricevuta da " + id + " = " + tagDistance);
+                Log.i(TAG, "MainActivity -> onTagDataAvailable: id = " + id + ", tagDistance = " + tagDistance);
                 setDistanceText(tagDistance, distanceView);
             }
         });
     }
 
     public void setDistanceText (final int tagDistance, final TextView distanceView) {
-        Log.i(TAG, "Distanza ricevuta da " + id + " = " + tagDistance);
+        Log.i(TAG, "MainActivity -> setDistanceText: id = " + id + ", tagDistance = " + tagDistance);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
