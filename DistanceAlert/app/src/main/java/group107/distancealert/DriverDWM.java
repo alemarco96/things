@@ -80,7 +80,13 @@ public class DriverDWM implements AutoCloseable {
      * @throws IOException Lanciata se ci sono problemi di accesso alla periferica
      */
     private void configureCommunication() throws IOException {
-        // Caso SPI: modalità 0, clock = 8MHz, 8 bit, ordine dei bit = prima quelli più significativi.
+        /*
+         Caso SPI:
+                Modalità 0
+                Clock = 8MHz
+                Numero di bit = 8
+                ordine dei bit = prima quelli più significativi
+         */
         if (mySPI != null) {
             mySPI.setMode(SpiDevice.MODE0);
             mySPI.setFrequency(8000000);
@@ -88,12 +94,20 @@ public class DriverDWM implements AutoCloseable {
             mySPI.setBitJustification(SpiDevice.BIT_JUSTIFICATION_MSB_FIRST);
         }
 
-        // Caso UART: baud-rate = 115200, 8 bit, nessun bit di parità e un bit di stop.
+        /*
+         Caso UART:
+                Baud-rate = 115200
+                Numero di bit = 8
+                Nessun bit di parità
+                Un bit di stop
+                Senza hardware flow controll
+         */
         else {
             myUART.setBaudrate(115200);
             myUART.setDataSize(8);
             myUART.setParity(UartDevice.PARITY_NONE);
             myUART.setStopBits(1);
+            myUART.setHardwareFlowControl(UartDevice.HW_FLOW_CONTROL_NONE);
         }
     }
 
