@@ -11,8 +11,6 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import java.util.List;
 
-//TODO se id != -1 alla riconnessione dell'id il RadioButton relativo a tale id deve essere premuto
-
 public class MainActivity extends Activity {
     public static final String TAG = "107G";
     private DistanceController myController;
