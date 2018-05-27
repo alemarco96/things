@@ -114,7 +114,7 @@ public class DistanceController implements AutoCloseable
      * @param timeElapsed Il tempo in nanoecondi trascorsi
      */
     private static void logTimeElapsed(String tag, String message, long timeElapsed) {
-        Log.d(tag, message + timeElapsed / 1000 + " us");
+        //Log.d(tag, message + timeElapsed / 1000 + " us");
     }
 
     //memorizza i dati attuali
