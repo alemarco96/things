@@ -11,7 +11,6 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import java.util.List;
 
-// classe view
 public class MainActivity extends Activity {
     public static final String TAG = "107G";
     private DistanceController myController;
@@ -28,6 +27,7 @@ public class MainActivity extends Activity {
         //Creazione di RadioGroup, ospiterà i RadioButtons
         final RadioGroup listIDsGroup = new RadioGroup(getApplicationContext());
 
+        //riferimento alla TextView che mostra l'ID al quale si è connessi.
         final TextView connectedToId = findViewById(R.id.connectedTo_id);
 
         //riferimento alla TextView che mostra la distanza ricevuta
@@ -38,27 +38,35 @@ public class MainActivity extends Activity {
             myController = new DistanceController("SPI0.0");
             //Start polling
             myController.startUpdate(1000L);
-            //Connessione ai listener generali
+
+            /*Connessione ai listeners generali per creare lista di IDs rilevati
+            visualizzabile su schermo e completa di bottoni per la visione dei dati relativi
+            allo specifico id selezionato */
             myController.addAllTagsListener(new AllTagsListener() {
                 @Override
                 public void onTagHasConnected(List<DistanceController.Entry> tags) {
                     Log.i(TAG,"MainActivity -> addAllTagListener -> onTagHasConnected");
-                    regenerateRagioGroup(listIDsGroup, idLayout, distanceView);
+                    //almeno un Tag si è appena connesso, rigenerazione lista IDs disponibili
+                    regenerateRagioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
                 }
 
                 @Override
                 public void onTagHasDisconnected(List<DistanceController.Entry> tags) {
                     Log.i(TAG,"MainActivity -> addAllTagListener -> onTagHasDisconnected");
-                    regenerateRagioGroup(listIDsGroup, idLayout, distanceView);
+                    //almeno un Tag si è appena disconnesso, rigenerazione lista IDs disponibili
+                    regenerateRagioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
                 }
 
                 @Override
                 public void onTagDataAvailable(List<DistanceController.Entry> tags) {
                     Log.i(TAG,"MainActivity -> addAllTagListener -> onTagDataAvailable");
+                    //dato inviato dai tag, lista IDs invariata
                 }
             });
         } catch (java.io.IOException | InterruptedException e) {
             Log.e(TAG, "Errore:\n", e);
+            /*Generata un'eccezione al momento della creazione dell'instanza DistanceController
+            quindi lo notifico sullo schermo utilizzato dall'utente*/
             connectedToId.setText(R.string.noDwm);
         }
     }
@@ -67,16 +75,24 @@ public class MainActivity extends Activity {
      * Rigenera la lista che gestisce gli IDs disponibili
      * @param listIDsGroup RadioGroup da aggiornare
      * @param idLayout LinearLayout contenente il RadioGroup da aggiornare
+     * @param distanceView La TextView dove viene visualizzato il dato di distanza rilevato
+     * @param connectedToId La TextView dove viene visualizzato l'ID del modulo a distanza "distanceView"
      */
 
-    private void regenerateRagioGroup(final RadioGroup listIDsGroup, final LinearLayout idLayout, final TextView distanceView){
+    private void regenerateRagioGroup(final RadioGroup listIDsGroup, final LinearLayout idLayout,
+                                      final TextView distanceView, final TextView connectedToId){
         Log.i(TAG, "MainActivity -> regenerateRadioGroup");
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 Log.i(TAG,"MainActivity -> regenerateRadioGroup: running thread");
+                //ricezione IDs connessi
                 List<Integer> ids = myController.getTagIDs();
+                //creazione di Array contentente i RadioGroups
                 final RadioButton[] item = new RadioButton[ids.size()];
+                //pulizia RadioGroup ospitante i RadioButtons
+                listIDsGroup.removeAllViews();
+                //popolazione dell'array di RadioButtons
                 for(int i = 0; i < ids.size(); i++) {
                     Log.i(TAG, "MainActivity -> regenerateRadioGroup: ciclo for, i = " + i);
                     item[i] = new RadioButton(getApplicationContext());
@@ -91,19 +107,31 @@ public class MainActivity extends Activity {
                             Log.i(TAG, "MainActivity -> regenerateRadioGroup:"
                                     + " onClick " + singleId);
                             id = singleId;
-                            connectToSpecificListener(distanceView);
+                            connectToSpecificListener(distanceView, connectedToId);
                         }
                     });
                     //Aggiunta del bottone in fondo alla lista
                     listIDsGroup.addView(item[i], -1, ViewGroup.LayoutParams.WRAP_CONTENT);
                 }
-                //pubblicazione RadioGroup sul layout
+                //pulizia scorso idLayout, ospitante il RadioGroup
+                idLayout.removeAllViews();
+                //pubblicazione RadioGroup su idlayout
                 idLayout.addView(listIDsGroup);
             }
         });
     }
 
-    private void connectToSpecificListener(final TextView distanceView) {
+    /**
+     * Connessione ad un id selezionato il quale invia il dato della distanza
+     * @param distanceView La TextView dove viene visualizzato il dato di distanza rilevato
+     * @param connectedToId La TextView dove viene visualizzato l'ID del modulo a distanza "distanceView"
+     */
+    private void connectToSpecificListener(final TextView distanceView, final TextView connectedToId) {
+
+        //visualizzazione a schermo dell'ID al quale si è connessi
+        String idText = Integer.toString(id);
+        connectedToId.setText(idText);
+
         //collegamento a listeners di un solo tag id
         myController.addTagListener(id, new TagListener() {
             @Override
@@ -145,11 +173,15 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    public void onPause() {
-        //chiusura controller
-        myController.close();
-
+    public void onDestroy() {
+        Log.i(TAG, "MainActivity -> onDestroy");
         //passaggio di stato
-        super.onPause();
+        super.onDestroy();
+
+        if (myController != null) {
+            Log.i(TAG, "MainActivity -> onDestroy -> chiusura controller");
+            //chiusura controller
+            myController.close();
+        }
     }
 }
