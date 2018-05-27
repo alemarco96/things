@@ -100,14 +100,12 @@ public class DriverDWM implements AutoCloseable {
                 Numero di bit = 8
                 Nessun bit di parità
                 Un bit di stop
-                Senza hardware flow controll
          */
         else {
             myUART.setBaudrate(115200);
             myUART.setDataSize(8);
             myUART.setParity(UartDevice.PARITY_NONE);
             myUART.setStopBits(1);
-            myUART.setHardwareFlowControl(UartDevice.HW_FLOW_CONTROL_NONE);
         }
     }
 
