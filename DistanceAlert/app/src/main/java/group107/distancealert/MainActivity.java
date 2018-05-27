@@ -122,6 +122,13 @@ public class MainActivity extends Activity {
                             connectToSpecificListener(distanceView, connectedToId);
                         }
                     });
+                    //Controllo se il bottono era stato premuto in precedenza
+                    if(id != -1 && id == singleId) {
+                        Log.i(TAG, "MainActivity -> regenerateRadioGroup:" +
+                                " ciclo for, i = " + i + ", RadioButton toggled: (id = " + id +
+                                ") == (singleid = " + singleId + ")");
+                        item[i].toggle();
+                    }
                     //Aggiunta del bottone in fondo alla lista
                     listIDsGroup.addView(item[i], -1, ViewGroup.LayoutParams.WRAP_CONTENT);
                 }
