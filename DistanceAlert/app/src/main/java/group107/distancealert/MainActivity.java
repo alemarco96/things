@@ -143,7 +143,6 @@ public class MainActivity extends Activity {
             @Override
             public void onTagHasDisconnected(final int tagLastKnownDistance) {
                 Log.i(TAG, id + " disconnesso.");
-                distanceView.setText(R.string.noConnection);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
