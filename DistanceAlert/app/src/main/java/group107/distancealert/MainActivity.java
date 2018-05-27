@@ -42,29 +42,34 @@ public class MainActivity extends Activity {
             /*Connessione ai listeners generali per creare lista di IDs rilevati
             visualizzabile su schermo e completa di bottoni per la visione dei dati relativi
             allo specifico id selezionato */
-            myController.addAllTagsListener(new AllTagsListener() {
+            new Thread(new Runnable() {
                 @Override
-                public void onTagHasConnected(List<DistanceController.Entry> tags) {
-                    Log.i(TAG,"MainActivity -> addAllTagListener -> onTagHasConnected");
-                    //almeno un Tag si è appena connesso, rigenerazione lista IDs disponibili
-                    regenerateRagioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
-                }
+                public void run() {
+                    myController.addAllTagsListener(new AllTagsListener() {
+                        @Override
+                        public void onTagHasConnected(List<DistanceController.Entry> tags) {
+                            Log.i(TAG,"MainActivity -> addAllTagListener -> onTagHasConnected");
+                            //almeno un Tag si è appena connesso, rigenerazione lista IDs disponibili
+                            regenerateRagioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
+                        }
 
-                @Override
-                public void onTagHasDisconnected(List<DistanceController.Entry> tags) {
-                    Log.i(TAG,"MainActivity -> addAllTagListener -> onTagHasDisconnected");
-                    //almeno un Tag si è appena disconnesso, rigenerazione lista IDs disponibili
-                    regenerateRagioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
-                }
+                        @Override
+                        public void onTagHasDisconnected(List<DistanceController.Entry> tags) {
+                            Log.i(TAG,"MainActivity -> addAllTagListener -> onTagHasDisconnected");
+                            //almeno un Tag si è appena disconnesso, rigenerazione lista IDs disponibili
+                            regenerateRagioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
+                        }
 
-                @Override
-                public void onTagDataAvailable(List<DistanceController.Entry> tags) {
-                    Log.i(TAG,"MainActivity -> addAllTagListener -> onTagDataAvailable");
-                    //dato inviato dai tag, lista IDs invariata
+                        @Override
+                        public void onTagDataAvailable(List<DistanceController.Entry> tags) {
+                            Log.i(TAG,"MainActivity -> addAllTagListener -> onTagDataAvailable");
+                            //dato inviato dai tag, lista IDs invariata
+                        }
+                    });
                 }
-            });
+            }).start();
         } catch (java.io.IOException | InterruptedException e) {
-            Log.e(TAG, "Errore:\n", e);
+            Log.e(TAG, "MainActivity -> onCreate: Errore:\n", e);
             /*Generata un'eccezione al momento della creazione dell'instanza DistanceController
             quindi lo notifico sullo schermo utilizzato dall'utente*/
             connectedToId.setText(R.string.noDwm);
@@ -78,7 +83,6 @@ public class MainActivity extends Activity {
      * @param distanceView La TextView dove viene visualizzato il dato di distanza rilevato
      * @param connectedToId La TextView dove viene visualizzato l'ID del modulo a distanza "distanceView"
      */
-
     private void regenerateRagioGroup(final RadioGroup listIDsGroup, final LinearLayout idLayout,
                                       final TextView distanceView, final TextView connectedToId){
         Log.i(TAG, "MainActivity -> regenerateRadioGroup");
@@ -159,6 +163,11 @@ public class MainActivity extends Activity {
         });
     }
 
+    /**
+     * Aggiorna la View con la distanza ricevuta
+     * @param tagDistance distanza ricevuta
+     * @param distanceView TextView dove aggiornare la distanza
+     */
     public void setDistanceText (final int tagDistance, final TextView distanceView) {
         Log.i(TAG, "MainActivity -> setDistanceText: id = " + id + ", tagDistance = " + tagDistance);
         runOnUiThread(new Runnable() {

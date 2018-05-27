@@ -11,7 +11,8 @@
         android:id="@+id/idLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingRight="20sp">
     </LinearLayout>
 
 
