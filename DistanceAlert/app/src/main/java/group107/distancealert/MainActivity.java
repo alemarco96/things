@@ -95,9 +95,9 @@ public class MainActivity extends Activity {
 
         try {
             //sceglie canale di comunicazione UART o SPI
-            myController = new DistanceController("SPI0.0");
+            myController = new DistanceController("MINIUART");
             //Start polling
-            myController.startUpdate(1000L);
+            myController.startUpdate(300L);
 
             /*Connessione ai listeners generali per creare lista di IDs rilevati
             visualizzabile su schermo e completa di bottoni per la visione dei dati relativi

@@ -4,6 +4,7 @@ import com.google.android.things.pio.PeripheralManager;
 import com.google.android.things.pio.SpiDevice;
 import com.google.android.things.pio.UartDevice;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -19,7 +20,7 @@ import static java.lang.Byte.toUnsignedInt;
  * Questa classe implementa l'interfaccia AutoCloseable che permette di invocare automaticamente
  * il metodo close quando avvengono delle eccezioni alla creazione dell'oggetto
  */
-public class DriverDWM implements AutoCloseable {
+public class DriverDWM implements Closeable {
     /**
      * Oggetti riferiti alle periferiche SPI e UART
      */
