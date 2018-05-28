@@ -3,6 +3,7 @@ package group107.distancealert;
 import android.util.Log;
 import android.util.Pair;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,7 +17,7 @@ import static group107.distancealert.MainActivity.TAG;
 /**
  * Classe che rappresenta un sensore di distanza.
  */
-public class DistanceController implements AutoCloseable
+public class DistanceController implements Closeable
 {
     private static final int BYTES_PER_ENTRY = 20;
     private static final int COUNTER_FOR_DISCONNECTED = 3;
