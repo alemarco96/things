@@ -12,6 +12,7 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import com.google.android.things.pio.Gpio;
+import com.google.android.things.pio.GpioCallback;
 
 import java.util.List;
 
@@ -273,6 +274,21 @@ public class MainActivity extends Activity {
     protected int getActualMaxDistance() {
         return maxDistance;
     }
+
+    /*TODO
+    private void allarm(){
+        final DistanceAlarm myAlarm=new DistanceAlarm();
+        myAlarm.start();
+        pulsante.setEdgeTriggerType(Gpio.EDGE_RISING);
+        pulsante.registerGpioCallback(new GpioCallback() {
+              @Override
+              public boolean onGpioEdge(Gpio gpio) {
+                  myAlarm.close();
+                  return false;
+              }
+          }
+        );
+    }*/
 
     @Override
     public void onDestroy() {
