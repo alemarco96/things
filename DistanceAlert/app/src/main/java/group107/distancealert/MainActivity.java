@@ -2,6 +2,7 @@ package group107.distancealert;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +14,9 @@ import android.widget.TextView;
 
 import com.google.android.things.pio.Gpio;
 import com.google.android.things.pio.GpioCallback;
+import com.google.android.things.pio.PeripheralManager;
 
+import java.io.IOException;
 import java.util.List;
 
 //TODO possibile ottimizzazione codice riguardante aggiornamento lista IDs
@@ -92,19 +95,9 @@ public class MainActivity extends Activity {
             }
         });
 
-        //Bottone relativo allo spegnimento dell'allarme tramite schermo
-        final Button turnOffAlarmButton = findViewById(R.id.turnOffAlarm);
-        turnOffAlarmButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.i(TAG, "MainActivity -> turnOffAlarmButton -> onClick");
-                //TODO turnOffAlarmButton.setOnClickListener
-            }
-        });
-
         try {
             //sceglie canale di comunicazione UART ("MINIUART") o SPI ("SPI0.0")
-            myController = new DistanceController("MINIUART");
+            myController = new DistanceController(RPI3_SPI);//TODO pulsante per passare da spi a uart
             //Start polling
             myController.startUpdate(300L);
 
@@ -147,6 +140,16 @@ public class MainActivity extends Activity {
             /*Generata un'eccezione al momento della creazione dell'instanza DistanceController
             quindi lo notifico sullo schermo utilizzato dall'utente*/
             connectedToId.setText(R.string.noDwm);
+        }
+
+
+        PeripheralManager manager = PeripheralManager.getInstance();//todo mettilo pure dove ti piace di più
+        try {
+            pulsante = manager.openGpio(GPIO_PULSANTE);
+            pulsante.setActiveType(Gpio.ACTIVE_HIGH);
+            pulsante.setDirection(Gpio.DIRECTION_IN);
+        } catch (IOException e) {
+            //todo
         }
     }
 
@@ -218,7 +221,7 @@ public class MainActivity extends Activity {
         Log.i(TAG, "MainActivity -> connectToSpecificListener: connectedToId = "
                 + connectedToId);
         //visualizzazione a schermo dell'ID al quale si è connessi
-        String idText = Integer.toString(id);
+        String idText = Integer.toHexString(id);
         connectedToId.setText(idText);
         //collegamento a listeners di un solo tag id
         myController.addTagListener(id, new TagListener() {
@@ -245,6 +248,9 @@ public class MainActivity extends Activity {
             public void onTagDataAvailable(final int tagDistance) {
                 Log.i(TAG, "MainActivity -> connectToSpecificListener -> addTagListener" +
                         " -> onTagDataAvailable: id = " + Integer.toHexString(id) + ", tagDistance = " + tagDistance);
+                if (tagDistance > maxDistance) {
+                    distanceAlarm();//todo migliorare implementazione?
+                }
                 setDistanceText(tagDistance, distanceView);
             }
         });
@@ -284,20 +290,30 @@ public class MainActivity extends Activity {
         return maxDistance;
     }
 
-    /*TODO
-    private void allarm(){
-        final DistanceAlarm myAlarm=new DistanceAlarm();
-        myAlarm.start();
-        pulsante.setEdgeTriggerType(Gpio.EDGE_RISING);
-        pulsante.registerGpioCallback(new GpioCallback() {
-              @Override
-              public boolean onGpioEdge(Gpio gpio) {
-                  myAlarm.close();
-                  return false;
-              }
-          }
-        );
-    }*/
+    /*TODO controlla questo metodo*/
+    private void distanceAlarm() {
+        try {
+            final DistanceAlarm myAlarm = new DistanceAlarm();
+            myAlarm.start();
+            pulsante.setEdgeTriggerType(Gpio.EDGE_RISING);
+
+            pulsante.registerGpioCallback(/*todo runtime exception create handler inside thread that has not called Looper.prepare() */
+                    new GpioCallback() {
+                        @Override
+                        public boolean onGpioEdge(Gpio gpio) {
+                            try {
+                                myAlarm.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            return false;
+                        }
+                    }
+            );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public void onDestroy() {

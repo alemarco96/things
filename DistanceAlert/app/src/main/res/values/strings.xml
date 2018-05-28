@@ -8,7 +8,7 @@
     <string name="selectModule">Seleziona un modulo dalla lista.</string>
     <string name="noConnection">Nessuna connessione.</string>
     <string name="noData">Nessuna misurazione rilevata.</string>
-    <string name="noDwm">Nessun Dwm connesso tramite SPI.</string>
+    <string name="noDwm">Nessun Dwm connesso alla RPI3.</string>
     <string name="noId">Nessun ID rilevato.</string>
     <string name="max_distance_is">Distanza massima:</string>
     <string name="plus">+</string>
