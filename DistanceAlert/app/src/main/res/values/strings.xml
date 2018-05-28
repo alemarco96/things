@@ -10,4 +10,7 @@
     <string name="noData">Nessuna misurazione rilevata.</string>
     <string name="noDwm">Nessun Dwm connesso tramite SPI.</string>
     <string name="noId">Nessun ID rilevato.</string>
+    <string name="max_distance_is">Distanza massima:</string>
+    <string name="plus">+</string>
+    <string name="minus">-</string>
 </resources>

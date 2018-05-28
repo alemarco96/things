@@ -5,10 +5,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+
 import java.util.List;
 
 //TODO possibile ottimizzazione codice riguardante aggiornamento lista IDs
@@ -21,6 +23,7 @@ public class MainActivity extends Activity {
     public static final String TAG = "107G";
     private DistanceController myController;
     private int id = -1;
+    private int maxDistance = 2000;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -29,15 +32,66 @@ public class MainActivity extends Activity {
 
         //riferimento alla TextView che mostra la distanza ricevuta
         final LinearLayout idLayout = findViewById(R.id.idLayout);
-
         //Creazione di RadioGroup, ospiterà i RadioButtons
         final RadioGroup listIDsGroup = new RadioGroup(getApplicationContext());
 
         //riferimento alla TextView che mostra l'ID al quale si è connessi.
         final TextView connectedToId = findViewById(R.id.connectedTo_id);
-
         //riferimento alla TextView che mostra la distanza ricevuta
         final TextView distanceView = findViewById(R.id.distance);
+
+        //TextView che mostra la distanza limite
+        final TextView maxDistanceView = findViewById(R.id.maxDistance);
+        String defaultMaxDistance = maxDistance/1000 + "." + maxDistance%1000 + " m";
+        maxDistanceView.setText(defaultMaxDistance);
+        //Bottone che aumenta la distanza limite
+        Button plusMaxDistanceButton = findViewById(R.id.plusMaxDistance);
+        plusMaxDistanceButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i(TAG,"MainActivity -> plusMaxDistanceButton -> onClick");
+                if (maxDistance <= 90500) {
+                    maxDistance += 500;
+                    final String newMaxDistance = (maxDistance / 1000) + "." + (maxDistance % 1000)
+                            +" m";
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            maxDistanceView.setText(newMaxDistance);
+                        }
+                    });
+                }
+            }
+        });
+        //Bottone che diminuisce la distanza limite
+        Button minusMaxDistanceButton = findViewById(R.id.minusMaxDistance);
+        minusMaxDistanceButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i(TAG,"MainActivity -> minusMaxDistanceButton -> onClick");
+                if (maxDistance >= 500) {
+                    maxDistance -= 500;
+                    final String newMaxDistance = (maxDistance / 1000) + "." + (maxDistance % 1000)
+                            + " m";
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            maxDistanceView.setText(newMaxDistance);
+                        }
+                    });
+                }
+            }
+        });
+
+        //Bottone relativo allo spegnimento dell'allarme tramite schermo
+        final Button turnOffAlarmButton = findViewById(R.id.turnOffAlarm);
+        turnOffAlarmButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i(TAG, "MainActivity -> turnOffAlarmButton -> onClick");
+                //TODO turnOffAlarmButton.setOnClickListener
+            }
+        });
 
         try {
             //sceglie canale di comunicazione UART o SPI
@@ -113,7 +167,7 @@ public class MainActivity extends Activity {
                     Log.i(TAG, "MainActivity -> regenerateRadioGroup: ciclo for, i = " + i);
                     item[i] = new RadioButton(getApplicationContext());
                     final int singleId = ids.get(i);
-                    String idText = Integer.toString(singleId);
+                    String idText = Integer.toHexString(singleId);
                     item[i].setText(idText);
 
                     //Click specifico di ogni singolo RadioButton
@@ -192,7 +246,7 @@ public class MainActivity extends Activity {
      * @param tagDistance distanza ricevuta
      * @param distanceView TextView dove aggiornare la distanza
      */
-    public void setDistanceText (final int tagDistance, final TextView distanceView) {
+    private void setDistanceText (final int tagDistance, final TextView distanceView) {
         Log.i(TAG, "MainActivity -> setDistanceText: id = " + id + ", tagDistance = "
                 + tagDistance);
         runOnUiThread(new Runnable() {
@@ -203,6 +257,22 @@ public class MainActivity extends Activity {
                 distanceView.setText(newText);
             }
         });
+    }
+
+    /**
+     * Restituisce l'id ai quali si è connessi
+     * @return id variabile di tipo int rappresentante l'id ai quali si è connessi
+     */
+    protected int getActualId() {
+        return id;
+    }
+
+    /**
+     * Restituisce la distanza massima impostata
+     * @return maxDistance variabile di tipo int rappresentante la distanza massima
+     */
+    protected int getActualMaxDistance() {
+        return maxDistance;
     }
 
     @Override
