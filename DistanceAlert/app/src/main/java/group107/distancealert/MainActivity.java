@@ -167,7 +167,7 @@ public class MainActivity extends Activity {
                     Log.i(TAG, "MainActivity -> regenerateRadioGroup: ciclo for, i = " + i);
                     item[i] = new RadioButton(getApplicationContext());
                     final int singleId = ids[i];
-                    String idText = Integer.toHexString(singleId);
+                    final String idText = Integer.toHexString(singleId);
                     item[i].setText(idText);
 
                     //Click specifico di ogni singolo RadioButton
@@ -175,7 +175,7 @@ public class MainActivity extends Activity {
                         @Override
                         public void onClick(View v) {
                             Log.i(TAG, "MainActivity -> regenerateRadioGroup:"
-                                    + " onClick " + singleId);
+                                    + " onClick " + idText);
                             id = singleId;
                             connectToSpecificListener(distanceView, connectedToId);
                         }
@@ -216,14 +216,14 @@ public class MainActivity extends Activity {
             @Override
             public void onTagHasConnected(final int tagDistance) {
                 Log.i(TAG, "MainActivity -> connectToSpecificListener -> addTagListener" +
-                        " -> onTagHasConnected: Connesso a " + id);
+                        " -> onTagHasConnected: Connesso a " + Integer.toHexString(id));
                 setDistanceText(tagDistance, distanceView);
             }
 
             @Override
             public void onTagHasDisconnected(final int tagLastKnownDistance) {
                 Log.i(TAG, "MainActivity -> connectToSpecificListener -> addTagListener" +
-                        " -> onTagHasDisconnected: disconnesso id = " + id);
+                        " -> onTagHasDisconnected: disconnesso id = " + Integer.toHexString(id));
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -235,7 +235,7 @@ public class MainActivity extends Activity {
             @Override
             public void onTagDataAvailable(final int tagDistance) {
                 Log.i(TAG, "MainActivity -> connectToSpecificListener -> addTagListener" +
-                        " -> onTagDataAvailable: id = " + id + ", tagDistance = " + tagDistance);
+                        " -> onTagDataAvailable: id = " + Integer.toHexString(id) + ", tagDistance = " + tagDistance);
                 setDistanceText(tagDistance, distanceView);
             }
         });
