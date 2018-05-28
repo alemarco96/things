@@ -91,16 +91,6 @@ public class MainActivity extends Activity {
             }
         });
 
-        //Bottone relativo allo spegnimento dell'allarme tramite schermo
-        final Button turnOffAlarmButton = findViewById(R.id.turnOffAlarm);
-        turnOffAlarmButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.i(TAG, "MainActivity -> turnOffAlarmButton -> onClick");
-                //TODO turnOffAlarmButton.setOnClickListener
-            }
-        });
-
         try {
             //sceglie canale di comunicazione UART ("MINIUART") o SPI ("SPI0.0")
             myController = new DistanceController("MINIUART");
@@ -119,8 +109,9 @@ public class MainActivity extends Activity {
                             Log.i(TAG,"MainActivity -> addAllTagListener ->" +
                                     " onTagHasConnected");
                             //almeno un Tag si è appena connesso, rigenerazione lista IDs
-                            regenerateRagioGroup(listIDsGroup, idLayout, distanceView,
-                                    connectedToId);
+                            //regenerateRagioGroup(listIDsGroup, idLayout, distanceView,
+                            //        connectedToId);
+
                         }
 
                         @Override
@@ -189,7 +180,7 @@ public class MainActivity extends Activity {
                         }
                     });
                     //Controllo se il bottone era stato premuto in precedenza
-                    if(id == singleId) {
+                    if(id != -1 && id == singleId) {
                         Log.i(TAG, "MainActivity -> regenerateRadioGroup:" +
                                 " ciclo for, i = " + i + ", RadioButton toggled: (id = " + id +
                                 ") == (singleid = " + singleId + ")");
