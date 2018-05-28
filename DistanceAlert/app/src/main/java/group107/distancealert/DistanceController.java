@@ -212,7 +212,6 @@ public class DistanceController implements AutoCloseable
     {
         private List<Entry> prevData;
         private List<Entry> actData;
-        private int counter = 0; //utile per contare il numero di Entry con valori uguali
 
         private WorkerThread(List<Entry> previous, List<Entry> actual)
         {
@@ -237,16 +236,12 @@ public class DistanceController implements AutoCloseable
                 if (result >= 0) {
                     Entry prevEntry = prevData.get(result);
 
-                    if (actEntry.tagDistance != prevEntry.tagDistance) {
-                        counter = 0;
-                        common.add(new Entry(actEntry));
-                    } else if (counter <2) {
-                        counter += 1;
-                        common.add(new Entry(actEntry));
-                    } else {
+                    if (actEntry.tagDistance == prevEntry.tagDistance) {
                         //tag appena disconnesso
                         disconnected.add(actEntry);
                         disconnectedData.add(actEntry);
+                    } else {
+                        common.add(new Entry(actEntry));
                     }
                 } else {
                     //tag appena connesso
