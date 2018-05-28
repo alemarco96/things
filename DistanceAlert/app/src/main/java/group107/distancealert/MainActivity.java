@@ -189,7 +189,7 @@ public class MainActivity extends Activity {
                         }
                     });
                     //Controllo se il bottone era stato premuto in precedenza
-                    if(id != -1 && id == singleId) {
+                    if(id == singleId) {
                         Log.i(TAG, "MainActivity -> regenerateRadioGroup:" +
                                 " ciclo for, i = " + i + ", RadioButton toggled: (id = " + id +
                                 ") == (singleid = " + singleId + ")");
