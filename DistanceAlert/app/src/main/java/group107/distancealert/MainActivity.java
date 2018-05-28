@@ -113,8 +113,9 @@ public class MainActivity extends Activity {
                             Log.i(TAG,"MainActivity -> addAllTagListener ->" +
                                     " onTagHasConnected");
                             //almeno un Tag si è appena connesso, rigenerazione lista IDs
-                            regenerateRagioGroup(listIDsGroup, idLayout, distanceView,
-                                    connectedToId);
+                            //regenerateRagioGroup(listIDsGroup, idLayout, distanceView,
+                            //        connectedToId);
+
                         }
 
                         @Override
@@ -193,7 +194,7 @@ public class MainActivity extends Activity {
                         }
                     });
                     //Controllo se il bottone era stato premuto in precedenza
-                    if(id == singleId) {
+                    if(id != -1 && id == singleId) {
                         Log.i(TAG, "MainActivity -> regenerateRadioGroup:" +
                                 " ciclo for, i = " + i + ", RadioButton toggled: (id = " + id +
                                 ") == (singleid = " + singleId + ")");
