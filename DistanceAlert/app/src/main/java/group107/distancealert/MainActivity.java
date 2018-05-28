@@ -11,6 +11,12 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import java.util.List;
 
+//TODO possibile ottimizzazione codice riguardante aggiornamento lista IDs
+/*--> onTagHasConnected(List<DistanceController.Entry> tags) : tags è la lista dei tags appena
+connessi
+--> onTagHasDisconnected(List<DistanceController.Entry> tags) : tags è la lista dei tags appena
+disconnessi
+*/
 public class MainActivity extends Activity {
     public static final String TAG = "107G";
     private DistanceController myController;
@@ -120,7 +126,7 @@ public class MainActivity extends Activity {
                             connectToSpecificListener(distanceView, connectedToId);
                         }
                     });
-                    //Controllo se il bottono era stato premuto in precedenza
+                    //Controllo se il bottone era stato premuto in precedenza
                     if(id != -1 && id == singleId) {
                         Log.i(TAG, "MainActivity -> regenerateRadioGroup:" +
                                 " ciclo for, i = " + i + ", RadioButton toggled: (id = " + id +
@@ -193,7 +199,7 @@ public class MainActivity extends Activity {
             @Override
             public void run() {
                 String newText =    (tagDistance/1000) +
-                        "." + (tagDistance%1000);
+                        "." + (tagDistance%1000) + " m";
                 distanceView.setText(newText);
             }
         });
