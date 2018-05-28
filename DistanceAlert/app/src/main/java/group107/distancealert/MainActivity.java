@@ -113,8 +113,8 @@ public class MainActivity extends Activity {
                             Log.i(TAG,"MainActivity -> addAllTagListener ->" +
                                     " onTagHasConnected");
                             //almeno un Tag si è appena connesso, rigenerazione lista IDs
-                            //regenerateRagioGroup(listIDsGroup, idLayout, distanceView,
-                            //        connectedToId);
+                            regenerateRagioGroup(listIDsGroup, idLayout, distanceView,
+                                    connectedToId);
 
                         }
 
@@ -299,6 +299,7 @@ public class MainActivity extends Activity {
             pulsante.setEdgeTriggerType(Gpio.EDGE_RISING);
 
             pulsante.registerGpioCallback(/*todo runtime exception create handler inside thread that has not called Looper.prepare() */
+                    /*new Handler(),*/
                     new GpioCallback() {
                         @Override
                         public boolean onGpioEdge(Gpio gpio) {

@@ -1,5 +1,7 @@
 package group107.distancealert;
 
+import android.util.Log;
+
 import com.google.android.things.pio.Gpio;
 import com.google.android.things.pio.PeripheralManager;
 import com.google.android.things.pio.Pwm;
@@ -9,16 +11,30 @@ import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * Questa classe ha lo scopo di gestire completamente l'allarme, ovvero il led lampeggiante e il
+ * buzzer che suona un semplice motivetto musicale.
+ * Quando si ha finito di usare un oggetto di questa classe è importante invocare il metodo close
+ * per rilasciare le periferiche hardware utilizzate.
+ * Questa classe implementa l'interfaccia Closeable che permette di invocare automaticamente
+ * il metodo close quando avvengono delle eccezioni alla creazione dell'oggetto
+ */
 public class DistanceAlarm implements Closeable {
+    /**
+     * Stringhe costanti usate per identificare le periferiche
+     */
     private static final String PWM_BUZZER = "PWM1";
     private static final String GPIO_LED = "BCM16";
 
+    /**
+     * Oggetti riferiti alle periferiche GPIO e PWM
+     */
     private Gpio led;
     private Pwm buzzer;
-    private Timer timer;
 
-    private boolean status;
-    private int toneIndex;
+    /**
+     * Sequenza di frequenze del segnale PWM utilizzate per realizzare il motivetto musicale
+     */
     private final int[] tone = {
             400, 400, 400,
             440, 440, 440,
@@ -28,63 +44,90 @@ public class DistanceAlarm implements Closeable {
             400, 440, 500
     };
 
+    // Variabile che funge da indice dell'array tone
+    private int toneIndex;
+    // Oggetto Timer usato per gestire la programmazione temporizzata dell'allarme
+    private Timer timer;
+
+    /**
+     * Costruttore: ottiene accesso alle periferiche e le inizializza
+     *
+     * @throws IOException Lanciata se ci sono problemi di accesso alle periferiche
+     */
     public DistanceAlarm() throws IOException {
+        // Ottengo istanza di PeripheralManager per poter gestire le periferiche
         PeripheralManager manager = PeripheralManager.getInstance();
+
+        /*
+        Prova ad ottenere un'istanza della periferica GPIO relativa al
+        pin desiderato, la inizializza come uscita inizialmente a 0V e
+        ne associa il livello logico alto al livello di tensione alto.
+         */
         led = manager.openGpio(GPIO_LED);
         led.setDirection(Gpio.DIRECTION_OUT_INITIALLY_LOW);
         led.setActiveType(Gpio.ACTIVE_HIGH);
 
+        /*
+        Prova ad ottenere un'istanza della periferica PWM relativa al
+        pin desiderato, la inizializza adegutamente e la lascia spenta.
+         */
         buzzer = manager.openPwm(PWM_BUZZER);
-        buzzer.setPwmFrequencyHz(440);
+        buzzer.setPwmFrequencyHz(tone[toneIndex]);
         buzzer.setPwmDutyCycle(50);
         buzzer.setEnabled(false);
-
-        status = false;
     }
 
-    public boolean getStatus() {
-        return status;
-    }
-
+    /**
+     * Avvia l'allarme e avvia anche la programmazione temporizzata che permette di cambiare tono
+     * al buzzer e di far lampeggiare il LED.
+     *
+     * @throws IOException Lanciata se ci sono problemi di accesso alle periferiche
+     */
     public void start() throws IOException {
-        if (status) {
+        if (timer != null) {
             return;
         }
 
-        timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
+        // Avvio programmazione ogni 400ms
+        (timer = new Timer()).scheduleAtFixedRate(new TimerTask() {
+
             @Override
             public void run() {
                 toneIndex = (toneIndex + 1) % tone.length;
                 try {
+                    //Cambio tono emesso dal buzzer e cambio stato al GPIO del LED
                     buzzer.setPwmFrequencyHz(tone[toneIndex]);
                     led.setValue(!led.getValue());
+
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Log.w(MainActivity.TAG, "Exception updating alarm state", e);
                 }
             }
         }, 0, 400);
 
+        // Abilito la periferica PWM
         buzzer.setEnabled(true);
-        status = true;
     }
 
-    public void stop() throws IOException {
-        timer.cancel();
-        timer = null;
-        buzzer.setEnabled(false);
-        status = false;
-    }
-
+    /**
+     * Terminazione della programmazione temportizzata sul timer e
+     * rilascio delle periferiche relative al led e al buzzer.
+     *
+     * @throws IOException Lanciata se ci sono problemi nella chiusura delle periferiche
+     */
     public void close() throws IOException {
-        if (status) {
-            stop();
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
         }
+
         if (led != null) {
             led.close();
             led = null;
         }
+
         if (buzzer != null) {
+            buzzer.setEnabled(false);
             buzzer.close();
             buzzer = null;
         }
