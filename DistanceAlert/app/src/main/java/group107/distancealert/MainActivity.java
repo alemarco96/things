@@ -11,6 +11,8 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
+import com.google.android.things.pio.Gpio;
+
 import java.util.List;
 
 //TODO possibile ottimizzazione codice riguardante aggiornamento lista IDs
@@ -21,6 +23,12 @@ disconnessi
 */
 public class MainActivity extends Activity {
     public static final String TAG = "107G";
+
+    private static final String GPIO_PULSANTE = "BCM26";
+    private static final String RPI3_UART = "MINIUART";
+    private static final String RPI3_SPI = "SPI0.0";
+
+    private Gpio pulsante;
     private DistanceController myController;
     private int id = -1;
     private int maxDistance = 2000;
@@ -94,7 +102,7 @@ public class MainActivity extends Activity {
         });
 
         try {
-            //sceglie canale di comunicazione UART o SPI
+            //sceglie canale di comunicazione UART ("MINIUART") o SPI ("SPI0.0")
             myController = new DistanceController("MINIUART");
             //Start polling
             myController.startUpdate(300L);
