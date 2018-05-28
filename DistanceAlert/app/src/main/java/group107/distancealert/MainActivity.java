@@ -157,16 +157,16 @@ public class MainActivity extends Activity {
             public void run() {
                 Log.i(TAG,"MainActivity -> regenerateRadioGroup: running thread");
                 //ricezione IDs connessi
-                List<Integer> ids = myController.getTagIDs();
+                int[] ids = myController.getTagIDs();
                 //creazione di Array contentente i RadioGroups
-                final RadioButton[] item = new RadioButton[ids.size()];
+                final RadioButton[] item = new RadioButton[ids.length];
                 //pulizia RadioGroup ospitante i RadioButtons
                 listIDsGroup.removeAllViews();
                 //popolazione dell'array di RadioButtons
-                for(int i = 0; i < ids.size(); i++) {
+                for(int i = 0; i < ids.length; i++) {
                     Log.i(TAG, "MainActivity -> regenerateRadioGroup: ciclo for, i = " + i);
                     item[i] = new RadioButton(getApplicationContext());
-                    final int singleId = ids.get(i);
+                    final int singleId = ids[i];
                     String idText = Integer.toHexString(singleId);
                     item[i].setText(idText);
 
