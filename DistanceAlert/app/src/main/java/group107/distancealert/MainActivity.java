@@ -108,6 +108,7 @@ public class MainActivity extends Activity {
             infoView.setText(R.string.physical_button_problem);
         }
 
+        //TODO: usa il nuovo metodo di DistanceController: switchBus(String busName)!!!
         //Switch che cambia metodo di connessione o UART o SPI
         final Switch switchMethodView = findViewById(R.id.switchMethod);
         switchMethodView.setOnClickListener(new View.OnClickListener() {
@@ -289,7 +290,12 @@ public class MainActivity extends Activity {
                         " -> onTagDataAvailable: id = " + Integer.toHexString(id) +
                         ", tagDistance = " + tagDistance);
                 if (tagDistance > maxDistance) {
-                    distanceAlarm();//todo migliorare implementazione?
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            distanceAlarm();//todo migliorare implementazione?
+                        }
+                    });
                 }
                 setDistanceText(tagDistance, distanceView);
             }
