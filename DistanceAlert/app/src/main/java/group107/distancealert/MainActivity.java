@@ -145,7 +145,7 @@ public class MainActivity extends Activity {
             /*Connessione ai listeners generali per creare lista di IDs rilevati
             visualizzabile su schermo e completa di bottoni per la visione dei dati relativi
             allo specifico id selezionato */
-            new Thread(new Runnable() {
+            runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     myController.addAllTagsListener(new AllTagsListener() {
@@ -222,7 +222,7 @@ public class MainActivity extends Activity {
                         }
                     });
                 }
-            }).start();
+            });
     }
 
     /**
