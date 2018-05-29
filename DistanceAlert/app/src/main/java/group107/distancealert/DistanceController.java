@@ -98,9 +98,9 @@ public class DistanceController implements Closeable
     private static List<Entry> cloneList(List<Entry> source)
     {
         List<Entry> dest = new ArrayList<>(source.size());
-        for (Entry entry:source)
+        for (int i = 0; i < source.size(); i++)
         {
-            dest.add(new DistanceController.Entry(entry));
+            dest.add(new Entry(source.get(i)));
         }
         return dest;
     }
@@ -119,7 +119,7 @@ public class DistanceController implements Closeable
             result.concat("<nessuno>");
 
         for (int i = 0; i < data.size(); i++)
-            result.concat(data.toString() + separator);
+            result.concat(data.get(i).toString() + separator);
 
         Log.d(tag, result);
     }
@@ -275,11 +275,11 @@ public class DistanceController implements Closeable
                     if (newEntry.tagDistance == actualEntry.tagDistance)
                     {
                         //tag appena disconnesso
-                        newEntry.counter++;
+                        newEntry.counter = actualEntry.counter + 1;
                         if (newEntry.counter >= COUNTER_FOR_DISCONNECTED)
                         {
-                            disconnected.add(newEntry);
-                            disconnectedData.add(newEntry);
+                            disconnected.add(new Entry(newEntry));
+                            disconnectedData.add(new Entry(newEntry));
                         }
                     } else
                     {
@@ -317,6 +317,7 @@ public class DistanceController implements Closeable
         {
             if (connected != null && connected.size() > 0)
             {
+                final List<Entry> connectedCopy = cloneList(connected);
                 //presenti tags connessi nell'ultimo aggiornamento dei dati
                 new Thread(new Runnable()
                 {
@@ -324,7 +325,6 @@ public class DistanceController implements Closeable
                     public void run()
                     {
                         //notifica su thread separato
-                        List<Entry> connectedCopy = cloneList(connected);
                         listener.onTagHasConnected(connectedCopy);
                     }
                 }).start();
@@ -332,6 +332,7 @@ public class DistanceController implements Closeable
 
             if (disconnected != null && disconnected.size() > 0)
             {
+                final List<Entry> disconnectedCopy = cloneList(disconnected);
                 //presenti tags disconnessi nell'ultimo aggiornamento dei dati
                 new Thread(new Runnable()
                 {
@@ -339,7 +340,6 @@ public class DistanceController implements Closeable
                     public void run()
                     {
                         //notifica su thread separato
-                        List<Entry> disconnectedCopy = cloneList(disconnected);
                         listener.onTagHasDisconnected(disconnectedCopy);
                     }
                 }).start();
@@ -347,6 +347,7 @@ public class DistanceController implements Closeable
 
             if (data != null && data.size() > 0)
             {
+                final List<Entry> dataCopy = cloneList(data);
                 //notifica i nuovi valori
                 new Thread(new Runnable()
                 {
@@ -354,7 +355,6 @@ public class DistanceController implements Closeable
                     public void run()
                     {
                         //notifica su thread separato
-                        List<Entry> dataCopy = cloneList(data);
                         listener.onTagDataAvailable(dataCopy);
                     }
                 }).start();
