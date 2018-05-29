@@ -282,8 +282,8 @@ public class MainActivity extends Activity {
      * @param distanceView TextView dove aggiornare la distanza
      */
     private void setDistanceText (final int distance, final TextView distanceView) {
-        Log.i(TAG, "MainActivity -> setDistanceText: id = " + id + ", tagDistance = "
-                + distance);
+        Log.i(TAG, "MainActivity -> setDistanceText: id = " + Integer.toHexString(id)
+                + ", tagDistance = " + distance);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
