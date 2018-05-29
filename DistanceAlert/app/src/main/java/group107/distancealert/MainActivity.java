@@ -54,8 +54,7 @@ public class MainActivity extends Activity {
 
         //TextView che mostra la distanza limite
         final TextView maxDistanceView = findViewById(R.id.maxDistance);
-        String defaultMaxDistance = maxDistance / 1000 + "." + maxDistance % 10000 + " m";
-        maxDistanceView.setText(defaultMaxDistance);
+        setDistanceText(maxDistance, maxDistanceView);
         //Bottone che aumenta la distanza limite
         Button plusMaxDistanceButton = findViewById(R.id.plusMaxDistance);
         plusMaxDistanceButton.setOnClickListener(new View.OnClickListener() {
@@ -294,7 +293,7 @@ public class MainActivity extends Activity {
                     decimal += "0";
                 } else {
                     //o due o più numeri dopo la virgola, ne considero solo due
-                    decimal = decimal.substring(0,1);
+                    decimal = decimal.substring(0,2);
                 }
                 String newText =    (distance/1000) +
                         "." + decimal + " m";
