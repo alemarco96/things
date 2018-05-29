@@ -44,7 +44,7 @@
         android:layout_marginBottom="24dp"
         android:text="@string/connected_to"
         android:textSize="24sp"
-        app:layout_constraintStart_toStartOf="@+id/idLayout" />
+        app:layout_constraintStart_toEndOf="@+id/idLayout" />
 
     <TextView
         android:id="@+id/connectedTo_id"
