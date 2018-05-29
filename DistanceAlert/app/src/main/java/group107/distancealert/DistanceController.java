@@ -19,10 +19,14 @@ import static group107.distancealert.MainActivity.TAG;
  */
 public class DistanceController implements Closeable
 {
+    //numero di byte usati dal modulo DWM per descrivere i dati relativi a ciascun tag
     private static final int BYTES_PER_ENTRY = 20;
+    //numero di volte per cui ricevendo gli stessi dati dal modulo DWM, un tag viene dichiarato disconnesso
     private static final int COUNTER_FOR_DISCONNECTED = 3;
 
-    //Oggetto che serve per ordinare in ordine crescente per tagID le entry
+    /**
+     * Oggetto che serve per ordinare in ordine crescente per tagID le entry
+     */
     private Comparator<Entry> MATCHING_ID_ENTRY_COMPARATOR = new Comparator<Entry>()
     {
         @Override
@@ -155,7 +159,9 @@ public class DistanceController implements Closeable
     //il polling del modulo DWM per ottenere le distanze
     private Timer updateDataTimer;
 
-    //oggetto che definisce cosa viene eseguito dal updateDataTimer
+    /**
+     * Oggetto che definisce la routine di aggiornamento periodica
+     */
     private TimerTask updateDataTask = new TimerTask()
     {
         @Override
@@ -213,6 +219,12 @@ public class DistanceController implements Closeable
         return newData;
     }
 
+    /**
+     * Ottiene i nuovi dati dal modulo DWM
+     * @return I nuovi dati dal modulo DWM
+     * @throws IOException
+     * @throws InterruptedException
+     */
     private List<Entry> updateData() throws IOException, InterruptedException
     {
         int[] dwmResponse = driverDWM.requestAPI((byte) 0x0C, null);
@@ -252,6 +264,10 @@ public class DistanceController implements Closeable
         return newData;
     }
 
+    /**
+     * Classifica i dati ottenuti dal modulo DWM e notifica ai listener
+     * @param newData I nuovi dati ottenuti dal modulo
+     */
     private void classifyDataAndNotify(List<Entry> newData)
     {
         List<Entry> common;
@@ -309,7 +325,13 @@ public class DistanceController implements Closeable
         }
     }
 
-    private void notifyToAllTagsListeners(final List<Entry> connected, final List<Entry> disconnected, final List<Entry> data)
+    /**
+     * Notifica a tutti i listener globali
+     * @param connected Lista di entry dei tag appena connessi
+     * @param disconnected Lista di entry dei tag appena disconnessi
+     * @param updated Lista di entry dei tag con dati aggiornati
+     */
+    private void notifyToAllTagsListeners(final List<Entry> connected, final List<Entry> disconnected, final List<Entry> updated)
     {
         //lock già ottenuto
 
@@ -345,9 +367,9 @@ public class DistanceController implements Closeable
                 }).start();
             }
 
-            if (data != null && data.size() > 0)
+            if (updated != null && updated.size() > 0)
             {
-                final List<Entry> dataCopy = cloneList(data);
+                final List<Entry> dataCopy = cloneList(updated);
                 //notifica i nuovi valori
                 new Thread(new Runnable()
                 {
@@ -362,7 +384,13 @@ public class DistanceController implements Closeable
         }
     }
 
-    private void notifyToTagsListeners(final List<Entry> connected, final List<Entry> disconnected, final List<Entry> data)
+    /**
+     * Notifica a tutti i listener specifici per un tag, se sono avvenuti degli eventi su quel tag
+     * @param connected Lista di entry dei tag appena connessi
+     * @param disconnected Lista di entry dei tag appena disconnessi
+     * @param updated Lista di entry dei tag con dati aggiornati
+     */
+    private void notifyToTagsListeners(final List<Entry> connected, final List<Entry> disconnected, final List<Entry> updated)
     {
         //lock già ottenuto
 
@@ -404,7 +432,7 @@ public class DistanceController implements Closeable
                 continue;
             }
 
-            final int r3 = Collections.binarySearch(data, new Entry(ID, -1), MATCHING_ID_ENTRY_COMPARATOR);
+            final int r3 = Collections.binarySearch(updated, new Entry(ID, -1), MATCHING_ID_ENTRY_COMPARATOR);
             if (r3 >= 0)
             {
                 //il tag è ancora connesso e si notifica la nuova posizione
@@ -413,7 +441,7 @@ public class DistanceController implements Closeable
                     @Override
                     public void run()
                     {
-                        listener.onTagDataAvailable(data.get(r3).tagDistance);
+                        listener.onTagDataAvailable(updated.get(r3).tagDistance);
                     }
                 }).start();
             }
@@ -421,7 +449,7 @@ public class DistanceController implements Closeable
     }
 
     /**
-     * Imposta il controller. Non avvia il polling con il modulo, che deve essere fatto manualmente tramite il metodo start()
+     * Imposta il controller. Non avvia il polling con il modulo, che deve essere fatto manualmente tramite il metodo startUpdate()
      * @param busName Il nome del pin a cui è collegato fisicamente il modulo
      * @throws IllegalArgumentException Se il busName non è valido
      * @throws IOException Se avviene un errore nella creazione del driver DWM
@@ -554,6 +582,21 @@ public class DistanceController implements Closeable
     }
 
     /**
+     * Cambia il bus di comunicazione con il modulo DWM
+     * @param busName il nome del bus di comunicazione
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void switchBus(String busName) throws IOException, InterruptedException
+    {
+        if (driverDWM != null)
+            driverDWM.close();
+
+        driverDWM = new DriverDWM(busName);
+        driverDWM.checkDWM();
+    }
+
+    /**
      * Chiude il DistanceController e rilascia le risorse
      */
     public void close()
@@ -581,6 +624,10 @@ public class DistanceController implements Closeable
         }
     }
 
+    /**
+     * Restituisce un array con gli ID dei tag connessi al modulo DWM. E' da usare una tantum.
+     * @return un array contenente i tag connessi
+     */
     public int[] getTagIDs()
     {
         synchronized (dataLock)
