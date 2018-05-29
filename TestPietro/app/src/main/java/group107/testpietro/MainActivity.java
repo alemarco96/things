@@ -51,6 +51,7 @@ public class MainActivity extends Activity {
         //Creazione di RadioGroup, ospiterà i RadioButtons
         final RadioGroup listIDsGroup = new RadioGroup(getApplicationContext());
 
+        idLayout.addView(listIDsGroup);
         //riferimento alla TextView che mostra l'ID al quale si è connessi.
         final TextView connectedToId = findViewById(R.id.connectedTo_id);
         //riferimento alla TextView che mostra la distanza ricevuta
@@ -128,9 +129,8 @@ public class MainActivity extends Activity {
                         });
                         listIDsGroup.addView(item.get(i));
                     }
-                    idLayout.addView(listIDsGroup);
                     for(int i = 5; i < 11; i++) {
-                        item.add(i, new RadioButton(getApplicationContext()));
+                        item.add(new RadioButton(getApplicationContext()));
                         item.get(i).setText(Integer.toHexString(i));
                         final int finalId = id;
                         item.get(i).setOnClickListener(new View.OnClickListener() {

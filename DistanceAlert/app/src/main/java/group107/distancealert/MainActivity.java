@@ -120,7 +120,7 @@ public class MainActivity extends Activity {
                             //regenerateRagioGroup(listIDsGroup, idLayout, distanceView,
                             //        connectedToId);
 
-                            //aggiungo TAG appena connessi
+                            //aggiunga tags appena connessi
                             for(int i = 0; i < tags.size(); i++) {
                                 item.add(new RadioButton(getApplicationContext()));
                                 final String textItem = Integer.toHexString(tags.get(i).tagID);
@@ -137,7 +137,8 @@ public class MainActivity extends Activity {
                                         connectToSpecificListener(distanceView, connectedToId);
                                     }
                                 });
-                                if(id == singleId) {Log.i(TAG,"MainActivity ->" +
+                                if(id == singleId) {
+                                    Log.i(TAG,"MainActivity ->" +
                                         " addAllTagListener ->" +
                                         " onTagHasConnected: ciclo for, i = " + i +
                                         ", RadioButton toggled: (id = " + Integer.toHexString(id) +
@@ -155,6 +156,8 @@ public class MainActivity extends Activity {
                             //almeno un Tag si è appena disconnesso, rigenerazione lista IDs
                             //regenerateRagioGroup(listIDsGroup, idLayout, distanceView,
                             //        connectedToId);
+
+                            //rimozione tags appena disconnessi
                             for(int i = 0; i < tags.size(); i ++) {
                                 for(int j = 0; j < item.size(); j++) {
                                     Log.i(TAG, "MainActivity -> addAllTagListener" +
@@ -167,7 +170,7 @@ public class MainActivity extends Activity {
                                                 Integer.toHexString(tags.get(i).tagID) +
                                                 ") == (item.get(j).getText() = " +
                                                 item.get(j).getText() + ")");
-                                        item.remove(i);
+                                        item.remove(j);
                                     }
                                 }
                             }
