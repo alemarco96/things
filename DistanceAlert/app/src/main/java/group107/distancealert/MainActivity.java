@@ -17,6 +17,7 @@ import com.google.android.things.pio.GpioCallback;
 import com.google.android.things.pio.PeripheralManager;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 //TODO possibile ottimizzazione codice riguardante aggiornamento lista IDs
@@ -36,6 +37,7 @@ public class MainActivity extends Activity {
     private DistanceController myController;
     private int id = -1;
     private int maxDistance = 2000;
+    private List<RadioButton> item = new ArrayList<>();
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -46,6 +48,8 @@ public class MainActivity extends Activity {
         final LinearLayout idLayout = findViewById(R.id.idLayout);
         //Creazione di RadioGroup, ospiterà i RadioButtons
         final RadioGroup listIDsGroup = new RadioGroup(getApplicationContext());
+        //Collegamento RadioGroup al LinearLayout ospitante
+        idLayout.addView(listIDsGroup);
 
         //riferimento alla TextView che mostra l'ID al quale si è connessi.
         final TextView connectedToId = findViewById(R.id.connectedTo_id);
@@ -111,20 +115,62 @@ public class MainActivity extends Activity {
                         @Override
                         public void onTagHasConnected(List<DistanceController.Entry> tags) {
                             Log.i(TAG,"MainActivity -> addAllTagListener ->" +
-                                    " onTagHasConnected");
+                                    " onTagHasConnected: tags.sixe() = " + tags.size());
                             //almeno un Tag si è appena connesso, rigenerazione lista IDs
-                            regenerateRagioGroup(listIDsGroup, idLayout, distanceView,
-                                    connectedToId);
+                            //regenerateRagioGroup(listIDsGroup, idLayout, distanceView,
+                            //        connectedToId);
+
+                            //aggiungo TAG appena connessi
+                            for(int i = 0; i < tags.size(); i++) {
+                                item.add(new RadioButton(getApplicationContext()));
+                                final String textItem = Integer.toHexString(tags.get(i).tagID);
+                                item.get(i).setText(textItem);
+                                final int singleId = tags.get(i).tagID;
+                                final int finalI = i;
+                                item.get(i).setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        Log.i(TAG, "MainActivity -> addAllTagListener ->" +
+                                                " onTagHasConnected -> item.get(i = " + finalI +
+                                                ").setOnClickListener: id = " + textItem);
+                                        id = singleId;
+                                        connectToSpecificListener(distanceView, connectedToId);
+                                    }
+                                });
+                                if(id == singleId) {Log.i(TAG,"MainActivity ->" +
+                                        " addAllTagListener ->" +
+                                        " onTagHasConnected: ciclo for, i = " + i +
+                                        ", RadioButton toggled: (id = " + Integer.toHexString(id) +
+                                        ") == (singleid = " + Integer.toHexString(singleId) + ")");
+                                    item.get(i).toggle();
+                                }
+                            }
 
                         }
 
                         @Override
                         public void onTagHasDisconnected(List<DistanceController.Entry> tags) {
                             Log.i(TAG,"MainActivity -> addAllTagListener" +
-                                    " -> onTagHasDisconnected");
+                                    " -> onTagHasDisconnected: tags.size() = " + tags.size());
                             //almeno un Tag si è appena disconnesso, rigenerazione lista IDs
-                            regenerateRagioGroup(listIDsGroup, idLayout, distanceView,
-                                    connectedToId);
+                            //regenerateRagioGroup(listIDsGroup, idLayout, distanceView,
+                            //        connectedToId);
+                            for(int i = 0; i < tags.size(); i ++) {
+                                for(int j = 0; j < item.size(); j++) {
+                                    Log.i(TAG, "MainActivity -> addAllTagListener" +
+                                            " -> onTagHasDisconnected: i = " + i + ", j = " + j);
+                                    if (Integer.toHexString(tags.get(i).tagID)
+                                            == item.get(j).getText()) {
+                                        Log.i(TAG, "MainActivity -> addAllTagListener" +
+                                                " -> onTagHasDisconnected" +
+                                                "(Integer.toHexString(tags.get(i).tagID) = " +
+                                                Integer.toHexString(tags.get(i).tagID) +
+                                                ") == (item.get(j).getText() = " +
+                                                item.get(j).getText() + ")");
+                                        item.remove(i);
+                                    }
+                                }
+                            }
                         }
 
                         @Override
@@ -248,7 +294,8 @@ public class MainActivity extends Activity {
             @Override
             public void onTagDataAvailable(final int tagDistance) {
                 Log.i(TAG, "MainActivity -> connectToSpecificListener -> addTagListener" +
-                        " -> onTagDataAvailable: id = " + Integer.toHexString(id) + ", tagDistance = " + tagDistance);
+                        " -> onTagDataAvailable: id = " + Integer.toHexString(id) +
+                        ", tagDistance = " + tagDistance);
                 if (tagDistance > maxDistance) {
                     distanceAlarm();//todo migliorare implementazione?
                 }
