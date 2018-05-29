@@ -13,10 +13,6 @@ import android.widget.RadioGroup;
 import android.widget.Switch;
 import android.widget.TextView;
 
-import com.google.android.things.pio.Gpio;
-import com.google.android.things.pio.GpioCallback;
-import com.google.android.things.pio.PeripheralManager;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +30,7 @@ public class MainActivity extends Activity {
     private static final String RPI3_UART = "MINIUART";
     private static final String RPI3_SPI = "SPI0.0";
 
-    private Gpio pulsante;
+    //private Gpio pulsante;
     //private DistanceController myController;
     private int id = 53774;
     private int maxDistance = 2000;

@@ -54,7 +54,7 @@ public class MainActivity extends Activity {
 
         //TextView che mostra la distanza limite
         final TextView maxDistanceView = findViewById(R.id.maxDistance);
-        String defaultMaxDistance = maxDistance / 1000 + "." + maxDistance % 1000 + " m";
+        String defaultMaxDistance = maxDistance / 1000 + "." + maxDistance % 10000 + " m";
         maxDistanceView.setText(defaultMaxDistance);
         //Bottone che aumenta la distanza limite
         Button plusMaxDistanceButton = findViewById(R.id.plusMaxDistance);
@@ -64,14 +64,7 @@ public class MainActivity extends Activity {
                 Log.i(TAG, "MainActivity -> plusMaxDistanceButton -> onClick");
                 if (maxDistance <= 90500) {
                     maxDistance += 500;
-                    final String newMaxDistance = (maxDistance / 1000) + "." + (maxDistance % 1000)
-                            + " m";
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            maxDistanceView.setText(newMaxDistance);
-                        }
-                    });
+                    setDistanceText(maxDistance, maxDistanceView);
                 }
             }
         });
@@ -83,14 +76,7 @@ public class MainActivity extends Activity {
                 Log.i(TAG, "MainActivity -> minusMaxDistanceButton -> onClick");
                 if (maxDistance >= 500) {
                     maxDistance -= 500;
-                    final String newMaxDistance = (maxDistance / 1000) + "." + (maxDistance % 1000)
-                            + " m";
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            maxDistanceView.setText(newMaxDistance);
-                        }
-                    });
+                    setDistanceText(maxDistance, maxDistanceView);
                 }
             }
         });
@@ -108,31 +94,20 @@ public class MainActivity extends Activity {
             infoView.setText(R.string.physical_button_problem);
         }
 
-        //TODO: usa il nuovo metodo di DistanceController: switchBus(String busName)!!!
         //Switch che cambia metodo di connessione o UART o SPI
         final Switch switchMethodView = findViewById(R.id.switchMethod);
         switchMethodView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
-                    if(myController != null) {
-                        Log.i(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
-                        "myController == null");
-                        myController.close();
-                    } else {
-                        Log.i(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
-                                "myController == null");
-                    }
                     if (nextSpi) {
                         nextSpi = false;
-                        myController = new DistanceController(RPI3_SPI);
-                        myController.startUpdate(update);
+                        myController.switchBus(RPI3_SPI);
                         switchMethodView.setChecked(true);
                         startElaboration(myController, distanceView, connectedToId, listIDsGroup);
                     } else {
                         nextSpi = true;
-                        myController = new DistanceController(RPI3_UART);
-                        myController.startUpdate(update);
+                        myController.switchBus(RPI3_UART);
                         switchMethodView.setChecked(false);
                         startElaboration(myController, distanceView, connectedToId, listIDsGroup);
                     }
@@ -304,17 +279,25 @@ public class MainActivity extends Activity {
 
     /**
      * Aggiorna la View con la distanza ricevuta
-     * @param tagDistance distanza ricevuta
+     * @param distance distanza ricevuta
      * @param distanceView TextView dove aggiornare la distanza
      */
-    private void setDistanceText (final int tagDistance, final TextView distanceView) {
+    private void setDistanceText (final int distance, final TextView distanceView) {
         Log.i(TAG, "MainActivity -> setDistanceText: id = " + id + ", tagDistance = "
-                + tagDistance);
+                + distance);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                String newText =    (tagDistance/1000) +
-                        "." + (tagDistance%1000) + " m";
+                String decimal = Integer.toString(distance%1000);
+                if(decimal.length() < 2) {
+                    //un solo numero dopo la virgola, aggiungo uno zero a sinistra
+                    decimal += "0";
+                } else {
+                    //o due o più numeri dopo la virgola, ne considero solo due
+                    decimal = decimal.substring(0,1);
+                }
+                String newText =    (distance/1000) +
+                        "." + decimal + " m";
                 distanceView.setText(newText);
             }
         });
