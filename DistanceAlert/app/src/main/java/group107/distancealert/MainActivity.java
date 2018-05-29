@@ -342,7 +342,7 @@ public class MainActivity extends Activity {
                     }
             );
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace();//TODO
         }
     }
 
