@@ -13,4 +13,7 @@
     <string name="max_distance_is">Distanza massima:</string>
     <string name="plus">+</string>
     <string name="minus">-</string>
+    <string name="physical_button_problem">Problema riguardo il bottone fisico rilevato.</string>
+    <string name="uart">UART</string>
+    <string name="spi">SPI</string>
 </resources>

@@ -97,4 +97,43 @@
         app:layout_constraintRight_toLeftOf="@id/maxDistance"
         app:layout_constraintTop_toBottomOf="@id/maxDistanceIs" />
 
+    <TextView
+        android:id="@+id/info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent"/>
+
+
+    <TextView
+        android:id="@+id/spi"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/spi"
+        android:layout_margin="20sp"
+        android:textSize="24sp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/maxDistance" />
+
+
+    <Switch
+        android:id="@+id/switchMethod"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="20sp"
+        app:layout_constraintTop_toBottomOf="@id/maxDistance"
+        app:layout_constraintLeft_toRightOf="@id/maxDistance"
+        app:layout_constraintRight_toLeftOf="@id/maxDistance"
+        />
+
+    <TextView
+        android:id="@+id/uart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/uart"
+        android:layout_margin="20sp"
+        android:textSize="24sp"
+        app:layout_constraintRight_toLeftOf="@id/switchMethod"
+        app:layout_constraintTop_toBottomOf="@id/maxDistance" />
 </android.support.constraint.ConstraintLayout>

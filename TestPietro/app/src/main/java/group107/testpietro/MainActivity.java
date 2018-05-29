@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.google.android.things.pio.Gpio;
@@ -37,6 +38,7 @@ public class MainActivity extends Activity {
     //private DistanceController myController;
     private int id = 53774;
     private int maxDistance = 2000;
+    private boolean nextSpi = true;
 
 
     private List<RadioButton> item = new ArrayList<>();
@@ -61,6 +63,24 @@ public class MainActivity extends Activity {
         final TextView maxDistanceView = findViewById(R.id.maxDistance);
         String defaultMaxDistance = maxDistance/1000 + "." + maxDistance%1000 + " m";
         maxDistanceView.setText(defaultMaxDistance);
+
+
+        final Switch switchMethodView = findViewById(R.id.switchMethod);
+        switchMethodView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (nextSpi) {
+                    switchMethodView.setChecked(true);
+                    nextSpi = false;
+                    Log.i(TAG, "switchMethodView.onClick: nextSpi = " + nextSpi);
+                } else {
+                    switchMethodView.setChecked(false);
+                    nextSpi = true;
+                    Log.i(TAG, "switchMethodView.onClick: nextSpi = " + nextSpi);
+                }
+            }
+        });
+
         //Bottone che aumenta la distanza limite
         Button plusMaxDistanceButton = findViewById(R.id.plusMaxDistance);
         plusMaxDistanceButton.setOnClickListener(new View.OnClickListener() {
@@ -144,7 +164,6 @@ public class MainActivity extends Activity {
                     }
                     listIDsGroup.removeView(item.get(6));
                     item.remove(6);
-                    item.add
 
                 }
             });

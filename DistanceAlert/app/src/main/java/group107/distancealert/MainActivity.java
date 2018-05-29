@@ -9,6 +9,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.google.android.things.pio.Gpio;
@@ -31,6 +32,8 @@ public class MainActivity extends Activity {
     private int id = -1;
     private int maxDistance = 2000;
     private List<RadioButton> item = new ArrayList<>();
+    private boolean nextSpi = true;
+    private long update = 300L;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -51,18 +54,18 @@ public class MainActivity extends Activity {
 
         //TextView che mostra la distanza limite
         final TextView maxDistanceView = findViewById(R.id.maxDistance);
-        String defaultMaxDistance = maxDistance/1000 + "." + maxDistance%1000 + " m";
+        String defaultMaxDistance = maxDistance / 1000 + "." + maxDistance % 1000 + " m";
         maxDistanceView.setText(defaultMaxDistance);
         //Bottone che aumenta la distanza limite
         Button plusMaxDistanceButton = findViewById(R.id.plusMaxDistance);
         plusMaxDistanceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG,"MainActivity -> plusMaxDistanceButton -> onClick");
+                Log.i(TAG, "MainActivity -> plusMaxDistanceButton -> onClick");
                 if (maxDistance <= 90500) {
                     maxDistance += 500;
                     final String newMaxDistance = (maxDistance / 1000) + "." + (maxDistance % 1000)
-                            +" m";
+                            + " m";
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -77,7 +80,7 @@ public class MainActivity extends Activity {
         minusMaxDistanceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG,"MainActivity -> minusMaxDistanceButton -> onClick");
+                Log.i(TAG, "MainActivity -> minusMaxDistanceButton -> onClick");
                 if (maxDistance >= 500) {
                     maxDistance -= 500;
                     final String newMaxDistance = (maxDistance / 1000) + "." + (maxDistance % 1000)
@@ -92,12 +95,77 @@ public class MainActivity extends Activity {
             }
         });
 
+        //Inizializzazione pulsante
+        TextView infoView = findViewById(R.id.info);
+        PeripheralManager manager = PeripheralManager.getInstance();
         try {
-            //sceglie canale di comunicazione UART ("MINIUART") o SPI ("SPI0.0")
-            myController = new DistanceController(RPI3_SPI);//TODO pulsante per passare da spi a uart
-            //Start polling
-            myController.startUpdate(300L);
+            pulsante = manager.openGpio(GPIO_PULSANTE);
+            pulsante.setActiveType(Gpio.ACTIVE_HIGH);
+            pulsante.setDirection(Gpio.DIRECTION_IN);
+        } catch (IOException e) {
+            Log.i(TAG, "MainActivity -> onCreate: Inizializzazione pulsante non riuscita"
+                    + ", errore: ", e);
+            infoView.setText(R.string.physical_button_problem);
+        }
 
+        //Switch che cambia metodo di connessione o UART o SPI
+        final Switch switchMethodView = findViewById(R.id.switchMethod);
+        switchMethodView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    if(myController != null) {
+                        Log.i(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
+                        "myController == null");
+                        myController.close();
+                    } else {
+                        Log.i(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
+                                "myController == null");
+                    }
+                    if (nextSpi) {
+                        nextSpi = false;
+                        myController = new DistanceController(RPI3_SPI);
+                        myController.startUpdate(update);
+                        switchMethodView.setChecked(true);
+                        startElaboration(myController, distanceView, connectedToId, listIDsGroup);
+                    } else {
+                        nextSpi = true;
+                        myController = new DistanceController(RPI3_UART);
+                        myController.startUpdate(update);
+                        switchMethodView.setChecked(false);
+                        startElaboration(myController, distanceView, connectedToId, listIDsGroup);
+                    }
+                } catch (java.io.IOException | InterruptedException e) {
+                    Log.e(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
+                            " Errore:\n", e);
+                    /*Generata un'eccezione al momento della creazione dell'instanza
+                    DistanceController quindi lo notifico sullo schermo utilizzato dall'utente*/
+                    connectedToId.setText(R.string.noDwm);
+                }
+
+            }
+        });
+
+        //default lancia SPI
+        try {
+            Log.i(TAG, "MainActivity -> onCreate: default lancia SPI");
+            nextSpi = false;
+            myController = new DistanceController(RPI3_SPI);
+            myController.startUpdate(update);
+            switchMethodView.setChecked(true);
+            startElaboration(myController, distanceView, connectedToId, listIDsGroup);
+        } catch (java.io.IOException | InterruptedException e) {
+            Log.e(TAG, "MainActivity -> onCreate Errore:\n", e);
+            /*Generata un'eccezione al momento della creazione dell'instanza DistanceController
+            quindi lo notifico sullo schermo utilizzato dall'utente*/
+            connectedToId.setText(R.string.noDwm);
+        }
+    }
+
+        protected void startElaboration(final DistanceController myController,
+                                        final TextView distanceView, final TextView connectedToId,
+                                        final RadioGroup listIDsGroup) {
+            Log.i(TAG, "MainActivity -> startElaboration");
             /*Connessione ai listeners generali per creare lista di IDs rilevati
             visualizzabile su schermo e completa di bottoni per la visione dei dati relativi
             allo specifico id selezionato */
@@ -107,8 +175,9 @@ public class MainActivity extends Activity {
                     myController.addAllTagsListener(new AllTagsListener() {
                         @Override
                         public void onTagHasConnected(List<DistanceController.Entry> tags) {
-                            Log.i(TAG,"MainActivity -> addAllTagListener ->" +
-                                    " onTagHasConnected: tags.size() = " + tags.size());
+                            Log.i(TAG,"MainActivity -> startElaboration -> " +
+                                    "addAllTagListener -> onTagHasConnected: tags.size() = "
+                                    + tags.size());
                             //aggiunga tags appena connessi
                             for(int i = 0; i < tags.size(); i++) {
                                 item.add(new RadioButton(getApplicationContext()));
@@ -119,7 +188,8 @@ public class MainActivity extends Activity {
                                 item.get(i).setOnClickListener(new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
-                                        Log.i(TAG, "MainActivity -> addAllTagListener ->" +
+                                        Log.i(TAG, "MainActivity -> startElaboration" +
+                                                " -> addAllTagListener ->" +
                                                 " onTagHasConnected -> item.get(i = " + finalI +
                                                 ").setOnClickListener: id = " + textItem);
                                         id = singleId;
@@ -127,7 +197,7 @@ public class MainActivity extends Activity {
                                     }
                                 });
                                 if(id == singleId) {
-                                    Log.i(TAG,"MainActivity ->" +
+                                    Log.i(TAG,"MainActivity -> startElaboration ->" +
                                         " addAllTagListener ->" +
                                         " onTagHasConnected: ciclo for, i = " + i +
                                         ", RadioButton toggled: (id = " + Integer.toHexString(id) +
@@ -144,16 +214,18 @@ public class MainActivity extends Activity {
 
                         @Override
                         public void onTagHasDisconnected(List<DistanceController.Entry> tags) {
-                            Log.i(TAG,"MainActivity -> addAllTagListener" +
+                            Log.i(TAG,"MainActivity -> startElaboration -> addAllTagListener" +
                                     " -> onTagHasDisconnected: tags.size() = " + tags.size());
                             //rimozione tags appena disconnessi
                             for(int i = 0; i < tags.size(); i ++) {
                                 for(int j = 0; j < item.size(); j++) {
-                                    Log.i(TAG, "MainActivity -> addAllTagListener" +
+                                    Log.i(TAG, "MainActivity -> startElaboration" +
+                                            " -> addAllTagListener" +
                                             " -> onTagHasDisconnected: i = " + i + ", j = " + j);
                                     if (Integer.toHexString(tags.get(i).tagID)
                                             == item.get(j).getText()) {
-                                        Log.i(TAG, "MainActivity -> addAllTagListener" +
+                                        Log.i(TAG, "MainActivity -> startElaboration ->" +
+                                                " addAllTagListener" +
                                                 " -> onTagHasDisconnected" +
                                                 "(Integer.toHexString(tags.get(i).tagID) = " +
                                                 Integer.toHexString(tags.get(i).tagID) +
@@ -175,22 +247,6 @@ public class MainActivity extends Activity {
                     });
                 }
             }).start();
-        } catch (java.io.IOException | InterruptedException e) {
-            Log.e(TAG, "MainActivity -> onCreate: Errore:\n", e);
-            /*Generata un'eccezione al momento della creazione dell'instanza DistanceController
-            quindi lo notifico sullo schermo utilizzato dall'utente*/
-            connectedToId.setText(R.string.noDwm);
-        }
-
-
-        PeripheralManager manager = PeripheralManager.getInstance();//todo mettilo pure dove ti piace di più
-        try {
-            pulsante = manager.openGpio(GPIO_PULSANTE);
-            pulsante.setActiveType(Gpio.ACTIVE_HIGH);
-            pulsante.setDirection(Gpio.DIRECTION_IN);
-        } catch (IOException e) {
-            //todo
-        }
     }
 
     /**
@@ -256,22 +312,6 @@ public class MainActivity extends Activity {
                 distanceView.setText(newText);
             }
         });
-    }
-
-    /**
-     * Restituisce l'id ai quali si è connessi
-     * @return id variabile di tipo int rappresentante l'id ai quali si è connessi
-     */
-    protected int getActualId() {
-        return id;
-    }
-
-    /**
-     * Restituisce la distanza massima impostata
-     * @return maxDistance variabile di tipo int rappresentante la distanza massima
-     */
-    protected int getActualMaxDistance() {
-        return maxDistance;
     }
 
     /*TODO controlla questo metodo*/
