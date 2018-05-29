@@ -98,9 +98,9 @@ public class DistanceController implements Closeable
     private static List<Entry> cloneList(List<Entry> source)
     {
         List<Entry> dest = new ArrayList<>(source.size());
-        for (Entry entry:source)
+        for (int i = 0; i < source.size(); i++)
         {
-            dest.add(new Entry(entry));
+            dest.add(new Entry(source.get(i)));
         }
         return dest;
     }
@@ -119,7 +119,7 @@ public class DistanceController implements Closeable
             result.concat("<nessuno>");
 
         for (int i = 0; i < data.size(); i++)
-            result.concat(data.toString() + separator);
+            result.concat(data.get(i).toString() + separator);
 
         Log.d(tag, result);
     }
