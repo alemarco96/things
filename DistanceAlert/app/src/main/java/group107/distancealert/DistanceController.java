@@ -100,7 +100,7 @@ public class DistanceController implements Closeable
         List<Entry> dest = new ArrayList<>(source.size());
         for (Entry entry:source)
         {
-            dest.add(new DistanceController.Entry(entry));
+            dest.add(new Entry(entry));
         }
         return dest;
     }
@@ -275,11 +275,11 @@ public class DistanceController implements Closeable
                     if (newEntry.tagDistance == actualEntry.tagDistance)
                     {
                         //tag appena disconnesso
-                        newEntry.counter++;
+                        newEntry.counter = actualEntry.counter + 1;
                         if (newEntry.counter >= COUNTER_FOR_DISCONNECTED)
                         {
-                            disconnected.add(newEntry);
-                            disconnectedData.add(newEntry);
+                            disconnected.add(new Entry(newEntry));
+                            disconnectedData.add(new Entry(newEntry));
                         }
                     } else
                     {
