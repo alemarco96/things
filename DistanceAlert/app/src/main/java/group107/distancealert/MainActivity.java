@@ -170,6 +170,7 @@ public class MainActivity extends Activity {
                                                 Integer.toHexString(tags.get(i).tagID) +
                                                 ") == (item.get(j).getText() = " +
                                                 item.get(j).getText() + ")");
+                                        listIDsGroup.removeView(item.get(j));
                                         item.remove(j);
                                     }
                                 }
