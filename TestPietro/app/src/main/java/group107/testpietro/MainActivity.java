@@ -144,6 +144,7 @@ public class MainActivity extends Activity {
                     }
                     listIDsGroup.removeView(item.get(6));
                     item.remove(6);
+                    item.add
 
                 }
             });

@@ -115,7 +115,7 @@ public class MainActivity extends Activity {
                         @Override
                         public void onTagHasConnected(List<DistanceController.Entry> tags) {
                             Log.i(TAG,"MainActivity -> addAllTagListener ->" +
-                                    " onTagHasConnected: tags.sixe() = " + tags.size());
+                                    " onTagHasConnected: tags.size() = " + tags.size());
                             //almeno un Tag si è appena connesso, rigenerazione lista IDs
                             //regenerateRagioGroup(listIDsGroup, idLayout, distanceView,
                             //        connectedToId);
@@ -145,6 +145,10 @@ public class MainActivity extends Activity {
                                         ") == (singleid = " + Integer.toHexString(singleId) + ")");
                                     item.get(i).toggle();
                                 }
+                                //Aggiunta del bottone in fondo alla lista
+                                listIDsGroup.addView(item.get(i), -1,
+                                        ViewGroup.LayoutParams.WRAP_CONTENT);
+
                             }
 
                         }
