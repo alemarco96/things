@@ -16,10 +16,8 @@ import java.util.TimerTask;
  * buzzer che suona un semplice motivetto musicale.
  * Quando si ha finito di usare un oggetto di questa classe è importante invocare il metodo close
  * per rilasciare le periferiche hardware utilizzate.
- * Questa classe implementa l'interfaccia Closeable che permette di invocare automaticamente
- * il metodo close quando avvengono delle eccezioni alla creazione dell'oggetto
  */
-public class DistanceAlarm implements Closeable {
+public class DistanceAlarm {
     /**
      * Stringhe costanti usate per identificare le periferiche
      */

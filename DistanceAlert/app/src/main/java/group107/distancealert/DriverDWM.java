@@ -17,10 +17,8 @@ import static java.lang.Byte.toUnsignedInt;
  * sia che esso sia collegato via UART o via SPI.
  * Quando si ha finito di usare un oggetto di questa classe è importante invocare il metodo close
  * per rilasciare le periferiche hardware utilizzate.
- * Questa classe implementa l'interfaccia Closeable che permette di invocare automaticamente
- * il metodo close quando avvengono delle eccezioni alla creazione dell'oggetto
  */
-public class DriverDWM implements Closeable {
+public class DriverDWM {
     /**
      * Oggetti riferiti alle periferiche SPI e UART
      */
