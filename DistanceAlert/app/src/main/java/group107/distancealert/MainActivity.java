@@ -329,7 +329,6 @@ public class MainActivity extends Activity {
 
             pulsante.registerGpioCallback(
                     /*todo runtime exception can't create handler inside thread that has not called Looper.prepare() */
-                    /*new Handler(),*/
                     new GpioCallback() {
                         @Override
                         public boolean onGpioEdge(Gpio gpio) {
