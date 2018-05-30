@@ -638,13 +638,12 @@ public class DistanceController
             updateDataTimer = null;
         }
 
-        try
-        {
-            driverDWM.close();
-            driverDWM = null;
-        } catch (IOException e)
-        {
-            //ignora errore
+        if (driverDWM != null) {
+            try {
+                driverDWM.close();
+            } catch (IOException e) {
+                Log.e(MainActivity.TAG, "Eccezione in chiusura del driver DWM", e);//TODO aggiunta
+            }
             driverDWM = null;
         }
 
