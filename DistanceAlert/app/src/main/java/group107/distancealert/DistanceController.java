@@ -597,10 +597,15 @@ public class DistanceController
         if (driverDWM != null)
             driverDWM.close();
 
+        long period = updateDataTask.scheduledExecutionTime();
+        stopUpdate();
+
         TimeUnit.MILLISECONDS.sleep(50L);
 
         driverDWM = new DriverDWM(busName);
         driverDWM.checkDWM();
+
+        startUpdate(period);
     }
 
     /**
