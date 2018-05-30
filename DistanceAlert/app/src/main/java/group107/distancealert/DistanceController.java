@@ -642,7 +642,7 @@ public class DistanceController
             try {
                 driverDWM.close();
             } catch (IOException e) {
-                Log.e(MainActivity.TAG, "Eccezione in chiusura del driver DWM", e);//TODO aggiunta
+                Log.e(MainActivity.TAG, "Eccezione in chiusura del driver DWM", e);
             }
             driverDWM = null;
         }
