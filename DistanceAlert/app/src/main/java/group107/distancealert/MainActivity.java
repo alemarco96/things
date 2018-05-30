@@ -20,6 +20,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+//TODO dopo crash classi continuano ad inviare dati, gestire eccezioni in modo da prevenire crash
+//TODO gestire eccezione se non connesso modulo ma si clicca sullo switch
+
 public class MainActivity extends Activity {
     public static final String TAG = "107G";
 
@@ -104,7 +107,6 @@ public class MainActivity extends Activity {
                                 " nextSpi = " + nextSpi);
                         nextSpi = false;
                         myController.switchBus(RPI3_SPI);
-                        myController.startUpdate(update); //TODO serve?
                         switchMethodView.setChecked(true);
                         startElaboration(myController, distanceView, connectedToId, listIDsGroup);
                     } else {
@@ -112,7 +114,6 @@ public class MainActivity extends Activity {
                                 " nextSpi = " + nextSpi);
                         nextSpi = true;
                         myController.switchBus(RPI3_UART);
-                        myController.startUpdate(update); //TODO serve?
                         switchMethodView.setChecked(false);
                         startElaboration(myController, distanceView, connectedToId, listIDsGroup);
                     }
@@ -230,6 +231,7 @@ public class MainActivity extends Activity {
                 Log.i(TAG,"MainActivity -> addAllTagListener" +
                         " -> onTagDataAvailable");
                 //dato inviato dai tag, lista IDs invariata
+                //TODO connettere quelli già connessi se non presenti
             }
         });
     }

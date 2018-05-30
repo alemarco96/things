@@ -120,6 +120,7 @@ public class DistanceAlarm {
         }
 
         if (led != null) {
+            led.setValue(false);
             led.close();
             led = null;
         }
