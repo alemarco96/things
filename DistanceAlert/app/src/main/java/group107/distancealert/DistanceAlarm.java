@@ -93,6 +93,7 @@ public class DistanceAlarm {
             public void run() {
                 toneIndex = (toneIndex + 1) % tone.length;
                 try {
+
                     //Cambio tono emesso dal buzzer e cambio stato al GPIO del LED
                     buzzer.setPwmFrequencyHz(tone[toneIndex]);
                     led.setValue(!led.getValue());
@@ -101,7 +102,7 @@ public class DistanceAlarm {
                     Log.w(MainActivity.TAG, "Exception updating alarm state", e);
                 }
             }
-        }, 0, 400);
+        }, 0, 300);
 
         // Abilito la periferica PWM
         buzzer.setEnabled(true);
