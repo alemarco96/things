@@ -26,6 +26,12 @@ import java.util.List;
 public class MainActivity extends Activity {
     public static final String TAG = "107G";
 
+
+    /**
+     * Stringhe costanti usate per identificare le periferiche
+     */
+    private static final String PWM_BUZZER = "PWM1";
+    private static final String GPIO_LED = "BCM16";
     private static final String GPIO_PULSANTE = "BCM26";
     private static final String RPI3_UART = "MINIUART";
     private static final String RPI3_SPI = "SPI0.0";
@@ -109,7 +115,7 @@ public class MainActivity extends Activity {
         // SOLO SE IL PULSANTE FUNZIONA, istanzio l'allarme
         if (pulsante != null) {
             try {
-                myAlarm = new DistanceAlarm();
+                myAlarm = new DistanceAlarm(GPIO_LED, PWM_BUZZER);
             } catch (IOException e) {
                 Log.i(TAG, "MainActivity -> onCreate: Inizializzazione allarme non riuscita"
                         + ", errore: ", e);

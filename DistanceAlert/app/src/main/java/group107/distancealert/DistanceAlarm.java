@@ -19,12 +19,6 @@ import java.util.TimerTask;
  */
 public class DistanceAlarm {
     /**
-     * Stringhe costanti usate per identificare le periferiche
-     */
-    private static final String PWM_BUZZER = "PWM1";
-    private static final String GPIO_LED = "BCM16";
-
-    /**
      * Oggetti riferiti alle periferiche GPIO e PWM
      */
     private Gpio led;
@@ -52,7 +46,7 @@ public class DistanceAlarm {
      *
      * @throws IOException Lanciata se ci sono problemi di accesso alle periferiche
      */
-    public DistanceAlarm() throws IOException {
+    public DistanceAlarm(String gpioLed, String pwmBuzzer) throws IOException {
         // Ottengo istanza di PeripheralManager per poter gestire le periferiche
         PeripheralManager manager = PeripheralManager.getInstance();
 
@@ -61,7 +55,7 @@ public class DistanceAlarm {
         pin desiderato, la inizializza come uscita inizialmente a 0V e
         ne associa il livello logico alto al livello di tensione alto.
          */
-        led = manager.openGpio(GPIO_LED);
+        led = manager.openGpio(gpioLed);
         led.setDirection(Gpio.DIRECTION_OUT_INITIALLY_LOW);
         led.setActiveType(Gpio.ACTIVE_HIGH);
 
@@ -69,7 +63,7 @@ public class DistanceAlarm {
         Prova ad ottenere un'istanza della periferica PWM relativa al
         pin desiderato, la inizializza adegutamente e la lascia spenta.
          */
-        buzzer = manager.openPwm(PWM_BUZZER);
+        buzzer = manager.openPwm(pwmBuzzer);
         buzzer.setPwmFrequencyHz(tone[toneIndex]);
         buzzer.setPwmDutyCycle(50);
         buzzer.setEnabled(false);
