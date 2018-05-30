@@ -11,6 +11,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.things.pio.Gpio;
 import com.google.android.things.pio.GpioCallback;
@@ -21,8 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 //TODO dopo crash classi continuano ad inviare dati, gestire eccezioni in modo da prevenire crash
-//TODO gestire eccezione se non connesso modulo ma si clicca sullo switch
-//TODO attenzione alla rimozione quando si disconnette e all'aggiunta alla riconnessione
 
 public class MainActivity extends Activity {
     public static final String TAG = "107G";
@@ -102,7 +101,8 @@ public class MainActivity extends Activity {
         } catch (IOException e) {
             Log.i(TAG, "MainActivity -> onCreate: Inizializzazione pulsante non riuscita"
                     + ", errore: ", e);
-            infoView.setText(R.string.physical_button_problem);
+            Toast t = Toast.makeText(getApplicationContext(), R.string.physical_button_problem,Toast.LENGTH_LONG);
+            t.show();
         }
 
         //Switch che cambia metodo di connessione o UART o SPI
@@ -131,7 +131,8 @@ public class MainActivity extends Activity {
                             " Errore:\n", e);
                     /*Generata un'eccezione al momento della creazione dell'instanza
                     DistanceController quindi lo notifico sullo schermo utilizzato dall'utente*/
-                    connectedToId.setText(R.string.noDwm);
+                    Toast t = Toast.makeText(getApplicationContext(), R.string.noDwm, Toast.LENGTH_LONG);
+                    t.show();
                 }
 
             }
@@ -149,7 +150,8 @@ public class MainActivity extends Activity {
             Log.e(TAG, "MainActivity -> onCreate Errore:\n", e);
             /*Generata un'eccezione al momento della creazione dell'instanza DistanceController
             quindi lo notifico sullo schermo utilizzato dall'utente*/
-            connectedToId.setText(R.string.noDwm);
+            Toast t = Toast.makeText(getApplicationContext(), R.string.noDwm, Toast.LENGTH_LONG);
+            t.show();
         }
     }
 
@@ -189,8 +191,9 @@ public class MainActivity extends Activity {
                 //Controllo siano presenti i tags giusti
                 for(int i = 0; i < tags.size(); i++) {
                     for (int j = 0; j < item.size(); j++) {
+                        String itemText = (String) item.get(j).getText();
                         if (!(Integer.toHexString(tags.get(i).tagID)
-                                .equals((String) item.get(j).getText()))) {
+                                .equals(itemText))) {
                             regenerateRadioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
                             return;
                         }
@@ -219,6 +222,8 @@ public class MainActivity extends Activity {
                 List<Integer> ids = myController.getTagIDs();
                 //pulizia RadioGroup ospitante i RadioButtons
                 listIDsGroup.removeAllViews();
+                //pulizia RadioButtons
+                item.clear();
                 //popolazione dell'array di RadioButtons
                 for (int i = 0; i < ids.size(); i++) {
                     Log.i(TAG, "MainActivity -> regenerateRadioGroup: ciclo for, i = " + i);
