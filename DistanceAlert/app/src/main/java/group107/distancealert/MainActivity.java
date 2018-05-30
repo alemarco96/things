@@ -178,8 +178,8 @@ public class MainActivity extends Activity {
             @Override
             public void onTagDataAvailable(final List<DistanceController.Entry> tags) {
                 Log.i(TAG, "MainActivity -> addAllTagListener" +
-                        " -> onTagDataAvailable");
-                regenerateRadioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
+                        " -> onTagDataAvailable: Lista invariata");
+                //Lista invariata
             }
         });
     }
@@ -285,7 +285,7 @@ public class MainActivity extends Activity {
                 if (tagDistance > maxDistance) {
                     distanceAlarm();//todo migliorare implementazione?
                 }
-                //Lista invariata
+                setDistanceText(tagDistance, distanceView);
             }
         });
     }
