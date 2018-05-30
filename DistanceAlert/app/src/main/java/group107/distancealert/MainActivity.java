@@ -285,7 +285,7 @@ public class MainActivity extends Activity {
                 if (tagDistance > maxDistance) {
                     distanceAlarm();//todo migliorare implementazione?
                 }
-                setDistanceText(tagDistance, distanceView);
+                //Lista invariata
             }
         });
     }
