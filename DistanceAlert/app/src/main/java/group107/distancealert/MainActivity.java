@@ -49,7 +49,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         //periodo polling
-        long update = 300L;
+        final long update = 300L;
 
         //riferimento alla TextView che mostra la distanza ricevuta
         idLayout = findViewById(R.id.idLayout);
@@ -113,6 +113,12 @@ public class MainActivity extends Activity {
                     if (nextSpi) {
                         Log.i(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
                                 " nextSpi = " + nextSpi);
+                        if(myController == null){
+                            myController = new DistanceController(RPI3_SPI);
+                            myController.startUpdate(update);
+                            nextSpi = false;
+                            return;
+                        }
                         nextSpi = false;
                         myController.switchBus(RPI3_SPI);
                         switchMethodView.setChecked(true);
@@ -120,6 +126,12 @@ public class MainActivity extends Activity {
                     } else {
                         Log.i(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
                                 " nextSpi = " + nextSpi);
+                        if(myController == null){
+                            myController = new DistanceController(RPI3_UART);
+                            myController.startUpdate(update);
+                            nextSpi = true;
+                            return;
+                        }
                         nextSpi = true;
                         myController.switchBus(RPI3_UART);
                         switchMethodView.setChecked(false);
