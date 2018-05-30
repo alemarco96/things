@@ -37,17 +37,23 @@ public class MainActivity extends Activity {
     private int maxDistance = 2000;
     private List<RadioButton> item = new ArrayList<>();
     private boolean nextSpi = true;
-    private long update = 300L;
+    //riferimento alla TextView che mostra la distanza ricevuta
+    LinearLayout idLayout;
+    //Creazione di RadioGroup, ospiterà i RadioButtons
+    RadioGroup listIDsGroup;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //periodo polling
+        long update = 300L;
+
         //riferimento alla TextView che mostra la distanza ricevuta
-        final LinearLayout idLayout = findViewById(R.id.idLayout);
+        idLayout = findViewById(R.id.idLayout);
         //Creazione di RadioGroup, ospiterà i RadioButtons
-        final RadioGroup listIDsGroup = new RadioGroup(getApplicationContext());
+        listIDsGroup = new RadioGroup(getApplicationContext());
         //Collegamento RadioGroup al LinearLayout ospitante
         idLayout.addView(listIDsGroup);
 
@@ -109,14 +115,14 @@ public class MainActivity extends Activity {
                         nextSpi = false;
                         myController.switchBus(RPI3_SPI);
                         switchMethodView.setChecked(true);
-                        startElaboration(myController, distanceView, connectedToId, listIDsGroup);
+                        startElaboration(myController, distanceView, connectedToId);
                     } else {
                         Log.i(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
                                 " nextSpi = " + nextSpi);
                         nextSpi = true;
                         myController.switchBus(RPI3_UART);
                         switchMethodView.setChecked(false);
-                        startElaboration(myController, distanceView, connectedToId, listIDsGroup);
+                        startElaboration(myController, distanceView, connectedToId);
                     }
                 } catch (java.io.IOException | InterruptedException e) {
                     Log.e(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
@@ -136,7 +142,7 @@ public class MainActivity extends Activity {
             myController = new DistanceController(RPI3_SPI);
             myController.startUpdate(update);
             switchMethodView.setChecked(true);
-            startElaboration(myController, distanceView, connectedToId, listIDsGroup);
+            startElaboration(myController, distanceView, connectedToId);
         } catch (java.io.IOException | InterruptedException e) {
             Log.e(TAG, "MainActivity -> onCreate Errore:\n", e);
             /*Generata un'eccezione al momento della creazione dell'instanza DistanceController
@@ -146,8 +152,7 @@ public class MainActivity extends Activity {
     }
 
     protected void startElaboration(final DistanceController myController,
-                                    final TextView distanceView, final TextView connectedToId,
-                                    final RadioGroup listIDsGroup) {
+                                    final TextView distanceView, final TextView connectedToId) {
         Log.i(TAG, "MainActivity -> startElaboration");
             /*Connessione ai listeners generali per creare lista di IDs rilevati
             visualizzabile su schermo e completa di bottoni per la visione dei dati relativi
@@ -209,8 +214,12 @@ public class MainActivity extends Activity {
                                 Log.i(TAG, "MainActivity -> startElaboration" +
                                         " -> addAllTagListener" +
                                         " -> onTagHasDisconnected: i = " + i + ", j = " + j);
+                                Log.d(TAG, "(Integer.toHexString(tags.get(i).tagID) = (" +
+                                        Integer.toHexString(tags.get(i).tagID) +
+                                        "), (item.get(j).getText() = (" +
+                                        item.get(j).getText() + ")");
                                 if (Integer.toHexString(tags.get(i).tagID)
-                                        == item.get(j).getText()) {
+                                        .equals((String) item.get(j).getText())) {
                                     Log.i(TAG, "MainActivity -> startElaboration ->" +
                                             " addAllTagListener" +
                                             " -> onTagHasDisconnected" +
@@ -228,11 +237,68 @@ public class MainActivity extends Activity {
             }
 
             @Override
-            public void onTagDataAvailable(List<DistanceController.Entry> tags) {
+            public void onTagDataAvailable(final List<DistanceController.Entry> tags) {
                 Log.i(TAG,"MainActivity -> addAllTagListener" +
                         " -> onTagDataAvailable");
-                //dato inviato dai tag, lista IDs invariata
-                //TODO connettere quelli già connessi se non presenti
+                //controllo ci siano tutti i tags nella lista
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        for(int i = 0; i < tags.size(); i++) {
+                            for(int j = 0; j < item.size(); j++) {
+                                Log.i(TAG, "MainActivity -> startElaboration" +
+                                        " -> addAllTagListener" +
+                                        " -> onTagDataAvailable: i = " + i + ", j = " + j);
+                                Log.d(TAG, "(Integer.toHexString(tags.get(i).tagID) = (" +
+                                        Integer.toHexString(tags.get(i).tagID) +
+                                        "), (item.get(j).getText() = (" +
+                                        item.get(j).getText() + ")");
+                                if (Integer.toHexString(tags.get(i).tagID)
+                                        .equals((String) item.get(j).getText())) {
+                                    Log.i(TAG, "MainActivity -> startElaboration ->" +
+                                            " addAllTagListener" +
+                                            " -> onTagDataAvailable" +
+                                            "(Integer.toHexString(tags.get(i).tagID) = " +
+                                            Integer.toHexString(tags.get(i).tagID) +
+                                            ") == (item.get(j).getText() = " +
+                                            item.get(j).getText() + ")");
+                                    //bottone già presente
+                                    break;
+                                }
+                                //bottone non presente, quindi aggiungo
+                                item.add(new RadioButton(getApplicationContext()));
+                                final String textItem = Integer.toHexString(tags.get(i).tagID);
+                                item.get(i).setText(textItem);
+                                final int singleId = tags.get(i).tagID;
+                                final int finalI = i;
+                                item.get(i).setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        Log.i(TAG, "MainActivity -> startElaboration" +
+                                                " -> addAllTagListener ->" +
+                                                " onTagDataAvailable -> item.get(i = " + finalI +
+                                                ").setOnClickListener: id = " + textItem);
+                                        id = singleId;
+                                        connectToSpecificListener(distanceView, connectedToId);
+                                    }
+                                });
+                                if(id == singleId) {
+                                    Log.i(TAG,"MainActivity -> startElaboration ->" +
+                                            " addAllTagListener ->" +
+                                            " onTagDataAvailable: ciclo for, i = " + i +
+                                            ", RadioButton toggled: (id = "
+                                            + Integer.toHexString(id) +
+                                            ") == (singleid = "
+                                            + Integer.toHexString(singleId) + ")");
+                                    item.get(i).toggle();
+                                }
+                                //Aggiunta del bottone in fondo alla lista
+                                listIDsGroup.addView(item.get(i), -1,
+                                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                            }
+                        }
+                    }
+                });
             }
         });
     }
@@ -342,13 +408,13 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    public void onDestroy() {
-        Log.i(TAG, "MainActivity -> onDestroy");
+    public void onPause() {
+        Log.i(TAG, "MainActivity -> onPause");
         //passaggio di stato
-        super.onDestroy();
+        super.onPause();
 
         if (myController != null) {
-            Log.i(TAG, "MainActivity -> onDestroy -> chiusura controller");
+            Log.i(TAG, "MainActivity -> onPause -> chiusura controller");
             //chiusura controller
             myController.close();
         }
