@@ -629,16 +629,20 @@ public class DistanceController
     }
 
     /**
-     * Restituisce un array con gli ID dei tag connessi al modulo DWM. E' da usare una tantum.
-     * @return un array contenente i tag connessi
+     * Restituisce una lista con gli ID dei tag connessi al modulo DWM. E' da usare una tantum.
+     * @return una lista contenente i tag connessi
      */
-    public int[] getTagIDs()
+    public List<Integer> getTagIDs()
     {
         synchronized (dataLock)
         {
-            int[] tags = new int[actualData.size()];
+            List<Integer> tags = new ArrayList<>(actualData.size());
             for (int i = 0; i < actualData.size(); i++)
-                tags[i] = actualData.get(i).tagID;
+            {
+                int result = Collections.binarySearch(disconnectedData, actualData.get(i), MATCHING_ID_ENTRY_COMPARATOR);
+                if (result < 0)
+                    tags.add(actualData.get(i).tagID);
+            }
 
             return tags;
         }
