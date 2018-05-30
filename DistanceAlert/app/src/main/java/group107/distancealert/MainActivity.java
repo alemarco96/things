@@ -79,8 +79,8 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Log.i(TAG, "MainActivity -> plusMaxDistanceButton -> onClick");
-                if (maxDistance <= 99000) {
-                    maxDistance += 500;
+                if (maxDistance < 5000) {
+                    maxDistance += 200;
                     setDistanceText(maxDistance, maxDistanceView);
                 }
             }
@@ -91,8 +91,8 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Log.i(TAG, "MainActivity -> minusMaxDistanceButton -> onClick");
-                if (maxDistance >= 500) {
-                    maxDistance -= 500;
+                if (maxDistance > 200) {
+                    maxDistance -= 200;
                     setDistanceText(maxDistance, maxDistanceView);
                 }
             }
