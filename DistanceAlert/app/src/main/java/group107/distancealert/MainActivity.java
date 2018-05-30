@@ -179,7 +179,15 @@ public class MainActivity extends Activity {
             public void onTagDataAvailable(final List<DistanceController.Entry> tags) {
                 Log.i(TAG, "MainActivity -> addAllTagListener" +
                         " -> onTagDataAvailable: Lista invariata");
-                //Lista invariata
+                for(int i = 0; i < tags.size(); i++) {
+                    for(int j = 0; j < item.size(); j++) {
+                        if (!(Integer.toHexString(tags.get(i).tagID)
+                                .equals((String) item.get(j).getText()))) {
+                            regenerateRadioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
+                            return;
+                        }
+                    }
+                }
             }
         });
     }
