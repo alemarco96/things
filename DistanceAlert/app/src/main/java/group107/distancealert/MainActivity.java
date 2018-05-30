@@ -200,16 +200,16 @@ public class MainActivity extends Activity {
             public void run() {
                 Log.i(TAG, "MainActivity -> regenerateRadioGroup: running thread");
                 //ricezione IDs connessi
-                int[] ids = myController.getTagIDs();
+                List<Integer> ids = myController.getTagIDs();
                 //creazione di Array contentente i RadioGroups
-                final RadioButton[] item = new RadioButton[ids.length];
+                final RadioButton[] item = new RadioButton[ids.size()];
                 //pulizia RadioGroup ospitante i RadioButtons
                 listIDsGroup.removeAllViews();
                 //popolazione dell'array di RadioButtons
-                for (int i = 0; i < ids.length; i++) {
+                for (int i = 0; i < ids.size(); i++) {
                     Log.i(TAG, "MainActivity -> regenerateRadioGroup: ciclo for, i = " + i);
                     item[i] = new RadioButton(getApplicationContext());
-                    final int singleId = ids[i];
+                    final int singleId = ids.get(i);
                     final String idText = Integer.toHexString(singleId);
                     item[i].setText(idText);
 
@@ -272,6 +272,7 @@ public class MainActivity extends Activity {
                     @Override
                     public void run() {
                         distanceView.setText(R.string.noConnection);
+                        distanceAlarm();
                     }
                 });
             }
@@ -282,12 +283,7 @@ public class MainActivity extends Activity {
                         " -> onTagDataAvailable: id = " + Integer.toHexString(id) +
                         ", tagDistance = " + tagDistance);
                 if (tagDistance > maxDistance) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            distanceAlarm();//todo migliorare implementazione?
-                        }
-                    });
+                    distanceAlarm();//todo migliorare implementazione?
                 }
                 setDistanceText(tagDistance, distanceView);
             }
@@ -322,28 +318,33 @@ public class MainActivity extends Activity {
 
     /*TODO controlla questo metodo*/
     private void distanceAlarm() {
-        try {
-            final DistanceAlarm myAlarm = new DistanceAlarm();
-            myAlarm.start();
-            pulsante.setEdgeTriggerType(Gpio.EDGE_RISING);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    final DistanceAlarm myAlarm = new DistanceAlarm();
+                    myAlarm.start();
+                    pulsante.setEdgeTriggerType(Gpio.EDGE_RISING);
 
-            pulsante.registerGpioCallback(
-                    /*todo runtime exception can't create handler inside thread that has not called Looper.prepare() */
-                    new GpioCallback() {
-                        @Override
-                        public boolean onGpioEdge(Gpio gpio) {
-                            try {
-                                myAlarm.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
+                    pulsante.registerGpioCallback(
+                            /*todo runtime exception can't create handler inside thread that has not called Looper.prepare() */
+                            new GpioCallback() {
+                                @Override
+                                public boolean onGpioEdge(Gpio gpio) {
+                                    try {
+                                        myAlarm.close();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                    return false;
+                                }
                             }
-                            return false;
-                        }
-                    }
-            );
-        } catch (IOException e) {
-            e.printStackTrace();//TODO
-        }
+                    );
+                } catch (IOException e) {
+                    e.printStackTrace();//TODO
+                }
+            }
+        });
     }
 
     @Override
