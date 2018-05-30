@@ -484,6 +484,8 @@ public class DistanceController
         actualData = new ArrayList<>();
         disconnectedData = new ArrayList<>();
 
+        lastException = null;
+
         //controlla lo stato della connessione del modulo
         driverDWM.checkDWM();
     }
