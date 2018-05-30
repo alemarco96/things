@@ -610,15 +610,18 @@ public class DistanceController
      * @throws IOException
      * @throws InterruptedException
      */
-    public void switchBus(String busName) throws IOException, InterruptedException
-    {
+    public void switchBus(String busName) throws IOException, InterruptedException {
         if (driverDWM != null)
             driverDWM.close();
 
         long period = updateDataTask.scheduledExecutionTime();
         stopUpdate();
 
-        TimeUnit.MILLISECONDS.sleep(50L);
+        try {
+            TimeUnit.MILLISECONDS.sleep(50L);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         driverDWM = new DriverDWM(busName);
         driverDWM.checkDWM();

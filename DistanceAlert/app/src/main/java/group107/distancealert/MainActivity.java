@@ -110,6 +110,9 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 try {
+
+                    /*//Utilizzo di switchBus
+
                     if (nextSpi) {
                         Log.i(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
                                 " nextSpi = " + nextSpi);
@@ -134,6 +137,29 @@ public class MainActivity extends Activity {
                         }
                         nextSpi = true;
                         myController.switchBus(RPI3_UART);
+                        switchMethodView.setChecked(false);
+                        startElaboration(myController, distanceView, connectedToId);
+                    }
+                     */
+                    if(myController != null) {
+                        Log.i(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
+                                "myController == null");
+                        myController.stopUpdate();
+                        myController.close();
+                    } else {
+                        Log.i(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
+                                "myController == null");
+                    }
+                    if (nextSpi) {
+                        nextSpi = false;
+                        myController = new DistanceController(RPI3_SPI);
+                        myController.startUpdate(update);
+                        switchMethodView.setChecked(true);
+                        startElaboration(myController, distanceView, connectedToId);
+                    } else {
+                        nextSpi = true;
+                        myController = new DistanceController(RPI3_UART);
+                        myController.startUpdate(update);
                         switchMethodView.setChecked(false);
                         startElaboration(myController, distanceView, connectedToId);
                     }
@@ -359,7 +385,7 @@ public class MainActivity extends Activity {
             @Override
             public void run() {
                 try {
-                    final DistanceAlarm myAlarm = new DistanceAlarm();
+                    final DistanceAlarm myAlarm = new DistanceAlarm(); //TODO variabile locale
                     myAlarm.start();
                     pulsante.setEdgeTriggerType(Gpio.EDGE_RISING);
 
@@ -388,6 +414,8 @@ public class MainActivity extends Activity {
         Log.i(TAG, "MainActivity -> onPause");
         //passaggio di stato
         super.onPause();
+
+        //TODO spegni led buzzer
 
         if (myController != null) {
             Log.i(TAG, "MainActivity -> onPause -> chiusura controller");
