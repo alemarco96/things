@@ -179,8 +179,14 @@ public class MainActivity extends Activity {
             public void onTagDataAvailable(final List<DistanceController.Entry> tags) {
                 Log.i(TAG, "MainActivity -> addAllTagListener" +
                         " -> onTagDataAvailable: Lista invariata");
+                //se diversi sicuramente c'è da riaggiornare
+                if(item.size() != tags.size()) {
+                    regenerateRadioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
+                    return;
+                }
+                //Controllo siano presenti i tags giusti
                 for(int i = 0; i < tags.size(); i++) {
-                    for(int j = 0; j < item.size(); j++) {
+                    for (int j = 0; j < item.size(); j++) {
                         if (!(Integer.toHexString(tags.get(i).tagID)
                                 .equals((String) item.get(j).getText()))) {
                             regenerateRadioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
