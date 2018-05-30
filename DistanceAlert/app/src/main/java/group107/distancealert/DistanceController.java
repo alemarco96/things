@@ -270,13 +270,13 @@ public class DistanceController
      */
     private void classifyDataAndNotify(List<Entry> newData)
     {
-        List<Entry> common;
+        List<Entry> updated;
         List<Entry> connected = new ArrayList<>();
         List<Entry> disconnected = new ArrayList<>();
 
         synchronized (dataLock)
         {
-            common = new ArrayList<>(newData.size() > actualData.size() ? newData.size() : actualData.size());
+            updated = new ArrayList<>(newData.size() > actualData.size() ? newData.size() : actualData.size());
 
             for (int i = 0; i < newData.size(); i++)
             {
@@ -297,10 +297,14 @@ public class DistanceController
                             disconnected.add(new Entry(newEntry));
                             disconnectedData.add(new Entry(newEntry));
                         }
+                        else
+                        {
+                            updated.add(new Entry(newEntry));
+                        }
                     } else
                     {
                         newEntry.counter = 0;
-                        common.add(new Entry(newEntry));
+                        updated.add(new Entry(newEntry));
                     }
                 } else
                 {
@@ -314,14 +318,14 @@ public class DistanceController
 
             logEntryData(TAG, "\nTag appena connessi: " + connected.size() + "\n", "\n", connected);
             logEntryData(TAG, "\nTag appena disconnessi: " + disconnected.size() + "\n", "\n", disconnected);
-            logEntryData(TAG, "\nTag ancora connessi: " + common.size() + "\n", "\n", common);
+            logEntryData(TAG, "\nTag ancora connessi: " + updated.size() + "\n", "\n", updated);
         }
 
         synchronized (listenersLock)
         {
-            notifyToAllTagsListeners(connected, disconnected, common);
+            notifyToAllTagsListeners(connected, disconnected, updated);
 
-            notifyToTagsListeners(connected, disconnected, common);
+            notifyToTagsListeners(connected, disconnected, updated);
         }
     }
 
