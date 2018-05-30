@@ -6,7 +6,6 @@ import com.google.android.things.pio.Gpio;
 import com.google.android.things.pio.PeripheralManager;
 import com.google.android.things.pio.Pwm;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;

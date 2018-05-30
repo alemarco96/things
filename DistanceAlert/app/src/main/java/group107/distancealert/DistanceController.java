@@ -2,9 +2,7 @@ package group107.distancealert;
 
 import android.util.Log;
 import android.util.Pair;
-import android.widget.Toast;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
