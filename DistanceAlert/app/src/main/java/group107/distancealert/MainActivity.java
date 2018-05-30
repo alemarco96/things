@@ -22,6 +22,7 @@ import java.util.List;
 
 //TODO dopo crash classi continuano ad inviare dati, gestire eccezioni in modo da prevenire crash
 //TODO gestire eccezione se non connesso modulo ma si clicca sullo switch
+//TODO attenzione alla rimozione quando si disconnette e all'aggiunta alla riconnessione
 
 public class MainActivity extends Activity {
     public static final String TAG = "107G";
