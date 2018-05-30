@@ -37,10 +37,12 @@ public class MainActivity extends Activity {
     private int maxDistance = 2000;
     private List<RadioButton> item = new ArrayList<>();
     private boolean nextSpi = true;
+
     //riferimento alla TextView che mostra la distanza ricevuta
     LinearLayout idLayout;
     //Creazione di RadioGroup, ospiterà i RadioButtons
     RadioGroup listIDsGroup;
+
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -163,144 +165,81 @@ public class MainActivity extends Activity {
                 Log.i(TAG,"MainActivity -> startElaboration -> " +
                         "addAllTagListener -> onTagHasConnected: tags.size() = "
                         + tags.size());
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        //aggiunga tags appena connessi
-                        for(int i = 0; i < tags.size(); i++) {
-                            item.add(new RadioButton(getApplicationContext()));
-                            final String textItem = Integer.toHexString(tags.get(i).tagID);
-                            item.get(i).setText(textItem);
-                            final int singleId = tags.get(i).tagID;
-                            final int finalI = i;
-                            item.get(i).setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    Log.i(TAG, "MainActivity -> startElaboration" +
-                                            " -> addAllTagListener ->" +
-                                            " onTagHasConnected -> item.get(i = " + finalI +
-                                            ").setOnClickListener: id = " + textItem);
-                                    id = singleId;
-                                    connectToSpecificListener(distanceView, connectedToId);
-                                }
-                            });
-                            if(id == singleId) {
-                                Log.i(TAG,"MainActivity -> startElaboration ->" +
-                                        " addAllTagListener ->" +
-                                        " onTagHasConnected: ciclo for, i = " + i +
-                                        ", RadioButton toggled: (id = " + Integer.toHexString(id) +
-                                        ") == (singleid = " + Integer.toHexString(singleId) + ")");
-                                item.get(i).toggle();
-                            }
-                            //Aggiunta del bottone in fondo alla lista
-                            listIDsGroup.addView(item.get(i), -1,
-                                    ViewGroup.LayoutParams.WRAP_CONTENT);
-
-                        }
-                    }
-                });
+                regenerateRadioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
             }
 
             @Override
             public void onTagHasDisconnected(final List<DistanceController.Entry> tags) {
                 Log.i(TAG,"MainActivity -> startElaboration -> addAllTagListener" +
                         " -> onTagHasDisconnected: tags.size() = " + tags.size());
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        //rimozione tags appena disconnessi
-                        for(int i = 0; i < tags.size(); i ++) {
-                            for(int j = 0; j < item.size(); j++) {
-                                Log.i(TAG, "MainActivity -> startElaboration" +
-                                        " -> addAllTagListener" +
-                                        " -> onTagHasDisconnected: i = " + i + ", j = " + j);
-                                Log.d(TAG, "(Integer.toHexString(tags.get(i).tagID) = (" +
-                                        Integer.toHexString(tags.get(i).tagID) +
-                                        "), (item.get(j).getText() = (" +
-                                        item.get(j).getText() + ")");
-                                if (Integer.toHexString(tags.get(i).tagID)
-                                        .equals((String) item.get(j).getText())) {
-                                    Log.i(TAG, "MainActivity -> startElaboration ->" +
-                                            " addAllTagListener" +
-                                            " -> onTagHasDisconnected" +
-                                            "(Integer.toHexString(tags.get(i).tagID) = " +
-                                            Integer.toHexString(tags.get(i).tagID) +
-                                            ") == (item.get(j).getText() = " +
-                                            item.get(j).getText() + ")");
-                                    listIDsGroup.removeView(item.get(j));
-                                    item.remove(j);
-                                }
-                            }
-                        }
-                    }
-                });
+                regenerateRadioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
             }
 
             @Override
             public void onTagDataAvailable(final List<DistanceController.Entry> tags) {
-                Log.i(TAG,"MainActivity -> addAllTagListener" +
+                Log.i(TAG, "MainActivity -> addAllTagListener" +
                         " -> onTagDataAvailable");
-                //controllo ci siano tutti i tags nella lista
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        for(int i = 0; i < tags.size(); i++) {
-                            for(int j = 0; j < item.size(); j++) {
-                                Log.i(TAG, "MainActivity -> startElaboration" +
-                                        " -> addAllTagListener" +
-                                        " -> onTagDataAvailable: i = " + i + ", j = " + j);
-                                Log.d(TAG, "(Integer.toHexString(tags.get(i).tagID) = (" +
-                                        Integer.toHexString(tags.get(i).tagID) +
-                                        "), (item.get(j).getText() = (" +
-                                        item.get(j).getText() + ")");
-                                if (Integer.toHexString(tags.get(i).tagID)
-                                        .equals((String) item.get(j).getText())) {
-                                    Log.i(TAG, "MainActivity -> startElaboration ->" +
-                                            " addAllTagListener" +
-                                            " -> onTagDataAvailable" +
-                                            "(Integer.toHexString(tags.get(i).tagID) = " +
-                                            Integer.toHexString(tags.get(i).tagID) +
-                                            ") == (item.get(j).getText() = " +
-                                            item.get(j).getText() + ")");
-                                    //bottone già presente
-                                    break;
-                                }
-                                //bottone non presente, quindi aggiungo
-                                item.add(new RadioButton(getApplicationContext()));
-                                final String textItem = Integer.toHexString(tags.get(i).tagID);
-                                item.get(i).setText(textItem);
-                                final int singleId = tags.get(i).tagID;
-                                final int finalI = i;
-                                item.get(i).setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
-                                        Log.i(TAG, "MainActivity -> startElaboration" +
-                                                " -> addAllTagListener ->" +
-                                                " onTagDataAvailable -> item.get(i = " + finalI +
-                                                ").setOnClickListener: id = " + textItem);
-                                        id = singleId;
-                                        connectToSpecificListener(distanceView, connectedToId);
-                                    }
-                                });
-                                if(id == singleId) {
-                                    Log.i(TAG,"MainActivity -> startElaboration ->" +
-                                            " addAllTagListener ->" +
-                                            " onTagDataAvailable: ciclo for, i = " + i +
-                                            ", RadioButton toggled: (id = "
-                                            + Integer.toHexString(id) +
-                                            ") == (singleid = "
-                                            + Integer.toHexString(singleId) + ")");
-                                    item.get(i).toggle();
-                                }
-                                //Aggiunta del bottone in fondo alla lista
-                                listIDsGroup.addView(item.get(i), -1,
-                                        ViewGroup.LayoutParams.WRAP_CONTENT);
-                            }
-                        }
-                    }
-                });
+                regenerateRadioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
             }
         });
+    }
+
+    /**
+     * Rigenera la lista che gestisce gli IDs disponibili
+     * @param listIDsGroup RadioGroup da aggiornare
+     * @param idLayout LinearLayout contenente il RadioGroup da aggiornare
+     * @param distanceView La TextView dove viene visualizzato il dato di distanza rilevato
+     * @param connectedToId La TextView dove viene visualizzato l'ID del modulo a distanza
+     *                      "distanceView"
+     */
+    private void regenerateRadioGroup(final RadioGroup listIDsGroup, final LinearLayout idLayout,
+                                      final TextView distanceView, final TextView connectedToId) {
+        Log.i(TAG, "MainActivity -> regenerateRadioGroup");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.i(TAG, "MainActivity -> regenerateRadioGroup: running thread");
+                //ricezione IDs connessi
+                int[] ids = myController.getTagIDs();
+                //creazione di Array contentente i RadioGroups
+                final RadioButton[] item = new RadioButton[ids.length];
+                //pulizia RadioGroup ospitante i RadioButtons
+                listIDsGroup.removeAllViews();
+                //popolazione dell'array di RadioButtons
+                for (int i = 0; i < ids.length; i++) {
+                    Log.i(TAG, "MainActivity -> regenerateRadioGroup: ciclo for, i = " + i);
+                    item[i] = new RadioButton(getApplicationContext());
+                    final int singleId = ids[i];
+                    final String idText = Integer.toHexString(singleId);
+                    item[i].setText(idText);
+
+                    //Click specifico di ogni singolo RadioButton
+                    item[i].setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Log.i(TAG, "MainActivity -> regenerateRadioGroup:"
+                                    + " onClick " + idText);
+                            id = singleId;
+                            connectToSpecificListener(distanceView, connectedToId);
+                        }
+                    });
+                    //Controllo se il bottone era stato premuto in precedenza
+                    if (id != -1 && id == singleId) {
+                        Log.i(TAG, "MainActivity -> regenerateRadioGroup:" +
+                                " ciclo for, i = " + i + ", RadioButton toggled: (id = " + id +
+                                ") == (singleid = " + singleId + ")");
+                        item[i].toggle();
+                    }
+                    //Aggiunta del bottone in fondo alla lista
+                    listIDsGroup.addView(item[i], -1, ViewGroup.LayoutParams.WRAP_CONTENT);
+                }
+                //pulizia scorso idLayout, ospitante il RadioGroup
+                idLayout.removeAllViews();
+                //pubblicazione RadioGroup su idlayout
+                idLayout.addView(listIDsGroup);
+            }
+        });
+
     }
 
     /**
