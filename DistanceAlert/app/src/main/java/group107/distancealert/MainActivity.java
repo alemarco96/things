@@ -395,8 +395,9 @@ public class MainActivity extends Activity {
                                 public boolean onGpioEdge(Gpio gpio) {
                                     try {
                                         myAlarm.close();
+                                        //todo se serve variabile globale, allora devo cambiare il metodo close e fare un metodo stop
                                     } catch (IOException e) {
-                                        e.printStackTrace();
+                                        e.printStackTrace();//todo
                                     }
                                     return false;
                                 }

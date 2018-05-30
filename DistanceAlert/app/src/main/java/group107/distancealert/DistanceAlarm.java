@@ -115,7 +115,7 @@ public class DistanceAlarm {
      */
     public void close() throws IOException {
         if (timer != null) {
-            timer.cancel();
+            timer.cancel();//todo implementare metodo stop
             timer = null;
         }
 
