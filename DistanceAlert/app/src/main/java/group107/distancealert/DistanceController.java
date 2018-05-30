@@ -2,6 +2,7 @@ package group107.distancealert;
 
 import android.util.Log;
 import android.util.Pair;
+import android.widget.Toast;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -149,10 +150,16 @@ public class DistanceController
     //memorizza tutti i listeners associati ad uno specifico tag
     private List<Pair<Integer, TagListener>> tagListeners;
 
+    //memorizza l'ultimo errore nel thread di aggiornamento
+    private Throwable lastException;
+
     //oggetto usato per gestire l'accesso in mutua esclusione ai dati
     private final Object dataLock = new Object();
     //oggetto usato per gestire l'accesso in mutua esclusione ai listeners
     private final Object listenersLock = new Object();
+    //TODO: scrivere meglio commento
+    //oggetto usato per gestore l'accesso in mutua esclusione all'eccezione
+    private final Object exceptionLock = new Object();
 
     private DriverDWM driverDWM;
 
@@ -166,7 +173,8 @@ public class DistanceController
     private TimerTask updateDataTask = new TimerTask()
     {
         @Override
-        public void run() {
+        public void run()
+        {
             try
             {
                 List<Entry> data = updateData();
@@ -175,10 +183,18 @@ public class DistanceController
                 {
                     actualData = data;
                 }
+                synchronized (exceptionLock)
+                {
+                    lastException = null;
+                }
             } catch (Exception e)
             {
                 //TODO: gestire eccezione
                 Log.e(MainActivity.TAG, "Avvenuta eccezione in updateDataTask", e);
+                synchronized (exceptionLock)
+                {
+                    lastException = e;
+                }
             }
         }
     };
@@ -633,6 +649,18 @@ public class DistanceController
         {
             allListeners = null;
             tagListeners = null;
+        }
+    }
+
+    /**
+     * Restituisce l'ultimo errore del controller
+     * @return L'ultimo errore del controller
+     */
+    public Throwable getLastException()
+    {
+        synchronized (exceptionLock)
+        {
+            return lastException;
         }
     }
 
