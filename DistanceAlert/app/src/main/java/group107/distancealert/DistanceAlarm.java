@@ -108,6 +108,26 @@ public class DistanceAlarm {
     }
 
     /**
+     * Terminazione della programmazione temportizzata sul timer, oltre a spegnere il LED e il buzzer
+     *
+     * @throws IOException Lanciata se ci sono problemi nella chiusura delle periferiche
+     */
+    public void stop() throws IOException {
+        if (timer == null) {
+            return;
+        }
+
+        // Fermo timer
+        timer.cancel();
+        timer = null;
+
+        // Spengo LED e buzzer
+        led.setValue(false);
+        buzzer.setEnabled(false);
+
+    }
+
+    /**
      * Terminazione della programmazione temportizzata sul timer e
      * rilascio delle periferiche relative al led e al buzzer.
      *
@@ -115,18 +135,15 @@ public class DistanceAlarm {
      */
     public void close() throws IOException {
         if (timer != null) {
-            timer.cancel();//todo implementare metodo stop
-            timer = null;
+            stop();
         }
 
         if (led != null) {
-            led.setValue(false);
             led.close();
             led = null;
         }
 
         if (buzzer != null) {
-            buzzer.setEnabled(false);
             buzzer.close();
             buzzer = null;
         }

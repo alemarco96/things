@@ -32,6 +32,7 @@ public class MainActivity extends Activity {
 
     private Gpio pulsante;
     private DistanceController myController;
+    private DistanceAlarm myAlarm;
     private int id = -1;
     private int maxDistance = 2000;
     private List<RadioButton> item = new ArrayList<>();
@@ -100,8 +101,15 @@ public class MainActivity extends Activity {
         } catch (IOException e) {
             Log.i(TAG, "MainActivity -> onCreate: Inizializzazione pulsante non riuscita"
                     + ", errore: ", e);
-            Toast t = Toast.makeText(getApplicationContext(), R.string.physical_button_problem,Toast.LENGTH_LONG);
+            Toast t = Toast.makeText(getApplicationContext(), R.string.physical_button_problem, Toast.LENGTH_LONG);
             t.show();
+        }
+
+        try {
+            myAlarm = new DistanceAlarm();
+        } catch (IOException e) {
+            Log.i(TAG, "MainActivity -> onCreate: Inizializzazione allarme non riuscita"
+                    + ", errore: ", e);
         }
 
         //Switch che cambia metodo di connessione o UART o SPI
@@ -141,7 +149,7 @@ public class MainActivity extends Activity {
                         startElaboration(myController, distanceView, connectedToId);
                     }
                      */
-                    if(myController != null) {
+                    if (myController != null) {
                         Log.i(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
                                 "myController == null");
                         myController.stopUpdate();
@@ -209,7 +217,7 @@ public class MainActivity extends Activity {
         myController.addAllTagsListener(new AllTagsListener() {
             @Override
             public void onTagHasConnected(final List<DistanceController.Entry> tags) {
-                Log.i(TAG,"MainActivity -> startElaboration -> " +
+                Log.i(TAG, "MainActivity -> startElaboration -> " +
                         "addAllTagListener -> onTagHasConnected: tags.size() = "
                         + tags.size());
                 Log.v(TAG, "item.size() = " + item.size() + ", tags.size() = " + tags.size());
@@ -218,7 +226,7 @@ public class MainActivity extends Activity {
 
             @Override
             public void onTagHasDisconnected(final List<DistanceController.Entry> tags) {
-                Log.i(TAG,"MainActivity -> startElaboration -> addAllTagListener" +
+                Log.i(TAG, "MainActivity -> startElaboration -> addAllTagListener" +
                         " -> onTagHasDisconnected: tags.size() = " + tags.size());
                 regenerateRadioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
             }
@@ -229,12 +237,12 @@ public class MainActivity extends Activity {
                         " -> onTagDataAvailable: Lista invariata");
                 //se diversi sicuramente c'è da riaggiornare
                 Log.v(TAG, "item.size() = " + item.size() + ", tags.size() = " + tags.size());
-                if(item.size() != tags.size()) {
+                if (item.size() != tags.size()) {
                     regenerateRadioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
                     return;
                 }
                 //Controllo siano presenti i tags giusti
-                for(int i = 0; i < tags.size(); i++) {
+                for (int i = 0; i < tags.size(); i++) {
                     for (int j = 0; j < item.size(); j++) {
                         String itemText = (String) item.get(j).getText();
                         if (!(Integer.toHexString(tags.get(i).tagID)
@@ -250,9 +258,10 @@ public class MainActivity extends Activity {
 
     /**
      * Rigenera la lista che gestisce gli IDs disponibili
-     * @param listIDsGroup RadioGroup da aggiornare
-     * @param idLayout LinearLayout contenente il RadioGroup da aggiornare
-     * @param distanceView La TextView dove viene visualizzato il dato di distanza rilevato
+     *
+     * @param listIDsGroup  RadioGroup da aggiornare
+     * @param idLayout      LinearLayout contenente il RadioGroup da aggiornare
+     * @param distanceView  La TextView dove viene visualizzato il dato di distanza rilevato
      * @param connectedToId La TextView dove viene visualizzato l'ID del modulo a distanza
      *                      "distanceView"
      */
@@ -308,7 +317,8 @@ public class MainActivity extends Activity {
 
     /**
      * Connessione ad un id selezionato il quale invia il dato della distanza
-     * @param distanceView La TextView dove viene visualizzato il dato di distanza rilevato
+     *
+     * @param distanceView  La TextView dove viene visualizzato il dato di distanza rilevato
      * @param connectedToId La TextView dove viene visualizzato l'ID del modulo a distanza
      *                      "distanceView"
      */
@@ -356,24 +366,25 @@ public class MainActivity extends Activity {
 
     /**
      * Aggiorna la View con la distanza ricevuta
-     * @param distance distanza ricevuta
+     *
+     * @param distance     distanza ricevuta
      * @param distanceView TextView dove aggiornare la distanza
      */
-    private void setDistanceText (final int distance, final TextView distanceView) {
+    private void setDistanceText(final int distance, final TextView distanceView) {
         Log.i(TAG, "MainActivity -> setDistanceText: id = " + Integer.toHexString(id)
                 + ", tagDistance = " + distance);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                String decimal = Integer.toString(distance%1000);
-                if(decimal.length() < 2) {
+                String decimal = Integer.toString(distance % 1000);
+                if (decimal.length() < 2) {
                     //un solo numero dopo la virgola, aggiungo uno zero a sinistra
                     decimal += "0";
                 } else {
                     //o due o più numeri dopo la virgola, ne considero solo due
-                    decimal = decimal.substring(0,2);
+                    decimal = decimal.substring(0, 2);
                 }
-                String newText =    (distance/1000) +
+                String newText = (distance / 1000) +
                         "." + decimal + " m";
                 distanceView.setText(newText);
             }
@@ -385,7 +396,10 @@ public class MainActivity extends Activity {
             @Override
             public void run() {
                 try {
-                    final DistanceAlarm myAlarm = new DistanceAlarm(); //TODO variabile locale
+                    if (myAlarm == null || pulsante == null) {
+                        return;
+                    }
+
                     myAlarm.start();
                     pulsante.setEdgeTriggerType(Gpio.EDGE_RISING);
 
@@ -394,17 +408,16 @@ public class MainActivity extends Activity {
                                 @Override
                                 public boolean onGpioEdge(Gpio gpio) {
                                     try {
-                                        myAlarm.close();
-                                        //todo se serve variabile globale, allora devo cambiare il metodo close e fare un metodo stop
+                                        myAlarm.stop();
                                     } catch (IOException e) {
-                                        e.printStackTrace();//todo
+                                        Log.e(TAG, "MainActivity -> distanceAlarm -> Errore Pulsate:", e);
                                     }
                                     return false;
                                 }
                             }
                     );
                 } catch (IOException e) {
-                    Log.e(TAG, "MainActivity -> distanceAlarm Errore:", e);
+                    Log.e(TAG, "MainActivity -> distanceAlarm -> Errore:", e);
                 }
             }
         });
@@ -416,7 +429,24 @@ public class MainActivity extends Activity {
         //passaggio di stato
         super.onPause();
 
-        //TODO spegni led buzzer
+        if (pulsante != null) {
+            try {
+                pulsante.close();
+            } catch (IOException e) {
+                Log.e(TAG, "MainActivity -> onPause -> Errore pulsante:", e);
+            }
+            pulsante = null;
+        }
+
+        if (myAlarm != null) {
+            try {
+                myAlarm.close();
+            } catch (IOException e) {
+                Log.e(TAG, "MainActivity -> onPause -> Errore allarme:", e);
+            }
+            myAlarm = null;
+
+        }
 
         if (myController != null) {
             Log.i(TAG, "MainActivity -> onPause -> chiusura controller");
