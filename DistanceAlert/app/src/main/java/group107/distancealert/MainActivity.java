@@ -165,6 +165,7 @@ public class MainActivity extends Activity {
                 Log.i(TAG,"MainActivity -> startElaboration -> " +
                         "addAllTagListener -> onTagHasConnected: tags.size() = "
                         + tags.size());
+                Log.v(TAG, "item.size() = " + item.size() + ", tags.size() = " + tags.size());
                 regenerateRadioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
             }
 
@@ -180,6 +181,7 @@ public class MainActivity extends Activity {
                 Log.i(TAG, "MainActivity -> addAllTagListener" +
                         " -> onTagDataAvailable: Lista invariata");
                 //se diversi sicuramente c'è da riaggiornare
+                Log.v(TAG, "item.size() = " + item.size() + ", tags.size() = " + tags.size());
                 if(item.size() != tags.size()) {
                     regenerateRadioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
                     return;
@@ -215,20 +217,18 @@ public class MainActivity extends Activity {
                 Log.i(TAG, "MainActivity -> regenerateRadioGroup: running thread");
                 //ricezione IDs connessi
                 List<Integer> ids = myController.getTagIDs();
-                //creazione di Array contentente i RadioGroups
-                final RadioButton[] item = new RadioButton[ids.size()];
                 //pulizia RadioGroup ospitante i RadioButtons
                 listIDsGroup.removeAllViews();
                 //popolazione dell'array di RadioButtons
                 for (int i = 0; i < ids.size(); i++) {
                     Log.i(TAG, "MainActivity -> regenerateRadioGroup: ciclo for, i = " + i);
-                    item[i] = new RadioButton(getApplicationContext());
+                    item.add(new RadioButton(getApplicationContext()));
                     final int singleId = ids.get(i);
                     final String idText = Integer.toHexString(singleId);
-                    item[i].setText(idText);
+                    item.get(i).setText(idText);
 
                     //Click specifico di ogni singolo RadioButton
-                    item[i].setOnClickListener(new View.OnClickListener() {
+                    item.get(i).setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             Log.i(TAG, "MainActivity -> regenerateRadioGroup:"
@@ -242,10 +242,10 @@ public class MainActivity extends Activity {
                         Log.i(TAG, "MainActivity -> regenerateRadioGroup:" +
                                 " ciclo for, i = " + i + ", RadioButton toggled: (id = " + id +
                                 ") == (singleid = " + singleId + ")");
-                        item[i].toggle();
+                        item.get(i).toggle();
                     }
                     //Aggiunta del bottone in fondo alla lista
-                    listIDsGroup.addView(item[i], -1, ViewGroup.LayoutParams.WRAP_CONTENT);
+                    listIDsGroup.addView(item.get(i), -1, ViewGroup.LayoutParams.WRAP_CONTENT);
                 }
                 //pulizia scorso idLayout, ospitante il RadioGroup
                 idLayout.removeAllViews();
