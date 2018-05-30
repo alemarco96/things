@@ -98,6 +98,7 @@ public class MainActivity extends Activity {
             pulsante = manager.openGpio(GPIO_PULSANTE);
             pulsante.setActiveType(Gpio.ACTIVE_HIGH);
             pulsante.setDirection(Gpio.DIRECTION_IN);
+            pulsante.setEdgeTriggerType(Gpio.EDGE_RISING);
         } catch (IOException e) {
             Log.i(TAG, "MainActivity -> onCreate: Inizializzazione pulsante non riuscita"
                     + ", errore: ", e);
@@ -105,11 +106,14 @@ public class MainActivity extends Activity {
             t.show();
         }
 
-        try {
-            myAlarm = new DistanceAlarm();
-        } catch (IOException e) {
-            Log.i(TAG, "MainActivity -> onCreate: Inizializzazione allarme non riuscita"
-                    + ", errore: ", e);
+        // SOLO SE IL PULSANTE FUNZIONA, istanzio l'allarme
+        if (pulsante != null) {
+            try {
+                myAlarm = new DistanceAlarm();
+            } catch (IOException e) {
+                Log.i(TAG, "MainActivity -> onCreate: Inizializzazione allarme non riuscita"
+                        + ", errore: ", e);
+            }
         }
 
         //Switch che cambia metodo di connessione o UART o SPI
@@ -401,7 +405,6 @@ public class MainActivity extends Activity {
                     }
 
                     myAlarm.start();
-                    pulsante.setEdgeTriggerType(Gpio.EDGE_RISING);
 
                     pulsante.registerGpioCallback(
                             new GpioCallback() {
@@ -410,12 +413,13 @@ public class MainActivity extends Activity {
                                     try {
                                         myAlarm.stop();
                                     } catch (IOException e) {
-                                        Log.e(TAG, "MainActivity -> distanceAlarm -> Errore Pulsate:", e);
+                                        Log.e(TAG, "MainActivity -> distanceAlarm -> Errore Pulsante:", e);
                                     }
                                     return false;
                                 }
                             }
                     );
+
                 } catch (IOException e) {
                     Log.e(TAG, "MainActivity -> distanceAlarm -> Errore:", e);
                 }
