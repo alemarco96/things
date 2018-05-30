@@ -61,7 +61,7 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Log.i(TAG, "MainActivity -> plusMaxDistanceButton -> onClick");
-                if (maxDistance <= 90500) {
+                if (maxDistance <= 99000) {
                     maxDistance += 500;
                     setDistanceText(maxDistance, maxDistanceView);
                 }
@@ -100,13 +100,19 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 try {
                     if (nextSpi) {
+                        Log.i(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
+                                " nextSpi = " + nextSpi);
                         nextSpi = false;
                         myController.switchBus(RPI3_SPI);
+                        myController.startUpdate(update); //TODO serve?
                         switchMethodView.setChecked(true);
                         startElaboration(myController, distanceView, connectedToId, listIDsGroup);
                     } else {
+                        Log.i(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
+                                " nextSpi = " + nextSpi);
                         nextSpi = true;
                         myController.switchBus(RPI3_UART);
+                        myController.startUpdate(update); //TODO serve?
                         switchMethodView.setChecked(false);
                         startElaboration(myController, distanceView, connectedToId, listIDsGroup);
                     }
@@ -137,91 +143,95 @@ public class MainActivity extends Activity {
         }
     }
 
-        protected void startElaboration(final DistanceController myController,
-                                        final TextView distanceView, final TextView connectedToId,
-                                        final RadioGroup listIDsGroup) {
-            Log.i(TAG, "MainActivity -> startElaboration");
+    protected void startElaboration(final DistanceController myController,
+                                    final TextView distanceView, final TextView connectedToId,
+                                    final RadioGroup listIDsGroup) {
+        Log.i(TAG, "MainActivity -> startElaboration");
             /*Connessione ai listeners generali per creare lista di IDs rilevati
             visualizzabile su schermo e completa di bottoni per la visione dei dati relativi
             allo specifico id selezionato */
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    myController.addAllTagsListener(new AllTagsListener() {
-                        @Override
-                        public void onTagHasConnected(List<DistanceController.Entry> tags) {
-                            Log.i(TAG,"MainActivity -> startElaboration -> " +
-                                    "addAllTagListener -> onTagHasConnected: tags.size() = "
-                                    + tags.size());
-                            //aggiunga tags appena connessi
-                            for(int i = 0; i < tags.size(); i++) {
-                                item.add(new RadioButton(getApplicationContext()));
-                                final String textItem = Integer.toHexString(tags.get(i).tagID);
-                                item.get(i).setText(textItem);
-                                final int singleId = tags.get(i).tagID;
-                                final int finalI = i;
-                                item.get(i).setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
-                                        Log.i(TAG, "MainActivity -> startElaboration" +
-                                                " -> addAllTagListener ->" +
-                                                " onTagHasConnected -> item.get(i = " + finalI +
-                                                ").setOnClickListener: id = " + textItem);
-                                        id = singleId;
-                                        connectToSpecificListener(distanceView, connectedToId);
-                                    }
-                                });
-                                if(id == singleId) {
-                                    Log.i(TAG,"MainActivity -> startElaboration ->" +
+        myController.addAllTagsListener(new AllTagsListener() {
+            @Override
+            public void onTagHasConnected(final List<DistanceController.Entry> tags) {
+                Log.i(TAG,"MainActivity -> startElaboration -> " +
+                        "addAllTagListener -> onTagHasConnected: tags.size() = "
+                        + tags.size());
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        //aggiunga tags appena connessi
+                        for(int i = 0; i < tags.size(); i++) {
+                            item.add(new RadioButton(getApplicationContext()));
+                            final String textItem = Integer.toHexString(tags.get(i).tagID);
+                            item.get(i).setText(textItem);
+                            final int singleId = tags.get(i).tagID;
+                            final int finalI = i;
+                            item.get(i).setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    Log.i(TAG, "MainActivity -> startElaboration" +
+                                            " -> addAllTagListener ->" +
+                                            " onTagHasConnected -> item.get(i = " + finalI +
+                                            ").setOnClickListener: id = " + textItem);
+                                    id = singleId;
+                                    connectToSpecificListener(distanceView, connectedToId);
+                                }
+                            });
+                            if(id == singleId) {
+                                Log.i(TAG,"MainActivity -> startElaboration ->" +
                                         " addAllTagListener ->" +
                                         " onTagHasConnected: ciclo for, i = " + i +
                                         ", RadioButton toggled: (id = " + Integer.toHexString(id) +
                                         ") == (singleid = " + Integer.toHexString(singleId) + ")");
-                                    item.get(i).toggle();
-                                }
-                                //Aggiunta del bottone in fondo alla lista
-                                listIDsGroup.addView(item.get(i), -1,
-                                        ViewGroup.LayoutParams.WRAP_CONTENT);
-
+                                item.get(i).toggle();
                             }
+                            //Aggiunta del bottone in fondo alla lista
+                            listIDsGroup.addView(item.get(i), -1,
+                                    ViewGroup.LayoutParams.WRAP_CONTENT);
 
                         }
+                    }
+                });
+            }
 
-                        @Override
-                        public void onTagHasDisconnected(List<DistanceController.Entry> tags) {
-                            Log.i(TAG,"MainActivity -> startElaboration -> addAllTagListener" +
-                                    " -> onTagHasDisconnected: tags.size() = " + tags.size());
-                            //rimozione tags appena disconnessi
-                            for(int i = 0; i < tags.size(); i ++) {
-                                for(int j = 0; j < item.size(); j++) {
-                                    Log.i(TAG, "MainActivity -> startElaboration" +
-                                            " -> addAllTagListener" +
-                                            " -> onTagHasDisconnected: i = " + i + ", j = " + j);
-                                    if (Integer.toHexString(tags.get(i).tagID)
-                                            == item.get(j).getText()) {
-                                        Log.i(TAG, "MainActivity -> startElaboration ->" +
-                                                " addAllTagListener" +
-                                                " -> onTagHasDisconnected" +
-                                                "(Integer.toHexString(tags.get(i).tagID) = " +
-                                                Integer.toHexString(tags.get(i).tagID) +
-                                                ") == (item.get(j).getText() = " +
-                                                item.get(j).getText() + ")");
-                                        listIDsGroup.removeView(item.get(j));
-                                        item.remove(j);
-                                    }
+            @Override
+            public void onTagHasDisconnected(final List<DistanceController.Entry> tags) {
+                Log.i(TAG,"MainActivity -> startElaboration -> addAllTagListener" +
+                        " -> onTagHasDisconnected: tags.size() = " + tags.size());
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        //rimozione tags appena disconnessi
+                        for(int i = 0; i < tags.size(); i ++) {
+                            for(int j = 0; j < item.size(); j++) {
+                                Log.i(TAG, "MainActivity -> startElaboration" +
+                                        " -> addAllTagListener" +
+                                        " -> onTagHasDisconnected: i = " + i + ", j = " + j);
+                                if (Integer.toHexString(tags.get(i).tagID)
+                                        == item.get(j).getText()) {
+                                    Log.i(TAG, "MainActivity -> startElaboration ->" +
+                                            " addAllTagListener" +
+                                            " -> onTagHasDisconnected" +
+                                            "(Integer.toHexString(tags.get(i).tagID) = " +
+                                            Integer.toHexString(tags.get(i).tagID) +
+                                            ") == (item.get(j).getText() = " +
+                                            item.get(j).getText() + ")");
+                                    listIDsGroup.removeView(item.get(j));
+                                    item.remove(j);
                                 }
                             }
                         }
+                    }
+                });
+            }
 
-                        @Override
-                        public void onTagDataAvailable(List<DistanceController.Entry> tags) {
-                            Log.i(TAG,"MainActivity -> addAllTagListener" +
-                                    " -> onTagDataAvailable");
-                            //dato inviato dai tag, lista IDs invariata
-                        }
-                    });
-                }
-            });
+            @Override
+            public void onTagDataAvailable(List<DistanceController.Entry> tags) {
+                Log.i(TAG,"MainActivity -> addAllTagListener" +
+                        " -> onTagDataAvailable");
+                //dato inviato dai tag, lista IDs invariata
+            }
+        });
     }
 
     /**
