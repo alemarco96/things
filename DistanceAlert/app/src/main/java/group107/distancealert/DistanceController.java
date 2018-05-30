@@ -339,7 +339,7 @@ public class DistanceController
         {
             if (connected != null && connected.size() > 0)
             {
-                final List<Entry> connectedCopy = cloneList(connected);
+                //final List<Entry> connectedCopy = cloneList(connected);
                 //presenti tags connessi nell'ultimo aggiornamento dei dati
                 new Thread(new Runnable()
                 {
@@ -347,14 +347,14 @@ public class DistanceController
                     public void run()
                     {
                         //notifica su thread separato
-                        listener.onTagHasConnected(connectedCopy);
+                        listener.onTagHasConnected(connected);
                     }
                 }).start();
             }
 
             if (disconnected != null && disconnected.size() > 0)
             {
-                final List<Entry> disconnectedCopy = cloneList(disconnected);
+                //final List<Entry> disconnectedCopy = cloneList(disconnected);
                 //presenti tags disconnessi nell'ultimo aggiornamento dei dati
                 new Thread(new Runnable()
                 {
@@ -362,14 +362,14 @@ public class DistanceController
                     public void run()
                     {
                         //notifica su thread separato
-                        listener.onTagHasDisconnected(disconnectedCopy);
+                        listener.onTagHasDisconnected(disconnected);
                     }
                 }).start();
             }
 
             if (updated != null && updated.size() > 0)
             {
-                final List<Entry> dataCopy = cloneList(updated);
+                //final List<Entry> dataCopy = cloneList(updated);
                 //notifica i nuovi valori
                 new Thread(new Runnable()
                 {
@@ -377,7 +377,7 @@ public class DistanceController
                     public void run()
                     {
                         //notifica su thread separato
-                        listener.onTagDataAvailable(dataCopy);
+                        listener.onTagDataAvailable(updated);
                     }
                 }).start();
             }
