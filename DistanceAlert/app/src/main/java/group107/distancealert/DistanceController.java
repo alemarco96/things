@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import static group107.distancealert.MainActivity.TAG;
 
@@ -595,6 +596,8 @@ public class DistanceController
     {
         if (driverDWM != null)
             driverDWM.close();
+
+        TimeUnit.MILLISECONDS.sleep(50L);
 
         driverDWM = new DriverDWM(busName);
         driverDWM.checkDWM();
