@@ -92,7 +92,6 @@ public class MainActivity extends Activity {
         });
 
         //Inizializzazione pulsante
-        TextView infoView = findViewById(R.id.info);
         PeripheralManager manager = PeripheralManager.getInstance();
         try {
             pulsante = manager.openGpio(GPIO_PULSANTE);
@@ -133,6 +132,10 @@ public class MainActivity extends Activity {
                     DistanceController quindi lo notifico sullo schermo utilizzato dall'utente*/
                     Toast t = Toast.makeText(getApplicationContext(), R.string.noDwm, Toast.LENGTH_LONG);
                     t.show();
+                    if (myController != null) {
+                        myController.close();
+                        myController = null;
+                    }
                 }
 
             }
@@ -152,6 +155,10 @@ public class MainActivity extends Activity {
             quindi lo notifico sullo schermo utilizzato dall'utente*/
             Toast t = Toast.makeText(getApplicationContext(), R.string.noDwm, Toast.LENGTH_LONG);
             t.show();
+            if (myController != null) {
+                myController.close();
+                myController = null;
+            }
         }
     }
 
@@ -302,7 +309,7 @@ public class MainActivity extends Activity {
                         " -> onTagDataAvailable: id = " + Integer.toHexString(id) +
                         ", tagDistance = " + tagDistance);
                 if (tagDistance > maxDistance) {
-                    distanceAlarm();//todo migliorare implementazione?
+                    distanceAlarm();
                 }
                 setDistanceText(tagDistance, distanceView);
             }
@@ -335,7 +342,6 @@ public class MainActivity extends Activity {
         });
     }
 
-    /*TODO controlla questo metodo*/
     private void distanceAlarm() {
         runOnUiThread(new Runnable() {
             @Override
@@ -346,7 +352,6 @@ public class MainActivity extends Activity {
                     pulsante.setEdgeTriggerType(Gpio.EDGE_RISING);
 
                     pulsante.registerGpioCallback(
-                            /*todo runtime exception can't create handler inside thread that has not called Looper.prepare() */
                             new GpioCallback() {
                                 @Override
                                 public boolean onGpioEdge(Gpio gpio) {
@@ -360,7 +365,7 @@ public class MainActivity extends Activity {
                             }
                     );
                 } catch (IOException e) {
-                    e.printStackTrace();//TODO
+                    Log.e(TAG, "MainActivity -> distanceAlarm Errore:", e);
                 }
             }
         });
@@ -376,6 +381,7 @@ public class MainActivity extends Activity {
             Log.i(TAG, "MainActivity -> onPause -> chiusura controller");
             //chiusura controller
             myController.close();
+            myController = null;
         }
     }
 }
