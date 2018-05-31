@@ -10,7 +10,7 @@
     <string name="noData">Nessuna misurazione rilevata.</string>
     <string name="noDwm">Problemi di comunicazione con la periferica DWM.</string>
     <string name="noId">Nessun ID rilevato.</string>
-    <string name="max_distance_is">Allerta superata distanza:</string>
+    <string name="max_distance_is">Allerta:</string>
     <string name="plus">+</string>
     <string name="minus">-</string>
     <string name="physical_button_problem">Problema riguardo il bottone fisico rilevato.</string>
