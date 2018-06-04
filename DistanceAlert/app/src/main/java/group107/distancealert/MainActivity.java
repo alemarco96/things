@@ -41,13 +41,13 @@ public class MainActivity extends Activity {
     private DistanceAlarm myAlarm;
     private int id = -1;
     private int maxDistance = 2000;
-    private List<RadioButton> item = new ArrayList<>();
+    final private List<RadioButton> item = new ArrayList<>();
     private boolean nextSpi = true;
 
     //riferimento alla TextView che mostra la distanza ricevuta
-    LinearLayout idLayout;
+    private LinearLayout idLayout;
     //Creazione di RadioGroup, ospiterà i RadioButtons
-    RadioGroup listIDsGroup;
+    private RadioGroup listIDsGroup;
 
 
     @Override
@@ -108,7 +108,8 @@ public class MainActivity extends Activity {
         } catch (IOException e) {
             Log.i(TAG, "MainActivity -> onCreate: Inizializzazione pulsante non riuscita"
                     + ", errore: ", e);
-            Toast t = Toast.makeText(getApplicationContext(), R.string.physical_button_problem, Toast.LENGTH_LONG);
+            Toast t = Toast.makeText(getApplicationContext(), R.string.physical_button_problem,
+                    Toast.LENGTH_LONG);
             t.show();
         }
 
@@ -218,8 +219,8 @@ public class MainActivity extends Activity {
         }
     }
 
-    protected void startElaboration(final DistanceController myController,
-                                    final TextView distanceView, final TextView connectedToId) {
+    private void startElaboration(final DistanceController myController,
+                                  final TextView distanceView, final TextView connectedToId) {
         Log.i(TAG, "MainActivity -> startElaboration");
             /*Connessione ai listeners generali per creare lista di IDs rilevati
             visualizzabile su schermo e completa di bottoni per la visione dei dati relativi
@@ -257,7 +258,8 @@ public class MainActivity extends Activity {
                         String itemText = (String) item.get(j).getText();
                         if (!(Integer.toHexString(tags.get(i).tagID)
                                 .equals(itemText))) {
-                            regenerateRadioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
+                            regenerateRadioGroup(listIDsGroup, idLayout, distanceView,
+                                    connectedToId);
                             return;
                         }
                     }
@@ -314,7 +316,8 @@ public class MainActivity extends Activity {
                         item.get(i).toggle();
                     }
                     //Aggiunta del bottone in fondo alla lista
-                    listIDsGroup.addView(item.get(i), -1, ViewGroup.LayoutParams.WRAP_CONTENT);
+                    listIDsGroup.addView(item.get(i), -1,
+                            ViewGroup.LayoutParams.WRAP_CONTENT);
                 }
                 //pulizia scorso idLayout, ospitante il RadioGroup
                 idLayout.removeAllViews();
@@ -419,7 +422,8 @@ public class MainActivity extends Activity {
                                     try {
                                         myAlarm.stop();
                                     } catch (IOException e) {
-                                        Log.e(TAG, "MainActivity -> distanceAlarm -> Errore Pulsante:", e);
+                                        Log.e(TAG, "MainActivity -> distanceAlarm" +
+                                                " -> Errore Pulsante:", e);
                                     }
                                     return false;
                                 }
