@@ -37,14 +37,6 @@ public class MainActivity extends Activity {
     private static final String RPI3_UART = "MINIUART";
     private static final String RPI3_SPI = "SPI0.0";
 
-    private Gpio pulsante;
-    private DistanceController myController;
-    private DistanceAlarm myAlarm;
-    private int id = -1;
-    private int maxDistance = 2000;
-    final private List<RadioButton> item = new ArrayList<>();
-    private boolean nextSpi = true;
-
     //Inizializzazione Elementi grafici
     private final LinearLayout idLayout = findViewById(R.id.idLayout);
     private final RadioGroup listIDsGroup = new RadioGroup(getApplicationContext());
@@ -52,6 +44,14 @@ public class MainActivity extends Activity {
     private final TextView distanceView = findViewById(R.id.distance);
     private final TextView maxDistanceView = findViewById(R.id.maxDistance);
 
+    //Oggetti utili all'activity
+    private Gpio pulsante;
+    private DistanceController myController;
+    private DistanceAlarm myAlarm;
+    private int id = -1;
+    private int maxDistance = 2000;
+    final private List<RadioButton> item = new ArrayList<>();
+    private boolean nextSpi = true;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -166,13 +166,13 @@ public class MainActivity extends Activity {
                         myController = new DistanceController(RPI3_SPI);
                         myController.startUpdate(update);
                         switchMethodView.setChecked(true);
-                        startElaboration(myController);
+                        startElaboration();
                     } else {
                         nextSpi = true;
                         myController = new DistanceController(RPI3_UART);
                         myController.startUpdate(update);
                         switchMethodView.setChecked(false);
-                        startElaboration(myController);
+                        startElaboration();
                     }
                 } catch (java.io.IOException | InterruptedException e) {
                     Log.e(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
@@ -198,7 +198,7 @@ public class MainActivity extends Activity {
             myController = new DistanceController(RPI3_SPI);
             myController.startUpdate(update);
             switchMethodView.setChecked(true);
-            startElaboration(myController);
+            startElaboration();
         } catch (java.io.IOException | InterruptedException e) {
             Log.e(TAG, "MainActivity -> onCreate Errore:\n", e);
             /*Generata un'eccezione al momento della creazione dell'instanza DistanceController
@@ -214,9 +214,8 @@ public class MainActivity extends Activity {
 
     /**
      * Comincia l'elaborazione dei dati ricevuti
-     * @param myController istanza di DistanceController
      */
-    private void startElaboration(final DistanceController myController) {
+    private void startElaboration() {
         Log.i(TAG, "MainActivity -> startElaboration");
             /*Connessione ai listeners generali per creare lista di IDs rilevati
             visualizzabile su schermo e completa di bottoni per la visione dei dati relativi
