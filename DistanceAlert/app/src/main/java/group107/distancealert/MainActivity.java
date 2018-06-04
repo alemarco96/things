@@ -23,6 +23,8 @@ import java.util.List;
 
 //TODO dopo crash classi continuano ad inviare dati, gestire eccezioni in modo da prevenire crash
 //TODO risolvere switch UART - SPI
+//TODO ogni volta che si esegue startElaboration() vengono creati listeners, bisogna anche toglierli quando non servono più?
+//TODO ogni volta che si esegue regenerateRadioGroup() vengono creati listeners, bisogna anche toglierli quando non servono più?
 
 public class MainActivity extends Activity {
     /**
@@ -293,8 +295,7 @@ public class MainActivity extends Activity {
                         public void onClick(View v) {
                             Log.i(TAG, "MainActivity -> regenerateRadioGroup:"
                                     + " onClick " + idText);
-                            id = singleId;
-                            connectToSpecificListener(distanceView, connectedToId);
+                            connectToSpecificListener(singleId);
                         }
                     });
                     //Controllo se il bottone era stato premuto in precedenza
@@ -320,10 +321,10 @@ public class MainActivity extends Activity {
     /**
      * Connessione ad un id selezionato il quale invia il dato della distanza
      */
-    private void connectToSpecificListener(final TextView distanceView,
-                                           final TextView connectedToId) {
+    private void connectToSpecificListener(int singleId) {
         Log.i(TAG, "MainActivity -> connectToSpecificListener: connectedToId = "
                 + connectedToId);
+        id = singleId;
         //visualizzazione a schermo dell'ID al quale si è connessi
         String idText = Integer.toHexString(id);
         connectedToId.setText(idText);
@@ -390,9 +391,8 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * Lancia l'allarme
+     * Lancia l'allarme spegnibile dal bottone fisico
      */
-
     private void distanceAlarm() {
         runOnUiThread(new Runnable() {
             @Override
