@@ -25,7 +25,9 @@ import java.util.List;
 //TODO risolvere switch UART - SPI
 
 public class MainActivity extends Activity {
-    //Stringa utile per il TAG dei logs
+    /**
+     * Stringa utile per il TAG dei logs del pacchetto group107.distancealert
+     */
     public static final String TAG = "107G";
 
     /**
@@ -43,6 +45,9 @@ public class MainActivity extends Activity {
     private final TextView connectedToId = findViewById(R.id.connectedTo_id);
     private final TextView distanceView = findViewById(R.id.distance);
     private final TextView maxDistanceView = findViewById(R.id.maxDistance);
+    private final Switch switchMethodView = findViewById(R.id.switchMethod);
+    private final Button plusMaxDistanceButton = findViewById(R.id.plusMaxDistance);
+    private final Button minusMaxDistanceButton = findViewById(R.id.minusMaxDistance);
 
     //Oggetti utili all'activity
     private Gpio pulsante;
@@ -66,7 +71,6 @@ public class MainActivity extends Activity {
 
         setDistanceText(maxDistance, maxDistanceView);
         //Bottone che aumenta la distanza limite
-        Button plusMaxDistanceButton = findViewById(R.id.plusMaxDistance);
         plusMaxDistanceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -78,7 +82,6 @@ public class MainActivity extends Activity {
             }
         });
         //Bottone che diminuisce la distanza limite
-        Button minusMaxDistanceButton = findViewById(R.id.minusMaxDistance);
         minusMaxDistanceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -116,7 +119,6 @@ public class MainActivity extends Activity {
         }
 
         //Switch che cambia metodo di connessione o UART o SPI
-        final Switch switchMethodView = findViewById(R.id.switchMethod);
         switchMethodView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -387,6 +389,10 @@ public class MainActivity extends Activity {
         });
     }
 
+    /**
+     * Lancia l'allarme
+     */
+
     private void distanceAlarm() {
         runOnUiThread(new Runnable() {
             @Override
@@ -426,6 +432,7 @@ public class MainActivity extends Activity {
         //passaggio di stato
         super.onPause();
 
+        //chiusura periferiche
         if (pulsante != null) {
             try {
                 pulsante.close();
