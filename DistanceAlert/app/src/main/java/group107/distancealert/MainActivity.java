@@ -22,10 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 //TODO dopo crash classi continuano ad inviare dati, gestire eccezioni in modo da prevenire crash
+//TODO risolvere switch UART - SPI
 
 public class MainActivity extends Activity {
+    //Stringa utile per il TAG dei logs
     public static final String TAG = "107G";
-
 
     /**
      * Stringhe costanti usate per identificare le periferiche
@@ -44,10 +45,12 @@ public class MainActivity extends Activity {
     final private List<RadioButton> item = new ArrayList<>();
     private boolean nextSpi = true;
 
-    //riferimento alla TextView che mostra la distanza ricevuta
-    private LinearLayout idLayout;
-    //Creazione di RadioGroup, ospiterà i RadioButtons
-    private RadioGroup listIDsGroup;
+    //Inizializzazione Elementi grafici
+    private final LinearLayout idLayout = findViewById(R.id.idLayout);
+    private final RadioGroup listIDsGroup = new RadioGroup(getApplicationContext());
+    private final TextView connectedToId = findViewById(R.id.connectedTo_id);
+    private final TextView distanceView = findViewById(R.id.distance);
+    private final TextView maxDistanceView = findViewById(R.id.maxDistance);
 
 
     @Override
@@ -57,21 +60,10 @@ public class MainActivity extends Activity {
 
         //periodo polling
         final long update = 300L;
-
-        //riferimento alla TextView che mostra la distanza ricevuta
-        idLayout = findViewById(R.id.idLayout);
-        //Creazione di RadioGroup, ospiterà i RadioButtons
-        listIDsGroup = new RadioGroup(getApplicationContext());
+        
         //Collegamento RadioGroup al LinearLayout ospitante
         idLayout.addView(listIDsGroup);
 
-        //riferimento alla TextView che mostra l'ID al quale si è connessi.
-        final TextView connectedToId = findViewById(R.id.connectedTo_id);
-        //riferimento alla TextView che mostra la distanza ricevuta
-        final TextView distanceView = findViewById(R.id.distance);
-
-        //TextView che mostra la distanza limite
-        final TextView maxDistanceView = findViewById(R.id.maxDistance);
         setDistanceText(maxDistance, maxDistanceView);
         //Bottone che aumenta la distanza limite
         Button plusMaxDistanceButton = findViewById(R.id.plusMaxDistance);
@@ -144,7 +136,7 @@ public class MainActivity extends Activity {
                         nextSpi = false;
                         myController.switchBus(RPI3_SPI);
                         switchMethodView.setChecked(true);
-                        startElaboration(myController, distanceView, connectedToId);
+                        startElaboration(myController);
                     } else {
                         Log.i(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
                                 " nextSpi = " + nextSpi);
@@ -157,7 +149,7 @@ public class MainActivity extends Activity {
                         nextSpi = true;
                         myController.switchBus(RPI3_UART);
                         switchMethodView.setChecked(false);
-                        startElaboration(myController, distanceView, connectedToId);
+                        startElaboration(myController);
                     }
                      */
                     if (myController != null) {
@@ -174,20 +166,21 @@ public class MainActivity extends Activity {
                         myController = new DistanceController(RPI3_SPI);
                         myController.startUpdate(update);
                         switchMethodView.setChecked(true);
-                        startElaboration(myController, distanceView, connectedToId);
+                        startElaboration(myController);
                     } else {
                         nextSpi = true;
                         myController = new DistanceController(RPI3_UART);
                         myController.startUpdate(update);
                         switchMethodView.setChecked(false);
-                        startElaboration(myController, distanceView, connectedToId);
+                        startElaboration(myController);
                     }
                 } catch (java.io.IOException | InterruptedException e) {
                     Log.e(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
                             " Errore:\n", e);
                     /*Generata un'eccezione al momento della creazione dell'instanza
                     DistanceController quindi lo notifico sullo schermo utilizzato dall'utente*/
-                    Toast t = Toast.makeText(getApplicationContext(), R.string.noDwm, Toast.LENGTH_LONG);
+                    Toast t = Toast.makeText(getApplicationContext(), R.string.noDwm,
+                            Toast.LENGTH_LONG);
                     t.show();
                     if (myController != null) {
                         myController.close();
@@ -205,7 +198,7 @@ public class MainActivity extends Activity {
             myController = new DistanceController(RPI3_SPI);
             myController.startUpdate(update);
             switchMethodView.setChecked(true);
-            startElaboration(myController, distanceView, connectedToId);
+            startElaboration(myController);
         } catch (java.io.IOException | InterruptedException e) {
             Log.e(TAG, "MainActivity -> onCreate Errore:\n", e);
             /*Generata un'eccezione al momento della creazione dell'instanza DistanceController
@@ -219,8 +212,11 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void startElaboration(final DistanceController myController,
-                                  final TextView distanceView, final TextView connectedToId) {
+    /**
+     * Comincia l'elaborazione dei dati ricevuti
+     * @param myController istanza di DistanceController
+     */
+    private void startElaboration(final DistanceController myController) {
         Log.i(TAG, "MainActivity -> startElaboration");
             /*Connessione ai listeners generali per creare lista di IDs rilevati
             visualizzabile su schermo e completa di bottoni per la visione dei dati relativi
@@ -232,14 +228,14 @@ public class MainActivity extends Activity {
                         "addAllTagListener -> onTagHasConnected: tags.size() = "
                         + tags.size());
                 Log.v(TAG, "item.size() = " + item.size() + ", tags.size() = " + tags.size());
-                regenerateRadioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
+                regenerateRadioGroup();
             }
 
             @Override
             public void onTagHasDisconnected(final List<DistanceController.Entry> tags) {
                 Log.i(TAG, "MainActivity -> startElaboration -> addAllTagListener" +
                         " -> onTagHasDisconnected: tags.size() = " + tags.size());
-                regenerateRadioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
+                regenerateRadioGroup();
             }
 
             @Override
@@ -249,7 +245,7 @@ public class MainActivity extends Activity {
                 //se diversi sicuramente c'è da riaggiornare
                 Log.v(TAG, "item.size() = " + item.size() + ", tags.size() = " + tags.size());
                 if (item.size() != tags.size()) {
-                    regenerateRadioGroup(listIDsGroup, idLayout, distanceView, connectedToId);
+                    regenerateRadioGroup();
                     return;
                 }
                 //Controllo siano presenti i tags giusti
@@ -258,8 +254,7 @@ public class MainActivity extends Activity {
                         String itemText = (String) item.get(j).getText();
                         if (!(Integer.toHexString(tags.get(i).tagID)
                                 .equals(itemText))) {
-                            regenerateRadioGroup(listIDsGroup, idLayout, distanceView,
-                                    connectedToId);
+                            regenerateRadioGroup();
                             return;
                         }
                     }
@@ -270,15 +265,8 @@ public class MainActivity extends Activity {
 
     /**
      * Rigenera la lista che gestisce gli IDs disponibili
-     *
-     * @param listIDsGroup  RadioGroup da aggiornare
-     * @param idLayout      LinearLayout contenente il RadioGroup da aggiornare
-     * @param distanceView  La TextView dove viene visualizzato il dato di distanza rilevato
-     * @param connectedToId La TextView dove viene visualizzato l'ID del modulo a distanza
-     *                      "distanceView"
      */
-    private void regenerateRadioGroup(final RadioGroup listIDsGroup, final LinearLayout idLayout,
-                                      final TextView distanceView, final TextView connectedToId) {
+    private void regenerateRadioGroup() {
         Log.i(TAG, "MainActivity -> regenerateRadioGroup");
         runOnUiThread(new Runnable() {
             @Override
@@ -330,10 +318,6 @@ public class MainActivity extends Activity {
 
     /**
      * Connessione ad un id selezionato il quale invia il dato della distanza
-     *
-     * @param distanceView  La TextView dove viene visualizzato il dato di distanza rilevato
-     * @param connectedToId La TextView dove viene visualizzato l'ID del modulo a distanza
-     *                      "distanceView"
      */
     private void connectToSpecificListener(final TextView distanceView,
                                            final TextView connectedToId) {
