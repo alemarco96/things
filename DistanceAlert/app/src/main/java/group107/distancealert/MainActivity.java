@@ -320,6 +320,7 @@ public class MainActivity extends Activity {
 
     /**
      * Connessione ad un id selezionato il quale invia il dato della distanza
+     * @param singleId id specifico al quale ci si vuole connettere
      */
     private void connectToSpecificListener(int singleId) {
         Log.i(TAG, "MainActivity -> connectToSpecificListener: connectedToId = "
