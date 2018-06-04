@@ -171,12 +171,18 @@ public class MainActivity extends Activity {
                         myController.startUpdate(update);
                         switchMethodView.setChecked(true);
                         startElaboration();
+                        if (id != -1) {
+                            connectToSpecificListener(id);
+                        }
                     } else {
                         nextSpi = true;
                         myController = new DistanceController(RPI3_UART);
                         myController.startUpdate(update);
                         switchMethodView.setChecked(false);
                         startElaboration();
+                        if (id != -1) {
+                            connectToSpecificListener(id);
+                        }
                     }
                 } catch (java.io.IOException | InterruptedException e) {
                     Log.e(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
