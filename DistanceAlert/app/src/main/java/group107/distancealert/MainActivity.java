@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
     private static final String RPI3_UART = "MINIUART";
     private static final String RPI3_SPI = "SPI0.0";
 
-    //Dichiarazione Elementi grafici
+    //Dichiarazione Elementi grafici condivisi da più metodi all'interno di MainActivity
     private LinearLayout idLayout;
     private RadioGroup listIDsGroup;
     private TextView connectedToId;
@@ -72,7 +72,7 @@ public class MainActivity extends Activity {
         maxDistanceView = findViewById(R.id.maxDistance);
         switchMethodView = findViewById(R.id.switchMethod);
 
-        //dichiarazione e inizializzazione Elementi Grafici che possono essere "locali"
+        //dichiarazione e inizializzazione Elementi Grafici utilizzati solo in onCreate
         Button plusMaxDistanceButton = findViewById(R.id.plusMaxDistance);
         Button minusMaxDistanceButton = findViewById(R.id.minusMaxDistance);
 
