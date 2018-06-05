@@ -410,7 +410,7 @@ public class MainActivity extends Activity {
             public void run() {
                 String decimal = Integer.toString(distance % 1000);
                 if (decimal.length() < 2) {
-                    //un solo numero dopo la virgola, aggiungo uno zero a sinistra
+                    //un solo numero dopo la virgola, aggiungo uno zero a destra
                     decimal += "0";
                 } else {
                     //o due o più numeri dopo la virgola, ne considero solo due
