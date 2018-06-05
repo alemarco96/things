@@ -41,15 +41,13 @@ public class MainActivity extends Activity {
     private static final String RPI3_UART = "MINIUART";
     private static final String RPI3_SPI = "SPI0.0";
 
-    //Inizializzazione Elementi grafici
-    private final LinearLayout idLayout = findViewById(R.id.idLayout);
-    private final RadioGroup listIDsGroup = new RadioGroup(getApplicationContext());
-    private final TextView connectedToId = findViewById(R.id.connectedTo_id);
-    private final TextView distanceView = findViewById(R.id.distance);
-    private final TextView maxDistanceView = findViewById(R.id.maxDistance);
-    private final Switch switchMethodView = findViewById(R.id.switchMethod);
-    private final Button plusMaxDistanceButton = findViewById(R.id.plusMaxDistance);
-    private final Button minusMaxDistanceButton = findViewById(R.id.minusMaxDistance);
+    //Dichiarazione Elementi grafici
+    private LinearLayout idLayout;
+    private RadioGroup listIDsGroup;
+    private TextView connectedToId;
+    private TextView distanceView;
+    private TextView maxDistanceView;
+    private Switch switchMethodView;
 
     //Oggetti utili all'activity
     private Gpio pulsante;
@@ -64,6 +62,19 @@ public class MainActivity extends Activity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //Inizializzazione Elementi grafici
+        idLayout = findViewById(R.id.idLayout);
+        listIDsGroup = new RadioGroup(getApplicationContext());
+        connectedToId = findViewById(R.id.connectedTo_id);
+        distanceView = findViewById(R.id.distance);
+        maxDistanceView = findViewById(R.id.maxDistance);
+        switchMethodView = findViewById(R.id.switchMethod);
+
+        //dichiarazione e inizializzazione Elementi Grafici che possono essere "locali"
+        Button plusMaxDistanceButton = findViewById(R.id.plusMaxDistance);
+        Button minusMaxDistanceButton = findViewById(R.id.minusMaxDistance);
+
 
         //periodo polling
         final long update = 300L;
@@ -280,7 +291,7 @@ public class MainActivity extends Activity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Log.i(TAG, "MainActivity -> regenerateRadioGroup: running thread");
+                Log.i(TAG, "MainActivity -> regenerateRadioGroup: running");
                 //ricezione IDs connessi
                 List<Integer> ids = myController.getTagIDs();
                 //pulizia RadioGroup ospitante i RadioButtons
