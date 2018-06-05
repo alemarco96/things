@@ -177,21 +177,29 @@ public class MainActivity extends Activity {
                                 "myController == null");
                     }
                     if (nextSpi) {
-                        nextSpi = false;
+                        //Chiudo sessione precedente e avvio SPI
+                        Log.i(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
+                                "nextSpi = true");
+                        nextSpi = false; //prossimo click a switch si deve avviare UART
                         myController = new DistanceController(RPI3_SPI);
                         myController.startUpdate(update);
                         switchMethodView.setChecked(true);
                         startElaboration();
                         if (id != -1) {
+                            //id già selezionato in precedenza
                             connectToSpecificListener(id);
                         }
                     } else {
-                        nextSpi = true;
+                        //Chiudo sessione precedente e avvio UART
+                        Log.i(TAG, "MainActivity -> onCreate -> onClick switchMethodView:" +
+                                "nextSpi = false");
+                        nextSpi = true; //prossimo click a switch si deve avviare SPI
                         myController = new DistanceController(RPI3_UART);
                         myController.startUpdate(update);
                         switchMethodView.setChecked(false);
                         startElaboration();
                         if (id != -1) {
+                            //id già selezionato in precedenza
                             connectToSpecificListener(id);
                         }
                     }
