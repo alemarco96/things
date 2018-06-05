@@ -25,6 +25,7 @@ import java.util.List;
 //TODO risolvere switch UART - SPI
 //TODO ogni volta che si esegue startElaboration() vengono creati listeners, bisogna anche toglierli quando non servono più?
 //TODO ogni volta che si esegue regenerateRadioGroup() vengono creati listeners, bisogna anche toglierli quando non servono più?
+//TODO Gestire analisi codice "aggiungere a dizionario parole come UART, distancealert, GPIO, MINIUART, switchbus, singleid, idlayout" ?
 
 public class MainActivity extends Activity {
     /**
@@ -122,7 +123,7 @@ public class MainActivity extends Activity {
             t.show();
         }
 
-        // SOLO SE IL PULSANTE FUNZIONA, istanzio l'allarme
+        // SOLO SE IL PULSANTE FUNZIONA, creo istanza dell'allarme
         if (pulsante != null) {
             try {
                 myAlarm = new DistanceAlarm(GPIO_LED, PWM_BUZZER);
@@ -274,7 +275,7 @@ public class MainActivity extends Activity {
             public void onTagDataAvailable(final List<DistanceController.Entry> tags) {
                 Log.i(TAG + MainActivityTAG, "addAllTagListener" +
                         " -> onTagDataAvailable: Lista invariata");
-                //se diversi sicuramente c'è da riaggiornare
+                //se diversi sicuramente c'è da aggiornare la lista degli ids
                 Log.v(TAG, "item.size() = " + item.size() + ", tags.size() = " + tags.size());
                 if (item.size() != tags.size()) {
                     regenerateRadioGroup();
