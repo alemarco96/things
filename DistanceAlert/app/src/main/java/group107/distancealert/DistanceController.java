@@ -99,6 +99,7 @@ public class DistanceController
      * @param source La lista con i dati da copiare
      * @return Una lista copia di quella passata per parametro
      */
+    /*
     private static List<Entry> cloneList(List<Entry> source)
     {
         List<Entry> dest = new ArrayList<>(source.size());
@@ -108,6 +109,7 @@ public class DistanceController
         }
         return dest;
     }
+    */
 
     /**
      * Logga tutte le entry presenti nella lista, anteponendoci un messaggio
@@ -134,9 +136,11 @@ public class DistanceController
      * @param message Il messaggio da anteporre ai dati
      * @param timeElapsed Il tempo in nanoecondi trascorsi
      */
+    /*
     private static void logTimeElapsed(String tag, String message, long timeElapsed) {
         Log.d(tag, message + timeElapsed / 1000 + " us");
     }
+    */
 
     //memorizza i dati attuali
     private List<Entry> actualData;
@@ -148,16 +152,10 @@ public class DistanceController
     //memorizza tutti i listeners associati ad uno specifico tag
     private List<Pair<Integer, TagListener>> tagListeners;
 
-    //memorizza l'ultimo errore nel thread di aggiornamento
-    private Throwable lastException;
-
     //oggetto usato per gestire l'accesso in mutua esclusione ai dati
     private final Object dataLock = new Object();
     //oggetto usato per gestire l'accesso in mutua esclusione ai listeners
     private final Object listenersLock = new Object();
-    //TODO: scrivere meglio commento
-    //oggetto usato per gestore l'accesso in mutua esclusione all'eccezione
-    private final Object exceptionLock = new Object();
 
     private DriverDWM driverDWM;
 
@@ -181,18 +179,9 @@ public class DistanceController
                 {
                     actualData = data;
                 }
-                synchronized (exceptionLock)
-                {
-                    lastException = null;
-                }
             } catch (Exception e)
             {
-                //TODO: gestire eccezione
                 Log.e(MainActivity.TAG, "Avvenuta eccezione in updateDataTask", e);
-                synchronized (exceptionLock)
-                {
-                    lastException = e;
-                }
             }
         }
     };
@@ -237,10 +226,9 @@ public class DistanceController
     /**
      * Ottiene i nuovi dati dal modulo DWM
      * @return I nuovi dati dal modulo DWM
-     * @throws IOException
-     * @throws InterruptedException
+     * @throws IOException Se avviene un errore di comunicazione con il modulo DWM
      */
-    private List<Entry> updateData() throws IOException, InterruptedException
+    private List<Entry> updateData() throws IOException
     {
         int[] dwmResponse = driverDWM.requestAPI((byte) 0x0C, null);
 
@@ -358,7 +346,6 @@ public class DistanceController
         {
             if (connected != null && connected.size() > 0)
             {
-                //final List<Entry> connectedCopy = cloneList(connected);
                 //presenti tags connessi nell'ultimo aggiornamento dei dati
                 new Thread(new Runnable()
                 {
@@ -373,7 +360,6 @@ public class DistanceController
 
             if (disconnected != null && disconnected.size() > 0)
             {
-                //final List<Entry> disconnectedCopy = cloneList(disconnected);
                 //presenti tags disconnessi nell'ultimo aggiornamento dei dati
                 new Thread(new Runnable()
                 {
@@ -388,7 +374,6 @@ public class DistanceController
 
             if (updated != null && updated.size() > 0)
             {
-                //final List<Entry> dataCopy = cloneList(updated);
                 //notifica i nuovi valori
                 new Thread(new Runnable()
                 {
@@ -473,7 +458,7 @@ public class DistanceController
      * @throws IllegalArgumentException Se il busName non è valido
      * @throws IOException Se avviene un errore nella creazione del driver DWM
      */
-    public DistanceController(String busName) throws IllegalArgumentException, IOException, InterruptedException
+    public DistanceController(String busName) throws IllegalArgumentException, IOException
     {
         driverDWM = new DriverDWM(busName);
         tagListeners = new ArrayList<>();
@@ -482,8 +467,6 @@ public class DistanceController
         actualData = new ArrayList<>();
         disconnectedData = new ArrayList<>();
 
-        lastException = null;
-
         //controlla lo stato della connessione del modulo
         driverDWM.checkDWM();
     }
@@ -491,19 +474,18 @@ public class DistanceController
     /**
      * Imposta il controller. Avvio automatico del polling, con un ritardo iniziale e periodo impostabile
      * @param busName Il nome del pin a cui è collegato fisicamente il modulo
-     * @param initialDelay Il ritardo iniziale prima di far iniziare il polling
      * @param period Il periodo di aggiornamento
      * @throws IllegalArgumentException Se il busName non è valido, oppure il periodo è negativo
      * @throws IOException Se avviene un errore nella creazione del driver DWM
      */
-    public DistanceController(String busName, long initialDelay, long period) throws IllegalArgumentException, IOException, InterruptedException
+    public DistanceController(String busName, long period) throws IllegalArgumentException, IOException
     {
         this(busName);
 
         if (period < 0)
             throw new IllegalArgumentException("Il periodo di aggiornamento deve essere positivo.");
 
-        startUpdate(initialDelay, period);
+        startUpdate(period);
     }
 
     /**
@@ -541,7 +523,7 @@ public class DistanceController
 
     /**
      * Aggiunge un listener che risponde agli eventi per tutti i tag
-     * @param listener Il listener
+     * @param listener Il listener da aggiungere
      */
     public void addAllTagsListener(AllTagsListener listener)
     {
@@ -564,11 +546,10 @@ public class DistanceController
     }
 
     /**
-     * Inizia il polling del modulo con ritardo iniziale e periodo impostabili come parametro
-     *
+     * Inizia il polling del modulo con un periodo impostabile come parametro
      * @param period Il tempo che trascorre tra un update e il successivo
      */
-    public void startUpdate(long initialDelay, long period) throws IllegalStateException
+    public void startUpdate(long period) throws IllegalStateException
     {
         if (period < 0)
             throw new IllegalArgumentException("Il periodo di aggiornamento deve essere positivo.");
@@ -576,18 +557,9 @@ public class DistanceController
         if (updateDataTimer == null)
         {
             updateDataTimer = new Timer(true);
-            updateDataTimer.scheduleAtFixedRate(updateDataTask, initialDelay > 0 ? initialDelay : 0, period);
+            updateDataTimer.scheduleAtFixedRate(updateDataTask, 0L, period);
         } else
             throw new IllegalStateException("Timer già avviato");
-    }
-
-    /**
-     * Inizia il polling del modulo con un periodo impostabile come parametro
-     * @param period Il tempo che trascorre tra un update e il successivo
-     */
-    public void startUpdate(long period) throws IllegalStateException
-    {
-        startUpdate(0L, period);
     }
 
     /**
@@ -604,22 +576,21 @@ public class DistanceController
 
     /**
      * Cambia il bus di comunicazione con il modulo DWM
-     * @param busName il nome del bus di comunicazione
-     * @throws IOException
-     * @throws InterruptedException
+     * @param busName Il nome del bus di comunicazione
+     * @throws IOException In caso di errore di comunicazione con il modulo DWM
      */
-    public void switchBus(String busName) throws IOException, InterruptedException {
+    public void switchBus(String busName) throws IOException
+    {
         if (driverDWM != null)
             driverDWM.close();
 
         long period = updateDataTask.scheduledExecutionTime();
         stopUpdate();
 
-        try {
+        try
+        {
             TimeUnit.MILLISECONDS.sleep(50L);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        } catch (InterruptedException e) {}
 
         driverDWM = new DriverDWM(busName);
         driverDWM.checkDWM();
@@ -638,10 +609,13 @@ public class DistanceController
             updateDataTimer = null;
         }
 
-        if (driverDWM != null) {
-            try {
+        if (driverDWM != null)
+        {
+            try
+            {
                 driverDWM.close();
-            } catch (IOException e) {
+            } catch (IOException e)
+            {
                 Log.e(MainActivity.TAG, "Eccezione in chiusura del driver DWM", e);
             }
             driverDWM = null;
@@ -651,18 +625,6 @@ public class DistanceController
         {
             allListeners = null;
             tagListeners = null;
-        }
-    }
-
-    /**
-     * Restituisce l'ultimo errore del controller
-     * @return L'ultimo errore del controller
-     */
-    public Throwable getLastException()
-    {
-        synchronized (exceptionLock)
-        {
-            return lastException;
         }
     }
 

@@ -114,16 +114,19 @@ public class DriverDWM {
      * probabilmente nell'hardware. Dunque lancia le relative eccezioni.
      *
      * @throws IOException          Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
-     * @throws InterruptedException Lanciata se viene interrotto lo sleep nella comunicazione SPI
      */
-    public void checkDWM() throws IOException, InterruptedException {
+    public void checkDWM() throws IOException {
         // Reset: caso SPI
         if (mySPI != null) {
             // Invio 3 byte 0xff al modulo DWM per resettare lo stato della comunicazione SPI
             transferViaSPI(new byte[1], true);
-            TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
+            try {
+                TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
+            } catch (InterruptedException e1) {}
             transferViaSPI(new byte[1], true);
-            TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
+            try {
+                TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
+            } catch (InterruptedException e2) {}
             int response = transferViaSPI(new byte[1], true)[0];
 
             // Se l'ultimo byte ricevuto è diverso da 0xff significa che c'è un problema
@@ -162,10 +165,9 @@ public class DriverDWM {
      *              Può anche essere null nel caso non siano previsti valori da passare.
      * @return array int[] contenente il pacchetto di byte ricevuti in risposta dal modulo DWM
      * @throws IOException              Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
-     * @throws InterruptedException     Lanciata se viene interrotto lo sleep nella comunicazione SPI
      * @throws IllegalArgumentException Lanciata se vengono passati parametri insensati
      */
-    public int[] requestAPI(byte tag, byte[] value) throws IOException, InterruptedException, IllegalArgumentException {
+    public int[] requestAPI(byte tag, byte[] value) throws IOException, IllegalArgumentException {
         // Ottengo la lunghezza dell'array dei valori della API
         int L = value == null ? 0 : value.length;
 
@@ -196,10 +198,14 @@ public class DriverDWM {
             int length;
             long timer = System.currentTimeMillis();
             do {
-                TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
+                try {
+                    TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
+                } catch (InterruptedException e1) {}
                 length = transferViaSPI(new byte[1], true)[0];
             } while ((length == 0x00) && ((System.currentTimeMillis() - timer) < MAX_SPI_WAIT));
-            TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
+            try {
+                TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
+            } catch (InterruptedException e2) {}
 
             // Nel caso ci siano stati problemi di comunicazione
             if (length == 0x00 || length == 0xff) {
