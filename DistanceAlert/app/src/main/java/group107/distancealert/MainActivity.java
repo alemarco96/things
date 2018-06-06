@@ -22,10 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 //TODO dopo crash classi continuano ad inviare dati, gestire eccezioni in modo da prevenire crash
-//TODO risolvere switch UART - SPI
-//TODO ogni volta che si esegue startElaboration() vengono creati listeners, bisogna anche toglierli quando non servono più?
-//TODO ogni volta che si esegue regenerateRadioGroup() vengono creati listeners, bisogna anche toglierli quando non servono più?
 //TODO Gestire analisi codice "aggiungere a dizionario parole come UART, distancealert, GPIO, MINIUART, switchbus, singleid, idlayout" ?
+//TODO decidere se cambiare onPause facendolo diventare onDestroy come sul repo ufficiale git
+//TODO Decidere se implementare un metodo switchbus in DistanceController o tenere soluzione già funzionante in MainActivity
 
 public class MainActivity extends Activity {
     /**
@@ -50,6 +49,7 @@ public class MainActivity extends Activity {
     private TextView distanceView;
     private TextView maxDistanceView;
     private Switch switchMethodView;
+    private TagListener idTagListener;
 
     //Oggetti utili all'activity
     private Gpio pulsante;
@@ -132,7 +132,6 @@ public class MainActivity extends Activity {
             }
         }
 
-        //TODO Decidere se implementare un metodo switchbus in DistanceController o risolvere in MainActivity
         //Switch che cambia metodo di connessione o UART o SPI
         switchMethodView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -325,6 +324,10 @@ public class MainActivity extends Activity {
                         public void onClick(View v) {
                             Log.i(TAG + MainActivityTAG, "regenerateRadioGroup:"
                                     + " onClick " + idText);
+                            if(id != -1) {
+                                //esiste già un tagListener
+                                myController.removeTagListener(idTagListener);
+                            }
                             connectToSpecificListener(singleId);
                         }
                     });
@@ -360,7 +363,7 @@ public class MainActivity extends Activity {
         String idText = Integer.toHexString(id);
         connectedToId.setText(idText);
         //collegamento a listeners di un solo tag id
-        myController.addTagListener(id, new TagListener() {
+        idTagListener = new TagListener() {
             @Override
             public void onTagHasConnected(final int tagDistance) {
                 Log.i(TAG + MainActivityTAG, "connectToSpecificListener -> " +
@@ -393,7 +396,8 @@ public class MainActivity extends Activity {
                 }
                 setDistanceText(tagDistance, distanceView);
             }
-        });
+        };
+        myController.addTagListener(id, idTagListener);
     }
 
     /**
@@ -459,7 +463,6 @@ public class MainActivity extends Activity {
         });
     }
 
-    //TODO decidere se cambiare e farlo diventare onDestroy come sul repo ufficiale git
     @Override
     public void onPause() {
         Log.i(TAG + MainActivityTAG, "onPause");
