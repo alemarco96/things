@@ -103,8 +103,8 @@ public class DistanceController
      * @param separator Una stringa usata per separare visivamente i dati
      * @param data Lista con le entry da loggare
      */
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    private static void logEntryData(String tag, String message, @SuppressWarnings("SameParameterValue") String separator, List<Entry> data)
+    @SuppressWarnings({"ResultOfMethodCallIgnored", "SameParameterValue"})
+    private static void logEntryData(String tag, String message, String separator, List<Entry> data)
     {
         String result = "" + message;
 
