@@ -137,52 +137,22 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 try {
-
-                    /*//Utilizzo di switchBus
-
-                    if (nextSpi) {
-                        Log.i(TAG + MainActivityTAG, "onCreate -> onClick switchMethodView:" +
-                                " nextSpi = " + nextSpi);
-                        if(myController == null){
-                            myController = new DistanceController(RPI3_SPI);
-                            myController.startUpdate(update);
-                            nextSpi = false;
-                            return;
-                        }
-                        nextSpi = false;
-                        myController.switchBus(RPI3_SPI);
-                        switchMethodView.setChecked(true);
-                        startElaboration(myController);
-                    } else {
-                        Log.i(TAG + MainActivityTAG, "onCreate -> onClick switchMethodView:" +
-                                " nextSpi = " + nextSpi);
-                        if(myController == null){
-                            myController = new DistanceController(RPI3_UART);
-                            myController.startUpdate(update);
-                            nextSpi = true;
-                            return;
-                        }
-                        nextSpi = true;
-                        myController.switchBus(RPI3_UART);
-                        switchMethodView.setChecked(false);
-                        startElaboration(myController);
-                    }
-                     */
-                    
-                    //Risoluzione in MainActivity di "switchBus"
+                    //Se istanza di DistanceController già creata allora la chiudo
                     if (myController != null) {
                         Log.i(TAG + MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView: myController != null");
                         myController.stopUpdate();
                         myController.close();
+                        myController = null;
                     } else {
                         Log.i(TAG + MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView: myController == null");
+                        //nessuna istanza di DistanceController creta
                     }
                     if (nextSpi) {
                         //Chiudo sessione precedente e avvio SPI
                         Log.i(TAG + MainActivityTAG, "onCreate -> " +
-                                "onClick switchMethodView: nextSpi = true");
+                                "onClick switchMethodView: nextSpi == true");
                         nextSpi = false; //prossimo click a switch si deve avviare UART
                         myController = new DistanceController(RPI3_SPI);
                         myController.startUpdate(update);
@@ -195,7 +165,7 @@ public class MainActivity extends Activity {
                     } else {
                         //Chiudo sessione precedente e avvio UART
                         Log.i(TAG + MainActivityTAG, "onCreate -> " +
-                                "onClick switchMethodView: nextSpi = false");
+                                "onClick switchMethodView: nextSpi == false");
                         nextSpi = true; //prossimo click a switch si deve avviare SPI
                         myController = new DistanceController(RPI3_UART);
                         myController.startUpdate(update);
@@ -402,7 +372,6 @@ public class MainActivity extends Activity {
 
     /**
      * Aggiorna la View con la distanza ricevuta
-     *
      * @param distance     distanza ricevuta
      * @param distanceView TextView dove aggiornare la distanza
      */
