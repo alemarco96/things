@@ -77,7 +77,6 @@ public class MainActivity extends Activity {
         Button plusMaxDistanceButton = findViewById(R.id.plusMaxDistance);
         Button minusMaxDistanceButton = findViewById(R.id.minusMaxDistance);
 
-
         //periodo polling
         final long update = 300L;
         
@@ -208,7 +207,7 @@ public class MainActivity extends Activity {
                             connectToSpecificListener(id);
                         }
                     }
-                } catch (java.io.IOException | InterruptedException e) {
+                } catch (java.io.IOException e) {
                     Log.e(TAG + MainActivityTAG, "onCreate -> onClick switchMethodView:" +
                             " Errore:\n", e);
                     /*Generata un'eccezione al momento della creazione dell'instanza
@@ -233,7 +232,7 @@ public class MainActivity extends Activity {
             myController.startUpdate(update);
             switchMethodView.setChecked(true);
             startElaboration();
-        } catch (java.io.IOException | InterruptedException e) {
+        } catch (java.io.IOException e) {
             Log.e(TAG + MainActivityTAG, "onCreate Errore:\n", e);
             /*Generata un'eccezione al momento della creazione dell'instanza DistanceController
             quindi lo notifico sullo schermo utilizzato dall'utente*/

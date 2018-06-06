@@ -95,52 +95,28 @@ public class DistanceController
     }
 
     /**
-     * Clona la lista di entry id-distanza passata per argomento. Viene effettuata una copia dei dati
-     * @param source La lista con i dati da copiare
-     * @return Una lista copia di quella passata per parametro
-     */
-    /*
-    private static List<Entry> cloneList(List<Entry> source)
-    {
-        List<Entry> dest = new ArrayList<>(source.size());
-        for (int i = 0; i < source.size(); i++)
-        {
-            dest.add(new Entry(source.get(i)));
-        }
-        return dest;
-    }
-    */
-
-    /**
      * Logga tutte le entry presenti nella lista, anteponendoci un messaggio
      * @param tag Il tag con cui fare il log
      * @param message Il messaggio da anteporre ai dati
      * @param separator Una stringa usata per separare visivamente i dati
      * @param data Lista con le entry da loggare
      */
-    private static void logEntryData(String tag, String message, String separator, List<Entry> data) {
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    private static void logEntryData(String tag, String message, @SuppressWarnings("SameParameterValue") String separator, List<Entry> data)
+    {
         String result = "" + message;
 
         if (data == null || data.size() == 0)
-            result.concat("<nessuno>");
+        {
+            Log.d(tag, "<nessuno>");
+            return;
+        }
 
         for (int i = 0; i < data.size(); i++)
             result.concat(data.get(i).toString() + separator);
 
         Log.d(tag, result);
     }
-
-    /**
-     * Logga il tempo trascorso per svolgere una operazione
-     * @param tag Il tag con cui fare il log
-     * @param message Il messaggio da anteporre ai dati
-     * @param timeElapsed Il tempo in nanoecondi trascorsi
-     */
-    /*
-    private static void logTimeElapsed(String tag, String message, long timeElapsed) {
-        Log.d(tag, message + timeElapsed / 1000 + " us");
-    }
-    */
 
     //memorizza i dati attuali
     private List<Entry> actualData;
@@ -458,6 +434,7 @@ public class DistanceController
      * @throws IllegalArgumentException Se il busName non è valido
      * @throws IOException Se avviene un errore nella creazione del driver DWM
      */
+    @SuppressWarnings("WeakerAccess")
     public DistanceController(String busName) throws IllegalArgumentException, IOException
     {
         driverDWM = new DriverDWM(busName);
@@ -478,6 +455,7 @@ public class DistanceController
      * @throws IllegalArgumentException Se il busName non è valido, oppure il periodo è negativo
      * @throws IOException Se avviene un errore nella creazione del driver DWM
      */
+    @SuppressWarnings("unused")
     public DistanceController(String busName, long period) throws IllegalArgumentException, IOException
     {
         this(busName);
@@ -505,6 +483,7 @@ public class DistanceController
      * Rimuove il listener, se presente
      * @param listener Il listener da rimuovere
      */
+    @SuppressWarnings("unused")
     public void removeTagListener(TagListener listener)
     {
         synchronized (listenersLock)
@@ -537,6 +516,7 @@ public class DistanceController
      * Rimuove il listener, se presente
      * @param listener Il listener da rimuovere
      */
+    @SuppressWarnings("unused")
     public void removeAllTagsListener(AllTagsListener listener)
     {
         synchronized (listenersLock)
@@ -579,6 +559,7 @@ public class DistanceController
      * @param busName Il nome del bus di comunicazione
      * @throws IOException In caso di errore di comunicazione con il modulo DWM
      */
+    @SuppressWarnings("unused")
     public void switchBus(String busName) throws IOException
     {
         if (driverDWM != null)
@@ -590,7 +571,9 @@ public class DistanceController
         try
         {
             TimeUnit.MILLISECONDS.sleep(50L);
-        } catch (InterruptedException e) {}
+        } catch (InterruptedException e) {
+            Log.d(TAG, "Sleep non eseguito.");
+        }
 
         driverDWM = new DriverDWM(busName);
         driverDWM.checkDWM();

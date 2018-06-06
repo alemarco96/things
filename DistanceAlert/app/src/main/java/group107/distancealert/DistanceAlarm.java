@@ -45,6 +45,7 @@ public class DistanceAlarm {
      *
      * @throws IOException Lanciata se ci sono problemi di accesso alle periferiche
      */
+    @SuppressWarnings("WeakerAccess")
     public DistanceAlarm(String gpioLed, String pwmBuzzer) throws IOException {
         // Ottengo istanza di PeripheralManager per poter gestire le periferiche
         PeripheralManager manager = PeripheralManager.getInstance();

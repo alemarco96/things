@@ -1,5 +1,7 @@
 package group107.distancealert;
 
+import android.util.Log;
+
 import com.google.android.things.pio.PeripheralManager;
 import com.google.android.things.pio.SpiDevice;
 import com.google.android.things.pio.UartDevice;
@@ -8,6 +10,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
+import static group107.distancealert.MainActivity.TAG;
 import static java.lang.Byte.toUnsignedInt;
 
 /**
@@ -38,6 +41,7 @@ public class DriverDWM {
      *                ovvero, per la raspberry: "SPI0.0" o "SPI0.1" o "MINIUART".
      * @throws IOException Lanciata se ci sono problemi di accesso alla periferica
      */
+    @SuppressWarnings("WeakerAccess")
     public DriverDWM(String busName) throws IOException {
         // Ottengo istanza di PeripheralManager per poter gestire le periferiche
         PeripheralManager manager = PeripheralManager.getInstance();
@@ -122,11 +126,15 @@ public class DriverDWM {
             transferViaSPI(new byte[1], true);
             try {
                 TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
-            } catch (InterruptedException e1) {}
+            } catch (InterruptedException e1) {
+                Log.d(TAG, "Sleep non eseguito.");
+            }
             transferViaSPI(new byte[1], true);
             try {
                 TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
-            } catch (InterruptedException e2) {}
+            } catch (InterruptedException e2) {
+                Log.d(TAG, "Sleep non eseguito.");
+            }
             int response = transferViaSPI(new byte[1], true)[0];
 
             // Se l'ultimo byte ricevuto è diverso da 0xff significa che c'è un problema
@@ -200,12 +208,16 @@ public class DriverDWM {
             do {
                 try {
                     TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
-                } catch (InterruptedException e1) {}
+                } catch (InterruptedException e1) {
+                    Log.d(TAG, "Sleep non eseguito.");
+                }
                 length = transferViaSPI(new byte[1], true)[0];
             } while ((length == 0x00) && ((System.currentTimeMillis() - timer) < MAX_SPI_WAIT));
             try {
                 TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
-            } catch (InterruptedException e2) {}
+            } catch (InterruptedException e2) {
+                Log.d(TAG, "Sleep non eseguito.");
+            }
 
             // Nel caso ci siano stati problemi di comunicazione
             if (length == 0x00 || length == 0xff) {
