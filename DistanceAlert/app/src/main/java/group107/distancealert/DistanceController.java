@@ -23,6 +23,8 @@ public class DistanceController
     private static final int BYTES_PER_ENTRY = 20;
     //numero di volte per cui ricevendo gli stessi dati dal modulo DWM, un tag viene dichiarato disconnesso
     private static final int COUNTER_FOR_DISCONNECTED = 3;
+    //periodo minimo di aggiornamento a cui può essere settato il controller (<= 10 Hz)
+    private static final long MINIMUM_UPDATE_PERIOD = 100L;
 
     /**
      * Oggetto che serve per ordinare in ordine crescente per tagID le entry
@@ -101,16 +103,16 @@ public class DistanceController
      * @param separator Una stringa usata per separare visivamente i dati
      * @param data Lista con le entry da loggare
      */
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    private static void logEntryData(String tag, String message, @SuppressWarnings("SameParameterValue") String separator, List<Entry> data)
+    @SuppressWarnings({"ResultOfMethodCallIgnored", "SameParameterValue"})
+    private static void logEntryData(String tag, String message, String separator, List<Entry> data)
     {
-        String result = "" + message;
-
         if (data == null || data.size() == 0)
         {
-            Log.d(tag, "<nessuno>");
+            Log.d(tag, message + "<nessuno>");
             return;
         }
+
+        String result = "" + message;
 
         for (int i = 0; i < data.size(); i++)
             result.concat(data.get(i).toString() + separator);
@@ -461,7 +463,9 @@ public class DistanceController
         this(busName);
 
         if (period < 0)
-            throw new IllegalArgumentException("Il periodo di aggiornamento deve essere positivo.");
+            throw new IllegalArgumentException("Il periodo di aggiornamento deve essere positivo. Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
+        else if (period < MINIMUM_UPDATE_PERIOD)
+            throw new IllegalArgumentException("Il periodo di aggiornamento è troppo basso. Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
 
         startUpdate(period);
     }
@@ -529,10 +533,12 @@ public class DistanceController
      * Inizia il polling del modulo con un periodo impostabile come parametro
      * @param period Il tempo che trascorre tra un update e il successivo
      */
-    public void startUpdate(long period) throws IllegalStateException
+    public void startUpdate(long period) throws IllegalArgumentException, IllegalStateException
     {
         if (period < 0)
-            throw new IllegalArgumentException("Il periodo di aggiornamento deve essere positivo.");
+            throw new IllegalArgumentException("Il periodo di aggiornamento deve essere positivo. Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
+        else if (period < MINIMUM_UPDATE_PERIOD)
+            throw new IllegalArgumentException("Il periodo di aggiornamento è troppo basso. Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
 
         if (updateDataTimer == null)
         {
@@ -559,7 +565,7 @@ public class DistanceController
      * @param busName Il nome del bus di comunicazione
      * @throws IOException In caso di errore di comunicazione con il modulo DWM
      */
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "EmptyCatchBlock"})
     public void switchBus(String busName) throws IOException
     {
         if (driverDWM != null)
@@ -568,12 +574,15 @@ public class DistanceController
         long period = updateDataTask.scheduledExecutionTime();
         stopUpdate();
 
-        try
+        //Prova a sospendere il thread per 50ms. Se non riesce, viene effettuato busy-waiting
+        long time = System.currentTimeMillis();
+        do
         {
-            TimeUnit.MILLISECONDS.sleep(50L);
-        } catch (InterruptedException e) {
-            Log.d(TAG, "Sleep non eseguito.");
-        }
+            try
+            {
+                TimeUnit.MILLISECONDS.sleep(50L - (System.currentTimeMillis() - time));
+            } catch (InterruptedException e) {}
+        } while((System.currentTimeMillis() - time) >= 50L);
 
         driverDWM = new DriverDWM(busName);
         driverDWM.checkDWM();
