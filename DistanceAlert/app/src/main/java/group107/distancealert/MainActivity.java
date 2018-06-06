@@ -137,7 +137,7 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 try {
-                    //Se istanza di DistanceController già creata allora la chiudo
+                    //Se istanza di DistanceController già creata allora deve essere chiusa
                     if (myController != null) {
                         Log.i(TAG + MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView: myController != null");
