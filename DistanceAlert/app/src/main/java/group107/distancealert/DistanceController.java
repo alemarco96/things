@@ -155,7 +155,7 @@ public class DistanceController
                 {
                     actualData = data;
                 }
-            } catch (Exception e)
+            } catch (Throwable e)
             {
                 Log.e(MainActivity.TAG, "Avvenuta eccezione in updateDataTask", e);
             }
