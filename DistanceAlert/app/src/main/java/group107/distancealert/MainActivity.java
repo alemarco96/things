@@ -174,7 +174,7 @@ public class MainActivity extends Activity {
                     //Risoluzione in MainActivity di "switchBus"
                     if (myController != null) {
                         Log.i(TAG + MainActivityTAG, "onCreate -> " +
-                                "onClick switchMethodView: myController == null");
+                                "onClick switchMethodView: myController != null");
                         myController.stopUpdate();
                         myController.close();
                     } else {
