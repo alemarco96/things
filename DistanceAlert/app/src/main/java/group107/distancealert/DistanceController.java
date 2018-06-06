@@ -106,13 +106,13 @@ public class DistanceController
     @SuppressWarnings({"ResultOfMethodCallIgnored", "SameParameterValue"})
     private static void logEntryData(String tag, String message, String separator, List<Entry> data)
     {
-        String result = "" + message;
-
         if (data == null || data.size() == 0)
         {
-            Log.d(tag, "<nessuno>");
+            Log.d(tag, message + "<nessuno>");
             return;
         }
+
+        String result = "" + message;
 
         for (int i = 0; i < data.size(); i++)
             result.concat(data.get(i).toString() + separator);
