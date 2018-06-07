@@ -25,6 +25,7 @@ import java.util.List;
 //TODO Gestire analisi codice "aggiungere a dizionario parole come UART, distancealert, GPIO, MINIUART, switchbus, singleid, idlayout" ?
 //TODO decidere se cambiare onPause facendolo diventare onDestroy come sul repo ufficiale git
 //TODO Decidere se implementare un metodo switchbus in DistanceController o tenere soluzione già funzionante in MainActivity
+//TODO analizzare l'intero progetto e risolvere le varie segnalazioni
 
 public class MainActivity extends Activity {
     /**
@@ -147,7 +148,7 @@ public class MainActivity extends Activity {
                     } else {
                         Log.i(TAG + MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView: myController == null");
-                        //nessuna istanza di DistanceController creta
+                        //nessuna istanza di DistanceController creata
                     }
                     if (nextSpi) {
                         //Chiudo sessione precedente e avvio SPI
