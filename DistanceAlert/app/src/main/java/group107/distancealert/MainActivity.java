@@ -247,6 +247,7 @@ public class MainActivity extends Activity {
                 //se diversi sicuramente c'è da aggiornare la lista degli ids
                 Log.v(TAG, "item.size() = " + item.size() + ", tags.size() = " + tags.size());
                 if (item.size() != tags.size()) {
+                    //sicuramente c'è differenza tra la lista mostrata e quella reale
                     regenerateRadioGroup();
                     return;
                 }
@@ -254,8 +255,8 @@ public class MainActivity extends Activity {
                 for (int i = 0; i < tags.size(); i++) {
                     for (int j = 0; j < item.size(); j++) {
                         String itemText = (String) item.get(j).getText();
-                        if (!(Integer.toHexString(tags.get(i).tagID)
-                                .equals(itemText))) {
+                        if (!(Integer.toHexString(tags.get(i).tagID).equals(itemText))) {
+                            //trovato id rilevato non presente nella lista, quindi la aggiorno
                             regenerateRadioGroup();
                             return;
                         }
@@ -296,7 +297,7 @@ public class MainActivity extends Activity {
                             Log.i(TAG + MainActivityTAG, "regenerateRadioGroup:"
                                     + " onClick " + idText);
                             if(id != -1) {
-                                //esiste già un tagListener
+                                //esiste già un tagListener, quindi è da rimuovere
                                 myController.removeTagListener(idTagListener);
                             }
                             connectToSpecificListener(singleId);
@@ -412,18 +413,18 @@ public class MainActivity extends Activity {
                     myAlarm.start();
 
                     pulsante.registerGpioCallback(
-                            new GpioCallback() {
-                                @Override
-                                public boolean onGpioEdge(Gpio gpio) {
-                                    try {
-                                        myAlarm.stop();
-                                    } catch (IOException e) {
-                                        Log.e(TAG + MainActivityTAG, "distanceAlarm" +
-                                                " -> Errore Pulsante:", e);
-                                    }
-                                    return false;
+                        new GpioCallback() {
+                            @Override
+                            public boolean onGpioEdge(Gpio gpio) {
+                                try {
+                                    myAlarm.stop();
+                                } catch (IOException e) {
+                                    Log.e(TAG + MainActivityTAG, "distanceAlarm" +
+                                            " -> Errore Pulsante:", e);
                                 }
+                                return false;
                             }
+                        }
                     );
 
                 } catch (IOException e) {
