@@ -23,6 +23,8 @@ public class DistanceController
     private static final int BYTES_PER_ENTRY = 20;
     //numero di volte per cui ricevendo gli stessi dati dal modulo DWM, un tag viene dichiarato disconnesso
     private static final int COUNTER_FOR_DISCONNECTED = 3;
+    //numero di volte per cui avvenendo un errore nella comunicazione con il modulo DWM, dichiara disconnessi tutti i tag e stoppa il polling
+    private static final int COUNTER_FOR_CONNECTION_ERRORS = COUNTER_FOR_DISCONNECTED;
     //periodo minimo di aggiornamento a cui può essere settato il controller (<= 10 Hz)
     private static final long MINIMUM_UPDATE_PERIOD = 100L;
 
@@ -97,6 +99,21 @@ public class DistanceController
     }
 
     /**
+     * Clona la lista di entry id-distanza passata per argomento. Viene effettuata una copia dei dati
+     * @param source La lista con i dati da copiare
+     * @return Una lista copia di quella passata per parametro
+     */
+    private static List<Entry> cloneList(List<Entry> source)
+    {
+        List<Entry> dest = new ArrayList<>(source.size());
+        for (int i = 0; i < source.size(); i++)
+        {
+            dest.add(new Entry(source.get(i)));
+        }
+        return dest;
+    }
+
+    /**
      * Logga tutte le entry presenti nella lista, anteponendoci un messaggio
      * @param tag Il tag con cui fare il log
      * @param message Il messaggio da anteporre ai dati
@@ -135,6 +152,9 @@ public class DistanceController
     //oggetto usato per gestire l'accesso in mutua esclusione ai listeners
     private final Object listenersLock = new Object();
 
+    //contatore degli errori di comunicazione con il modulo DWM
+    private int connectionErrors = 0;
+
     private DriverDWM driverDWM;
 
     //oggetto che, usando un thread secondario che autogestisce la sua schedulazione periodica, si occupa di effettuare
@@ -157,9 +177,31 @@ public class DistanceController
                 {
                     actualData = data;
                 }
+                connectionErrors = 0;
             } catch (Throwable e)
             {
                 Log.e(MainActivity.TAG, "Avvenuta eccezione in updateDataTask", e);
+                connectionErrors++;
+                if (connectionErrors >= COUNTER_FOR_CONNECTION_ERRORS)
+                {
+                    List<Entry> data;
+                    synchronized (dataLock)
+                    {
+                        data = cloneList(actualData);
+                    }
+                    synchronized (listenersLock)
+                    {
+                        //notifica a tutti i listeners che tutti i tag che erano connessi all'ultimo aggiornamento si sono disconnessi
+
+                        notifyToAllTagsListeners(null, data, null);
+                        notifyToTagsListeners(new ArrayList<Entry>(), data, new ArrayList<Entry>());
+                    }
+
+                    //stoppa il thread di aggiornamento
+                    stopUpdate();
+
+                    Log.e(TAG, "*** Troppi errori di comunicazione avvenuti. Stop dell'aggiornamento del controller. ***");
+                }
             }
         }
     };
@@ -445,6 +487,8 @@ public class DistanceController
 
         actualData = new ArrayList<>();
         disconnectedData = new ArrayList<>();
+
+        connectionErrors = 0;
 
         //controlla lo stato della connessione del modulo
         driverDWM.checkDWM();
