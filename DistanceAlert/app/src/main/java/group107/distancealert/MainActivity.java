@@ -26,6 +26,7 @@ import java.util.List;
 //TODO decidere se cambiare onPause facendolo diventare onDestroy come sul repo ufficiale git
 //TODO Decidere se implementare un metodo switchbus in DistanceController o tenere soluzione già funzionante in MainActivity
 //TODO analizzare l'intero progetto e risolvere le varie segnalazioni
+//TODO tags specifici per ogni classe?
 
 public class MainActivity extends Activity {
     /**
