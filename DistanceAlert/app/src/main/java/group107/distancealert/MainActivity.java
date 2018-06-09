@@ -304,6 +304,7 @@ public class MainActivity extends Activity {
                                         "(id == " + id + ") !=-1");
                                 //esiste già un tagListener, quindi è da rimuovere
                                 myController.removeTagListener(idTagListener);
+                                idTagListener = null;
                             }
                             connectToSpecificListener(singleId);
                         }
