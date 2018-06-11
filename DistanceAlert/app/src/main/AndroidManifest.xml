@@ -23,8 +23,8 @@
             </intent-filter>
 
             <!--
-                 Serve per lanciare automaticamente l'activity dopo che il sistema ha fatto
-                 il boot e a riavviare automaticamente l'activity se l'app viene chiusa
+                Serve per lanciare automaticamente l'activity dopo che il sistema ha fatto
+                il boot e a riavviare automaticamente l'activity se l'app viene chiusa
             -->
 
             <intent-filter>
