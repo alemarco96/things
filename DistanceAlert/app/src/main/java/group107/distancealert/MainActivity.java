@@ -147,7 +147,7 @@ public class MainActivity extends Activity {
                         myController.switchBus(busName);
                         nextSpi = !nextSpi;
                         switchMethodView.setChecked(nextSpi);
-                        startElaboration();
+                        //startElaboration();
                         /*
                         if (id != -1) {
                             //id già selezionato in precedenza
