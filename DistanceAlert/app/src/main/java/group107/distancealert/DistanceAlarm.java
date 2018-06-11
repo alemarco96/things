@@ -80,6 +80,7 @@ public class DistanceAlarm {
             return;
         }
 
+        toneIndex = 0;
         // Avvio programmazione ogni 400ms
         (timer = new Timer()).scheduleAtFixedRate(new TimerTask() {
 
