@@ -142,21 +142,15 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 try {
+                    /*
                     if (myController != null) {
                         String busName = nextSpi ? RPI3_SPI : RPI3_UART;
                         myController.switchBus(busName);
                         nextSpi = !nextSpi;
                         switchMethodView.setChecked(nextSpi);
-                        //startElaboration();
-                        /*
-                        if (id != -1) {
-                            //id già selezionato in precedenza
-                            connectToSpecificListener(id);
-                        }
-                        */
                     }
+                    */
 
-                    /*
                     //Se istanza di DistanceController già creata allora deve essere chiusa
                     if (myController != null) {
                         Log.i(MainActivityTAG, "onCreate -> " +
@@ -196,7 +190,6 @@ public class MainActivity extends Activity {
                             connectToSpecificListener(id);
                         }
                     }
-                    */
                 } catch (IOException e) {
                     Log.e(MainActivityTAG, "onCreate -> onClick switchMethodView:" +
                             " Errore:\n", e);
