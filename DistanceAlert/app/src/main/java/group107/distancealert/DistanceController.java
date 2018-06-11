@@ -616,7 +616,10 @@ public class DistanceController
     public void switchBus(String busName) throws IOException
     {
         if (driverDWM != null)
+        {
             driverDWM.close();
+            driverDWM = null;
+        }
 
         long period = updateDataTask.scheduledExecutionTime();
         stopUpdate();
