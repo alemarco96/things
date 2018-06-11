@@ -613,7 +613,7 @@ public class DistanceController
      * @throws IOException In caso di errore di comunicazione con il modulo DWM
      */
     @SuppressWarnings({"unused", "EmptyCatchBlock"})
-    public void switchBus(String busName) throws IOException
+    public void switchBus(String busName) throws IllegalArgumentException, IOException
     {
         if (driverDWM != null)
         {
