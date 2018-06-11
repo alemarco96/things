@@ -385,14 +385,16 @@ public class MainActivity extends Activity {
                 Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                         "addTagListener -> onTagDataAvailable: id = " + Integer.toHexString(id) +
                         ", tagDistance = " + tagDistance);
-                if ((!alertActivated) && (tagDistance > maxDistance)) {
+                //if ((!alertActivated) && (tagDistance > maxDistance)) {
+                if (tagDistance > maxDistance) {
                     Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                             "addTagListener -> onTagDataAvailable: " +
                             "(tagDistance == " + tagDistance +
                             ") > (maxDistance == " + maxDistance + ")");
-                    alertActivated = true;
+                    //alertActivated = true;
                     distanceAlarm();
                 }
+                /*
                 if ((alertActivated) && (tagDistance <= maxDistance)) {
                     try {
                         //TODO: è così che si ferma l'allarme per via programmatica?
@@ -402,6 +404,7 @@ public class MainActivity extends Activity {
                         Log.e(TAG, "Errore nella chiusura dell'allarme", e);
                     }
                 }
+                */
                 setDistanceText(tagDistance, distanceView);
             }
         };
