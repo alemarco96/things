@@ -145,6 +145,15 @@ public class MainActivity extends Activity {
                     if (myController != null) {
                         String busName = nextSpi ? RPI3_SPI : RPI3_UART;
                         myController.switchBus(busName);
+                        nextSpi = !nextSpi;
+                        switchMethodView.setChecked(nextSpi);
+                        startElaboration();
+                        /*
+                        if (id != -1) {
+                            //id già selezionato in precedenza
+                            connectToSpecificListener(id);
+                        }
+                        */
                     }
 
                     /*
