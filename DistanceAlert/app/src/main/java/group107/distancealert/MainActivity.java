@@ -62,6 +62,7 @@ public class MainActivity extends Activity {
     private int maxDistance = 2000;
     final private List<RadioButton> item = new ArrayList<>();
     private boolean nextSpi = true;
+    boolean alertActivated = false;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -348,8 +349,6 @@ public class MainActivity extends Activity {
         connectedToId.setText(idText);
         //collegamento a listeners di un solo tag id
         idTagListener = new TagListener() {
-            private boolean alertActivated = false;
-
             @Override
             public void onTagHasConnected(final int tagDistance) {
                 Log.i(MainActivityTAG, "connectToSpecificListener -> " +
@@ -448,6 +447,7 @@ public class MainActivity extends Activity {
                                 try {
                                     Log.i(MainActivityTAG, "distanceAlarm -> " +
                                             "GpioCallback");
+                                    alertActivated = false;
                                     myAlarm.stop();
                                 } catch (IOException e) {
                                     Log.e(MainActivityTAG, "distanceAlarm" +
