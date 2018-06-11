@@ -502,7 +502,7 @@ public class DistanceController
      * @throws IllegalArgumentException Se il busName non è valido, oppure il periodo è negativo
      * @throws IOException Se avviene un errore nella creazione del driver DWM
      */
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public DistanceController(String busName, long period) throws IllegalArgumentException, IOException
     {
         this(busName);
@@ -578,6 +578,7 @@ public class DistanceController
      * Inizia il polling del modulo con un periodo impostabile come parametro
      * @param period Il tempo che trascorre tra un update e il successivo
      */
+    @SuppressWarnings("WeakerAccess")
     public void startUpdate(long period) throws IllegalArgumentException, IllegalStateException
     {
         if (period < 0)
@@ -596,6 +597,7 @@ public class DistanceController
     /**
      * Termina il polling del modulo
      * */
+    @SuppressWarnings("WeakerAccess")
     public void stopUpdate()
     {
         if (updateDataTimer != null)
