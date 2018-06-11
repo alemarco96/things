@@ -141,6 +141,12 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 try {
+                    if (myController != null) {
+                        String busName = nextSpi ? RPI3_SPI : RPI3_UART;
+                        myController.switchBus(busName);
+                    }
+
+                    /*
                     //Se istanza di DistanceController già creata allora deve essere chiusa
                     if (myController != null) {
                         Log.i(MainActivityTAG, "onCreate -> " +
@@ -180,7 +186,8 @@ public class MainActivity extends Activity {
                             connectToSpecificListener(id);
                         }
                     }
-                } catch (java.io.IOException e) {
+                    */
+                } catch (IOException e) {
                     Log.e(MainActivityTAG, "onCreate -> onClick switchMethodView:" +
                             " Errore:\n", e);
                     /*Generata un'eccezione al momento della creazione dell'instanza
@@ -201,11 +208,10 @@ public class MainActivity extends Activity {
         try {
             Log.i(MainActivityTAG, "onCreate: default lancia SPI");
             nextSpi = false;
-            myController = new DistanceController(RPI3_SPI);
-            myController.startUpdate(update);
+            myController = new DistanceController(RPI3_SPI, update);
             switchMethodView.setChecked(true);
             startElaboration();
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             Log.e(MainActivityTAG, "onCreate Errore:\n", e);
             /*Generata un'eccezione al momento della creazione dell'instanza DistanceController
             quindi lo notifico sullo schermo utilizzato dall'utente*/
@@ -342,6 +348,8 @@ public class MainActivity extends Activity {
         connectedToId.setText(idText);
         //collegamento a listeners di un solo tag id
         idTagListener = new TagListener() {
+            private boolean alertActivated = false;
+
             @Override
             public void onTagHasConnected(final int tagDistance) {
                 Log.i(MainActivityTAG, "connectToSpecificListener -> " +
@@ -369,12 +377,22 @@ public class MainActivity extends Activity {
                 Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                         "addTagListener -> onTagDataAvailable: id = " + Integer.toHexString(id) +
                         ", tagDistance = " + tagDistance);
-                if (tagDistance > maxDistance) {
+                if ((!alertActivated) && (tagDistance > maxDistance)) {
                     Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                             "addTagListener -> onTagDataAvailable: " +
                             "(tagDistance == " + tagDistance +
                             ") > (maxDistance == " + maxDistance + ")");
+                    alertActivated = true;
                     distanceAlarm();
+                }
+                if ((alertActivated) && (tagDistance <= maxDistance)) {
+                    try {
+                        //TODO: è così che si ferma l'allarme per via programmatica?
+                        myAlarm.stop();
+                        alertActivated = false;
+                    } catch (IOException e) {
+                        Log.e(TAG, "Errore nella chiusura dell'allarme", e);
+                    }
                 }
                 setDistanceText(tagDistance, distanceView);
             }
