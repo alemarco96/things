@@ -155,6 +155,7 @@ public class DistanceController
     //contatore degli errori di comunicazione con il modulo DWM
     private int connectionErrors = 0;
 
+    //oggetto che gestisce la comunicazione a basso livello con il modulo DWM
     private DriverDWM driverDWM;
 
     //oggetto che, usando un thread secondario che autogestisce la sua schedulazione periodica, si occupa di effettuare
