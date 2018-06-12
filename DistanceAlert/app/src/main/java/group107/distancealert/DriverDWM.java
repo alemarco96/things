@@ -5,9 +5,12 @@ import android.util.Log;
 import com.google.android.things.pio.PeripheralManager;
 import com.google.android.things.pio.SpiDevice;
 import com.google.android.things.pio.UartDevice;
+import com.google.android.things.pio.UartDeviceCallback;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static group107.distancealert.MainActivity.TAG;
@@ -20,12 +23,14 @@ import static java.lang.Byte.toUnsignedInt;
  * Quando si ha finito di usare un oggetto di questa classe è importante invocare il metodo close
  * per rilasciare le periferiche hardware utilizzate.
  */
-public class DriverDWM {
+public class DriverDWM implements UartDeviceCallback {
     /**
      * Oggetti riferiti alle periferiche SPI e UART
      */
     private SpiDevice mySPI;
     private UartDevice myUART;
+    private List<UartCallback> uartListeners;
+    private final Object listenerLock = new Object();
 
     /**
      * Parametri costanti usati per gestire la temporizzazione durante le comunicazioni SPI e UART
@@ -45,6 +50,8 @@ public class DriverDWM {
     public DriverDWM(String busName) throws IOException {
         // Ottengo istanza di PeripheralManager per poter gestire le periferiche
         PeripheralManager manager = PeripheralManager.getInstance();
+
+        uartListeners = new ArrayList<>();
 
         /*
         Se il busName è un bus SPI, prova ad ottenere un'istanza della periferica SPI.
@@ -230,7 +237,8 @@ public class DriverDWM {
 
         // Caso UART
         else {
-            return transferViaUART(buffer);
+            requestDataViaUART(buffer);
+            return new int[0];
         }
     }
 
@@ -273,14 +281,15 @@ public class DriverDWM {
      * Se non riceve alcuna risposta entro 50ms lancia la relativa eccezione.
      *
      * @param transmit array contenete i byte da inviare via UART
-     * @return Array int[] contentente i valori ricevuti convertiti in unsigned int
      * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      */
-    private int[] transferViaUART(byte[] transmit) throws IOException {
+    private void requestDataViaUART(byte[] transmit) throws IOException {
         // Reset della comunicazione e invio della richiesta
         myUART.flush(UartDevice.FLUSH_IN_OUT);
         myUART.write(transmit, transmit.length);
+    }
 
+    private int[] getDataViaUART() throws IOException {
         byte[] totalReceive = new byte[255];
         int totalCount = 0;
         long timer = System.currentTimeMillis();
@@ -323,6 +332,49 @@ public class DriverDWM {
         return intReceive;
     }
 
+    @Override
+    public boolean onUartDeviceDataAvailable(final UartDevice uartDevice)
+    {
+        synchronized (listenerLock) {
+            for (int i = 0; i < uartListeners.size(); i++)
+            {
+                final UartCallback callback = uartListeners.get(i);
+
+                new Thread(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        try
+                        {
+                            callback.onDataAvailable(getDataViaUART());
+                        } catch (IOException e)
+                        {
+                            Log.e(TAG, "Errore nella notifica di dati da UART disponibili.", e);
+                        }
+                    }
+                }).start();
+            }
+            return false;
+        }
+    }
+
+    public void addUARTCallbackListener(UartCallback listener)
+    {
+        synchronized (listenerLock)
+        {
+            uartListeners.add(listener);
+        }
+    }
+
+    public void removeUARTCallbackListener(UartCallback listener)
+    {
+        synchronized (listenerLock)
+        {
+            uartListeners.remove(listener);
+        }
+    }
+
     /**
      * Chiusura e rilascio della periferica SPI e/o UART
      *
@@ -337,6 +389,12 @@ public class DriverDWM {
         if (myUART != null) {
             myUART.close();
             myUART = null;
+        }
+
+        synchronized (listenerLock) {
+            for (int i = 0; i < uartListeners.size(); i++) {
+                removeUARTCallbackListener(uartListeners.get(i));
+            }
         }
     }
 }
