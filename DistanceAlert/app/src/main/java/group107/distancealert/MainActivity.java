@@ -58,7 +58,7 @@ public class MainActivity extends Activity {
         @Override
         public boolean onGpioEdge(Gpio gpio) {
             try {
-                Log.i(MainActivityTAG, "distanceAlarm -> " +
+                Log.d(MainActivityTAG, "distanceAlarm -> " +
                         "GpioCallback");
                 myAlarm.stop();
                 pulsante.unregisterGpioCallback(pulsanteCallback);
@@ -73,7 +73,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
-        Log.i(MainActivityTAG, "onCreate");
+        Log.d(MainActivityTAG, "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -163,7 +163,7 @@ public class MainActivity extends Activity {
                     }
                     if (nextSpi) {
                         //Chiudo sessione precedente e avvio SPI
-                        Log.i(MainActivityTAG, "onCreate -> " +
+                        Log.d(MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView: nextSpi == true");
                         nextSpi = false; //prossimo click a switch si deve avviare UART
                         myController = new DistanceController(RPI3_SPI);
@@ -176,7 +176,7 @@ public class MainActivity extends Activity {
                         }
                     } else {
                         //Chiudo sessione precedente e avvio UART
-                        Log.i(MainActivityTAG, "onCreate -> " +
+                        Log.d(MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView: nextSpi == false");
                         nextSpi = true; //prossimo click a switch si deve avviare SPI
                         myController = new DistanceController(RPI3_UART);
@@ -229,14 +229,14 @@ public class MainActivity extends Activity {
      * Comincia l'elaborazione dei dati ricevuti
      */
     private void startElaboration() {
-        Log.i(MainActivityTAG, "startElaboration");
+        Log.d(MainActivityTAG, "startElaboration");
             /*Connessione ai listeners generali per creare lista di IDs rilevati
             visualizzabile su schermo e completa di bottoni per la visione dei dati relativi
             allo specifico id selezionato */
         myController.addAllTagsListener(new AllTagsListener() {
             @Override
             public void onTagHasConnected(final List<DistanceController.Entry> tags) {
-                Log.d(MainActivityTAG, "startElaboration -> " +
+                Log.i(MainActivityTAG, "startElaboration -> " +
                         "addAllTagListener -> onTagHasConnected: item.size() = " + item.size()
                         + ", tags.size() = " + tags.size());
                 regenerateRadioGroup();
@@ -244,7 +244,7 @@ public class MainActivity extends Activity {
 
             @Override
             public void onTagHasDisconnected(final List<DistanceController.Entry> tags) {
-                Log.d(MainActivityTAG, "startElaboration -> addAllTagListener" +
+                Log.i(MainActivityTAG, "startElaboration -> addAllTagListener" +
                         " -> onTagHasDisconnected: item.size() = " + item.size()
                         + ", tags.size() = " + tags.size());
                 regenerateRadioGroup();
@@ -252,7 +252,7 @@ public class MainActivity extends Activity {
 
             @Override
             public void onTagDataAvailable(final List<DistanceController.Entry> tags) {
-                Log.d(MainActivityTAG, "addAllTagListener" +
+                Log.i(MainActivityTAG, "addAllTagListener" +
                         " -> onTagDataAvailable: item.size() = " + item.size()
                         + ", tags.size() = " + tags.size());
                 //se diversi sicuramente c'è da aggiornare la lista degli ids
@@ -280,7 +280,7 @@ public class MainActivity extends Activity {
      * Rigenera la lista che gestisce gli IDs disponibili
      */
     private void regenerateRadioGroup() {
-        Log.i(MainActivityTAG, "regenerateRadioGroup");
+        Log.d(MainActivityTAG, "regenerateRadioGroup");
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -304,7 +304,7 @@ public class MainActivity extends Activity {
                     item.get(i).setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            Log.d(MainActivityTAG, "regenerateRadioGroup:"
+                            Log.i(MainActivityTAG, "regenerateRadioGroup:"
                                     + " onClick " + idText);
                             if(id != -1) {
                                 Log.v(MainActivityTAG, "regenerateRadioGroup -> " +
@@ -341,7 +341,7 @@ public class MainActivity extends Activity {
      * @param singleId id specifico al quale ci si vuole connettere
      */
     private void connectToSpecificListener(int singleId) {
-        Log.i(MainActivityTAG, "connectToSpecificListener: connectedToId = "
+        Log.d(MainActivityTAG, "connectToSpecificListener: connectedToId = "
                 + connectedToId);
         id = singleId;
         //visualizzazione a schermo dell'ID al quale si è connessi
@@ -351,7 +351,7 @@ public class MainActivity extends Activity {
         idTagListener = new TagListener() {
             @Override
             public void onTagHasConnected(final int tagDistance) {
-                Log.d(MainActivityTAG, "connectToSpecificListener -> " +
+                Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                         "addTagListener -> onTagHasConnected: Connesso a " +
                         Integer.toHexString(id));
                 setDistanceText(tagDistance, distanceView);
@@ -359,7 +359,7 @@ public class MainActivity extends Activity {
 
             @Override
             public void onTagHasDisconnected(final int tagLastKnownDistance) {
-                Log.d(MainActivityTAG, "connectToSpecificListener -> " +
+                Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                         "addTagListener -> onTagHasDisconnected: disconnesso id = " +
                         Integer.toHexString(id));
                 runOnUiThread(new Runnable() {
@@ -376,11 +376,11 @@ public class MainActivity extends Activity {
 
             @Override
             public void onTagDataAvailable(final int tagDistance) {
-                Log.d(MainActivityTAG, "connectToSpecificListener -> " +
+                Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                         "addTagListener -> onTagDataAvailable: id = " + Integer.toHexString(id) +
                         ", tagDistance = " + tagDistance);
                 if ((tagDistance > maxDistance) && (!alarmMuted) && (!alarmStatus)) {
-                    Log.d(MainActivityTAG, "connectToSpecificListener -> " +
+                    Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                             "addTagListener -> onTagDataAvailable: " +
                             "(tagDistance == " + tagDistance +
                             ") > (maxDistance == " + maxDistance + "), " +
@@ -390,7 +390,7 @@ public class MainActivity extends Activity {
                 }
                 if ((tagDistance <= maxDistance) && (alarmStatus)) {
                     try {
-                        Log.d(MainActivityTAG, "connectToSpecificListener -> " +
+                        Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                                 "addTagListener -> onTagDataAvailable: " +
                                 "(tagDistance == " + tagDistance +
                                 ") <= (maxDistance == " + maxDistance + "), " +
@@ -442,7 +442,7 @@ public class MainActivity extends Activity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Log.i(MainActivityTAG, "distanceAlarm: running");
+                Log.d(MainActivityTAG, "distanceAlarm: running");
                 try {
                     if (myAlarm == null || pulsante == null) {
                         return;
@@ -486,7 +486,7 @@ public class MainActivity extends Activity {
         }
 
         if (myController != null) {
-            Log.i(MainActivityTAG, "onPause -> chiusura controller");
+            Log.d(MainActivityTAG, "onPause -> chiusura controller");
             //chiusura controller
             myController.close();
             myController = null;

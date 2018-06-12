@@ -123,7 +123,7 @@ public class DistanceController
     {
         if (data == null || data.size() == 0)
         {
-            Log.i(tag, message + "<nessuno>");
+            Log.d(tag, message + "<nessuno>");
             return;
         }
 
@@ -132,7 +132,7 @@ public class DistanceController
         for (int i = 0; i < data.size(); i++)
             result.concat(data.get(i).toString() + separator);
 
-        Log.i(tag, result);
+        Log.d(tag, result);
     }
 
     //memorizza i dati attuali
