@@ -127,14 +127,14 @@ public class DriverDWM {
             transferViaSPI(new byte[1], true);
             try {
                 TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
-            } catch (InterruptedException e1) {
-                Log.e(TAG, "Sleep non eseguito.");
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Sleep interrupted", e);
             }
             transferViaSPI(new byte[1], true);
             try {
                 TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
-            } catch (InterruptedException e2) {
-                Log.e(TAG, "Sleep non eseguito.");
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Sleep interrupted", e);
             }
             int response = transferViaSPI(new byte[1], true)[0];
 
@@ -209,15 +209,15 @@ public class DriverDWM {
             do {
                 try {
                     TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
-                } catch (InterruptedException e1) {
-                    Log.e(TAG, "Sleep non eseguito.");
+                } catch (InterruptedException e) {
+                    Log.e(TAG, "Sleep interrupted", e);
                 }
                 length = transferViaSPI(new byte[1], true)[0];
             } while ((length == 0x00) && ((System.currentTimeMillis() - timer) < MAX_SPI_WAIT));
             try {
                 TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
-            } catch (InterruptedException e2) {
-                Log.e(TAG, "Sleep non eseguito.");
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Sleep interrupted", e);
             }
 
             // Nel caso ci siano stati problemi di comunicazione
