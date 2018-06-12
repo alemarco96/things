@@ -10,15 +10,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
-
-import static group107.distancealert.MainActivity.TAG;
 
 /**
  * Classe che rappresenta un sensore di distanza.
  */
 public class DistanceController
 {
+    private static final String TAG = "DistanceController";
     //numero di byte usati dal modulo DWM per descrivere i dati relativi a ciascun tag
     private static final int BYTES_PER_ENTRY = 20;
     //numero di volte per cui ricevendo gli stessi dati dal modulo DWM, un tag viene dichiarato disconnesso
@@ -181,7 +179,7 @@ public class DistanceController
                 connectionErrors = 0;
             } catch (Throwable e)
             {
-                Log.e(MainActivity.TAG, "Avvenuta eccezione in updateDataTask", e);
+                Log.e(TAG, "Avvenuta eccezione in updateDataTask", e);
                 connectionErrors++;
                 if (connectionErrors >= COUNTER_FOR_CONNECTION_ERRORS)
                 {
@@ -608,39 +606,6 @@ public class DistanceController
     }
 
     /**
-     * Cambia il bus di comunicazione con il modulo DWM
-     * @param busName Il nome del bus di comunicazione
-     * @throws IOException In caso di errore di comunicazione con il modulo DWM
-     */
-    @SuppressWarnings({"unused", "EmptyCatchBlock"})
-    public void switchBus(String busName) throws IllegalArgumentException, IOException
-    {
-        if (driverDWM != null)
-        {
-            driverDWM.close();
-            driverDWM = null;
-        }
-
-        long period = updateDataTask.scheduledExecutionTime();
-        stopUpdate();
-
-        //Prova a sospendere il thread per 50ms. Se non riesce, viene effettuato busy-waiting
-        long time = System.currentTimeMillis();
-        do
-        {
-            try
-            {
-                TimeUnit.MILLISECONDS.sleep(50L - (System.currentTimeMillis() - time));
-            } catch (InterruptedException e) {}
-        } while((System.currentTimeMillis() - time) >= 50L);
-
-        driverDWM = new DriverDWM(busName);
-        driverDWM.checkDWM();
-
-        startUpdate(period);
-    }
-
-    /**
      * Chiude il DistanceController e rilascia le risorse
      */
     public void close()
@@ -658,7 +623,7 @@ public class DistanceController
                 driverDWM.close();
             } catch (IOException e)
             {
-                Log.e(MainActivity.TAG, "Eccezione in chiusura del driver DWM", e);
+                Log.e(TAG, "Eccezione in chiusura del driver DWM", e);
             }
             driverDWM = null;
         }

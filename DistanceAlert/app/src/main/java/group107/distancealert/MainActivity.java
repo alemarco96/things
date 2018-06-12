@@ -21,20 +21,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-//TODO dopo crash classi continuano ad inviare dati, gestire eccezioni in modo da prevenire crash
-//TODO Gestire analisi codice "aggiungere a dizionario parole come UART, distancealert, GPIO, MINIUART, switchbus, singleid, idlayout" ?
-//TODO decidere se cambiare onPause facendolo diventare onDestroy come sul repo ufficiale git
-//TODO Decidere se implementare un metodo switchbus in DistanceController o tenere soluzione già funzionante in MainActivity
 //TODO analizzare l'intero progetto e risolvere le varie segnalazioni
 //TODO tags specifici per ogni classe?
 
 public class MainActivity extends Activity {
-    /**
-     * Stringa utile per il TAG dei logs del pacchetto group107.distancealert
-     */
-    public static final String TAG = "107G";
     //Stringhe utili per TAGs della MainActivity
-    private final String MainActivityTAG = TAG + " MainActivity";
+    private final String MainActivityTAG = "MainActivity";
 
     /**
      * Stringhe costanti usate per identificare le periferiche
@@ -250,7 +242,7 @@ public class MainActivity extends Activity {
                 Log.i(MainActivityTAG, "startElaboration -> " +
                         "addAllTagListener -> onTagHasConnected: tags.size() = "
                         + tags.size());
-                Log.v(TAG, "item.size() = " + item.size() + ", tags.size() = " + tags.size());
+                Log.v(MainActivityTAG, "item.size() = " + item.size() + ", tags.size() = " + tags.size());
                 regenerateRadioGroup();
             }
 
@@ -266,7 +258,7 @@ public class MainActivity extends Activity {
                 Log.i(MainActivityTAG, "addAllTagListener" +
                         " -> onTagDataAvailable: Lista invariata");
                 //se diversi sicuramente c'è da aggiornare la lista degli ids
-                Log.v(TAG, "item.size() = " + item.size() + ", tags.size() = " + tags.size());
+                Log.v(MainActivityTAG, "item.size() = " + item.size() + ", tags.size() = " + tags.size());
                 if (item.size() != tags.size()) {
                     //sicuramente c'è differenza tra la lista mostrata e quella reale
                     regenerateRadioGroup();
@@ -411,7 +403,7 @@ public class MainActivity extends Activity {
                         myAlarm.stop();
                         pulsante.unregisterGpioCallback(pulsanteCallback);
                     } catch (IOException e) {
-                        Log.e(TAG, "Errore nella chiusura dell'allarme", e);
+                        Log.e(MainActivityTAG, "Errore nella chiusura dell'allarme", e);
                     }
                 }
                 setDistanceText(tagDistance, distanceView);
@@ -503,40 +495,4 @@ public class MainActivity extends Activity {
             myController = null;
         }
     }
-
-    /*
-    @Override
-    public void onDestroy() {
-        Log.i(MainActivityTAG, "onDestroy");
-        //passaggio di stato
-        super.onDestroy();
-
-        //chiusura periferiche
-        if (pulsante != null) {
-            try {
-                pulsante.close();
-            } catch (IOException e) {
-                Log.e(MainActivityTAG, "onDestroy -> Errore pulsante:", e);
-            }
-            pulsante = null;
-        }
-
-        if (myAlarm != null) {
-            try {
-                myAlarm.close();
-            } catch (IOException e) {
-                Log.e(MainActivityTAG, "onDestroy -> Errore allarme:", e);
-            }
-            myAlarm = null;
-
-        }
-
-        if (myController != null) {
-            Log.i(MainActivityTAG, "onDestroy -> chiusura controller");
-            //chiusura controller
-            myController.close();
-            myController = null;
-        }
-    }
-    */
 }

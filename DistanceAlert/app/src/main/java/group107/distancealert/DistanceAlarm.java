@@ -17,6 +17,8 @@ import java.util.TimerTask;
  * per rilasciare le periferiche hardware utilizzate.
  */
 public class DistanceAlarm {
+    private final static String TAG = "DistanceAlarm";
+
     /**
      * Oggetti riferiti alle periferiche GPIO e PWM
      */
@@ -94,7 +96,7 @@ public class DistanceAlarm {
                     led.setValue(!led.getValue());
 
                 } catch (IOException e) {
-                    Log.w(MainActivity.TAG, "Exception updating alarm state", e);
+                    Log.w(TAG, "Exception updating alarm state", e);
                 }
             }
         }, 0, 300);
