@@ -284,24 +284,35 @@ public class DriverDWM {
         // Reset della comunicazione e invio della richiesta
         myUART.flush(UartDevice.FLUSH_IN_OUT);
         myUART.write(transmit, transmit.length);
-        //callback inviata quando arrivano i dati
-        myUART.registerUartDeviceCallback(new UartDeviceCallback() {
+        new Thread(new Runnable() {
             @Override
-            public boolean onUartDeviceDataAvailable(UartDevice uartDevice) {
-                fineAttesaUart();
-                return false;
+            public void run() {
+                try {
+                    //callback inviata quando arrivano i dati
+                    myUART.registerUartDeviceCallback(new UartDeviceCallback() {
+                        @Override
+                        public boolean onUartDeviceDataAvailable(UartDevice uartDevice) {
+                            fineAttesaUart();
+                            return false;
+                        }
+                    });
+                } catch (IOException e) {
+                    Log.e(TAG, "Errore: ", e);
+                }
             }
-        });
+        }).start();
 
         return ricezioneUart();
     }
 
     private synchronized void fineAttesaUart() {
+        Log.i(TAG,"fineAttesaUart()");
         //notifica che l'attesa è finita
         notify();
     }
 
     private synchronized int[] ricezioneUart() throws IOException {
+        Log.i(TAG,"ricezioneUart()");
         long timer = System.currentTimeMillis();
         try {
             //attesa al massimo fino a MAX_UART_WAIT
