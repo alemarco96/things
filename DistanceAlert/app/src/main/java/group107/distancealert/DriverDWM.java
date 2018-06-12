@@ -289,6 +289,7 @@ public class DriverDWM implements UartDeviceCallback {
         myUART.write(transmit, transmit.length);
     }
 
+    //hjdngfksrjnger
     private int[] getDataViaUART() throws IOException {
         byte[] totalReceive = new byte[255];
         int totalCount = 0;
