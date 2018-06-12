@@ -29,7 +29,7 @@ public class DistanceController
     /**
      * Oggetto che serve per ordinare in ordine crescente per tagID le entry
      */
-    private Comparator<Entry> MATCHING_ID_ENTRY_COMPARATOR = new Comparator<Entry>()
+    private final Comparator<Entry> MATCHING_ID_ENTRY_COMPARATOR = new Comparator<Entry>()
     {
         @Override
         public int compare(Entry e1, Entry e2)
@@ -163,7 +163,7 @@ public class DistanceController
     /**
      * Oggetto che definisce la routine di aggiornamento periodica
      */
-    private TimerTask updateDataTask = new TimerTask()
+    private final TimerTask updateDataTask = new TimerTask()
     {
         @Override
         public void run()
