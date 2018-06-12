@@ -62,7 +62,7 @@ public class MainActivity extends Activity {
     private int maxDistance = 2000;
     final private List<RadioButton> item = new ArrayList<>();
     private boolean nextSpi = true;
-    private boolean alarmMuted = false; //TODO flag utile per fermare allarme quando preme bottone fisico
+    private boolean alarmMuted = false;
     private boolean alarmStatus = false;
 
     final private GpioCallback pulsanteCallback = new GpioCallback() {
@@ -115,7 +115,6 @@ public class MainActivity extends Activity {
                 if (maxDistance < 5000) {
                     maxDistance += 200;
                     setDistanceText(maxDistance, maxDistanceView);
-                    //throw new RuntimeException("Test"); //TODO togliere questa riga
                 }
             }
         });
@@ -409,7 +408,6 @@ public class MainActivity extends Activity {
                     alarmStatus = true;
                     distanceAlarm();
                 }
-                //TODO spegne allarme se rientra nel range e reset alarmMuted: tenerlo?
                 if ((tagDistance <= maxDistance) && (alarmStatus)) {
                     try {
                         Log.i(MainActivityTAG, "connectToSpecificListener -> " +
