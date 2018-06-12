@@ -359,6 +359,14 @@ public class MainActivity extends Activity {
                         "addTagListener -> onTagHasConnected: Connesso a " +
                         Integer.toHexString(id));
                 setDistanceText(tagDistance, distanceView);
+                if (alarmStatus) {
+                    alarmStatus = false;
+                    try {
+                        myAlarm.stop();
+                    } catch (IOException e) {
+                        Log.e(MainActivityTAG, "Errore myAlarm.stop(): ", e);
+                    }
+                }
             }
 
             @Override
@@ -370,7 +378,11 @@ public class MainActivity extends Activity {
                     @Override
                     public void run() {
                         distanceView.setText(R.string.noConnection);
-                        distanceAlarm();
+                        if (!alarmStatus) {
+                            distanceAlarm();
+                            alarmStatus = true;
+                            alarmMuted = false;
+                        }
                     }
                 });
             }
@@ -384,7 +396,8 @@ public class MainActivity extends Activity {
                     Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                             "addTagListener -> onTagDataAvailable: " +
                             "(tagDistance == " + tagDistance +
-                            ") > (maxDistance == " + maxDistance + ")");
+                            ") > (maxDistance == " + maxDistance + "), " +
+                            "(alarmMuted == false), (alarmStatus == false)");
                     alarmStatus = true;
                     distanceAlarm();
                 }
@@ -394,7 +407,8 @@ public class MainActivity extends Activity {
                         Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                                 "addTagListener -> onTagDataAvailable: " +
                                 "(tagDistance == " + tagDistance +
-                                ") <= (maxDistance == " + maxDistance + ")");
+                                ") <= (maxDistance == " + maxDistance + "), " +
+                                "(alarmStatus == true)");
                         alarmMuted = false;
                         alarmStatus = false;
                         myAlarm.stop();
