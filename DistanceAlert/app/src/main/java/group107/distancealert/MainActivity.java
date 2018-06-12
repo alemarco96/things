@@ -62,7 +62,8 @@ public class MainActivity extends Activity {
     private int maxDistance = 2000;
     final private List<RadioButton> item = new ArrayList<>();
     private boolean nextSpi = true;
-    boolean alertActivated = false;
+    private boolean alarmMuted = false; //TODO flag utile per fermare allarme quando preme bottone fisico
+    private boolean alarmStatus = false;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -97,6 +98,7 @@ public class MainActivity extends Activity {
                 if (maxDistance < 5000) {
                     maxDistance += 200;
                     setDistanceText(maxDistance, maxDistanceView);
+                    //throw new RuntimeException("Test"); //TODO togliere questa riga
                 }
             }
         });
@@ -378,26 +380,28 @@ public class MainActivity extends Activity {
                 Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                         "addTagListener -> onTagDataAvailable: id = " + Integer.toHexString(id) +
                         ", tagDistance = " + tagDistance);
-                //if ((!alertActivated) && (tagDistance > maxDistance)) {
-                if (tagDistance > maxDistance) {
+                if ((tagDistance > maxDistance) && (!alarmMuted) && (!alarmStatus)) {
                     Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                             "addTagListener -> onTagDataAvailable: " +
                             "(tagDistance == " + tagDistance +
                             ") > (maxDistance == " + maxDistance + ")");
-                    //alertActivated = true;
+                    alarmStatus = true;
                     distanceAlarm();
                 }
-                /*
-                if ((alertActivated) && (tagDistance <= maxDistance)) {
+                //TODO spegne allarme se rientra nel range e reset alarmMuted: tenerlo?
+                if ((tagDistance <= maxDistance) && (alarmStatus)) {
                     try {
-                        //TODO: è così che si ferma l'allarme per via programmatica?
+                        Log.i(MainActivityTAG, "connectToSpecificListener -> " +
+                                "addTagListener -> onTagDataAvailable: " +
+                                "(tagDistance == " + tagDistance +
+                                ") <= (maxDistance == " + maxDistance + ")");
+                        alarmMuted = false;
+                        alarmStatus = false;
                         myAlarm.stop();
-                        alertActivated = false;
                     } catch (IOException e) {
                         Log.e(TAG, "Errore nella chiusura dell'allarme", e);
                     }
                 }
-                */
                 setDistanceText(tagDistance, distanceView);
             }
         };
@@ -452,8 +456,8 @@ public class MainActivity extends Activity {
                                 try {
                                     Log.i(MainActivityTAG, "distanceAlarm -> " +
                                             "GpioCallback");
-                                    alertActivated = false;
                                     myAlarm.stop();
+                                    alarmMuted = true;
                                 } catch (IOException e) {
                                     Log.e(MainActivityTAG, "distanceAlarm" +
                                             " -> Errore Pulsante:", e);
@@ -503,4 +507,40 @@ public class MainActivity extends Activity {
             myController = null;
         }
     }
+
+    /*
+    @Override
+    public void onDestroy() {
+        Log.i(MainActivityTAG, "onDestroy");
+        //passaggio di stato
+        super.onDestroy();
+
+        //chiusura periferiche
+        if (pulsante != null) {
+            try {
+                pulsante.close();
+            } catch (IOException e) {
+                Log.e(MainActivityTAG, "onDestroy -> Errore pulsante:", e);
+            }
+            pulsante = null;
+        }
+
+        if (myAlarm != null) {
+            try {
+                myAlarm.close();
+            } catch (IOException e) {
+                Log.e(MainActivityTAG, "onDestroy -> Errore allarme:", e);
+            }
+            myAlarm = null;
+
+        }
+
+        if (myController != null) {
+            Log.i(MainActivityTAG, "onDestroy -> chiusura controller");
+            //chiusura controller
+            myController.close();
+            myController = null;
+        }
+    }
+    */
 }
