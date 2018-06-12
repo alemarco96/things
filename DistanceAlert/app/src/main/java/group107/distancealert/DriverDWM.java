@@ -284,23 +284,14 @@ public class DriverDWM {
         // Reset della comunicazione e invio della richiesta
         myUART.flush(UartDevice.FLUSH_IN_OUT);
         myUART.write(transmit, transmit.length);
-        new Thread(new Runnable() {
+        //callback inviata quando arrivano i dati
+        myUART.registerUartDeviceCallback(new UartDeviceCallback() {
             @Override
-            public void run() {
-                try {
-                    //callback inviata quando arrivano i dati
-                    myUART.registerUartDeviceCallback(new UartDeviceCallback() {
-                        @Override
-                        public boolean onUartDeviceDataAvailable(UartDevice uartDevice) {
-                            fineAttesaUart();
-                            return false;
-                        }
-                    });
-                } catch (IOException e) {
-                    Log.e(TAG, "Errore: ", e);
-                }
+            public boolean onUartDeviceDataAvailable(UartDevice uartDevice) {
+                fineAttesaUart();
+                return false;
             }
-        }).start();
+        });
 
         return ricezioneUart();
     }
