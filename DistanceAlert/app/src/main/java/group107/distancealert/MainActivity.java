@@ -100,7 +100,7 @@ public class MainActivity extends Activity {
         plusMaxDistanceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(MainActivityTAG, "plusMaxDistanceButton -> onClick");
+                Log.v(MainActivityTAG, "plusMaxDistanceButton -> onClick");
                 if (maxDistance < 5000) {
                     maxDistance += 200;
                     setDistanceText(maxDistance, maxDistanceView);
@@ -111,7 +111,7 @@ public class MainActivity extends Activity {
         minusMaxDistanceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(MainActivityTAG, "minusMaxDistanceButton -> onClick");
+                Log.v(MainActivityTAG, "minusMaxDistanceButton -> onClick");
                 if (maxDistance > 200) {
                     maxDistance -= 200;
                     setDistanceText(maxDistance, maxDistanceView);
@@ -151,13 +151,13 @@ public class MainActivity extends Activity {
                 try {
                     //Se istanza di DistanceController già creata allora deve essere chiusa
                     if (myController != null) {
-                        Log.i(MainActivityTAG, "onCreate -> " +
+                        Log.v(MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView: myController != null");
                         myController.stopUpdate();
                         myController.close();
                         myController = null;
                     } else {
-                        Log.i(MainActivityTAG, "onCreate -> " +
+                        Log.v(MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView: myController == null");
                         //nessuna istanza di DistanceController creata
                     }
@@ -207,7 +207,7 @@ public class MainActivity extends Activity {
 
         //default lancia SPI
         try {
-            Log.i(MainActivityTAG, "onCreate: default lancia SPI");
+            Log.v(MainActivityTAG, "onCreate: default lancia SPI");
             nextSpi = false;
             myController = new DistanceController(RPI3_SPI, update);
             switchMethodView.setChecked(true);
@@ -236,26 +236,26 @@ public class MainActivity extends Activity {
         myController.addAllTagsListener(new AllTagsListener() {
             @Override
             public void onTagHasConnected(final List<DistanceController.Entry> tags) {
-                Log.i(MainActivityTAG, "startElaboration -> " +
-                        "addAllTagListener -> onTagHasConnected: tags.size() = "
-                        + tags.size());
-                Log.v(MainActivityTAG, "item.size() = " + item.size() + ", tags.size() = " + tags.size());
+                Log.d(MainActivityTAG, "startElaboration -> " +
+                        "addAllTagListener -> onTagHasConnected: item.size() = " + item.size()
+                        + ", tags.size() = " + tags.size());
                 regenerateRadioGroup();
             }
 
             @Override
             public void onTagHasDisconnected(final List<DistanceController.Entry> tags) {
-                Log.i(MainActivityTAG, "startElaboration -> addAllTagListener" +
-                        " -> onTagHasDisconnected: tags.size() = " + tags.size());
+                Log.d(MainActivityTAG, "startElaboration -> addAllTagListener" +
+                        " -> onTagHasDisconnected: item.size() = " + item.size()
+                        + ", tags.size() = " + tags.size());
                 regenerateRadioGroup();
             }
 
             @Override
             public void onTagDataAvailable(final List<DistanceController.Entry> tags) {
-                Log.i(MainActivityTAG, "addAllTagListener" +
-                        " -> onTagDataAvailable: Lista invariata");
+                Log.d(MainActivityTAG, "addAllTagListener" +
+                        " -> onTagDataAvailable: item.size() = " + item.size()
+                        + ", tags.size() = " + tags.size());
                 //se diversi sicuramente c'è da aggiornare la lista degli ids
-                Log.v(MainActivityTAG, "item.size() = " + item.size() + ", tags.size() = " + tags.size());
                 if (item.size() != tags.size()) {
                     //sicuramente c'è differenza tra la lista mostrata e quella reale
                     regenerateRadioGroup();
@@ -304,7 +304,7 @@ public class MainActivity extends Activity {
                     item.get(i).setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            Log.i(MainActivityTAG, "regenerateRadioGroup:"
+                            Log.d(MainActivityTAG, "regenerateRadioGroup:"
                                     + " onClick " + idText);
                             if(id != -1) {
                                 Log.v(MainActivityTAG, "regenerateRadioGroup -> " +
@@ -351,7 +351,7 @@ public class MainActivity extends Activity {
         idTagListener = new TagListener() {
             @Override
             public void onTagHasConnected(final int tagDistance) {
-                Log.i(MainActivityTAG, "connectToSpecificListener -> " +
+                Log.d(MainActivityTAG, "connectToSpecificListener -> " +
                         "addTagListener -> onTagHasConnected: Connesso a " +
                         Integer.toHexString(id));
                 setDistanceText(tagDistance, distanceView);
@@ -359,7 +359,7 @@ public class MainActivity extends Activity {
 
             @Override
             public void onTagHasDisconnected(final int tagLastKnownDistance) {
-                Log.i(MainActivityTAG, "connectToSpecificListener -> " +
+                Log.d(MainActivityTAG, "connectToSpecificListener -> " +
                         "addTagListener -> onTagHasDisconnected: disconnesso id = " +
                         Integer.toHexString(id));
                 runOnUiThread(new Runnable() {
@@ -376,11 +376,11 @@ public class MainActivity extends Activity {
 
             @Override
             public void onTagDataAvailable(final int tagDistance) {
-                Log.i(MainActivityTAG, "connectToSpecificListener -> " +
+                Log.d(MainActivityTAG, "connectToSpecificListener -> " +
                         "addTagListener -> onTagDataAvailable: id = " + Integer.toHexString(id) +
                         ", tagDistance = " + tagDistance);
                 if ((tagDistance > maxDistance) && (!alarmMuted) && (!alarmStatus)) {
-                    Log.i(MainActivityTAG, "connectToSpecificListener -> " +
+                    Log.d(MainActivityTAG, "connectToSpecificListener -> " +
                             "addTagListener -> onTagDataAvailable: " +
                             "(tagDistance == " + tagDistance +
                             ") > (maxDistance == " + maxDistance + "), " +
@@ -390,7 +390,7 @@ public class MainActivity extends Activity {
                 }
                 if ((tagDistance <= maxDistance) && (alarmStatus)) {
                     try {
-                        Log.i(MainActivityTAG, "connectToSpecificListener -> " +
+                        Log.d(MainActivityTAG, "connectToSpecificListener -> " +
                                 "addTagListener -> onTagDataAvailable: " +
                                 "(tagDistance == " + tagDistance +
                                 ") <= (maxDistance == " + maxDistance + "), " +
@@ -442,7 +442,7 @@ public class MainActivity extends Activity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Log.v(MainActivityTAG, "distanceAlarm: running");
+                Log.i(MainActivityTAG, "distanceAlarm: running");
                 try {
                     if (myAlarm == null || pulsante == null) {
                         return;
@@ -461,7 +461,7 @@ public class MainActivity extends Activity {
 
     @Override
     public void onPause() {
-        Log.i(MainActivityTAG, "onPause");
+        Log.v(MainActivityTAG, "onPause");
         //passaggio di stato
         super.onPause();
 
