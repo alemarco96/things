@@ -1,5 +1,7 @@
 package group107.distancealert;
 
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -284,14 +286,18 @@ public class DriverDWM {
         // Reset della comunicazione e invio della richiesta
         myUART.flush(UartDevice.FLUSH_IN_OUT);
         myUART.write(transmit, transmit.length);
+        HandlerThread myThread = new HandlerThread("UartCallBackThread");
+        myThread.start();
+        Handler myHandler = new Handler(myThread.getLooper());
         //callback inviata quando arrivano i dati
-        myUART.registerUartDeviceCallback(new UartDeviceCallback() {
+        myUART.registerUartDeviceCallback(myHandler, new UartDeviceCallback() {
             @Override
             public boolean onUartDeviceDataAvailable(UartDevice uartDevice) {
                 fineAttesaUart();
                 return false;
             }
         });
+        myThread.quitSafely();
 
         return ricezioneUart();
     }
