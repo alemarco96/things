@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-import static group107.distancealert.MainActivity.TAG;
 import static java.lang.Byte.toUnsignedInt;
 
 /**
@@ -21,6 +20,8 @@ import static java.lang.Byte.toUnsignedInt;
  * per rilasciare le periferiche hardware utilizzate.
  */
 public class DriverDWM {
+    private static final String TAG = "DriverDWM";
+
     /**
      * Oggetti riferiti alle periferiche SPI e UART
      */
