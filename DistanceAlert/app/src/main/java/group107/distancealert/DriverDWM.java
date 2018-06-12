@@ -2,7 +2,6 @@ package group107.distancealert;
 
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.provider.Settings;
 import android.util.Log;
 
 import com.google.android.things.pio.PeripheralManager;
@@ -297,9 +296,8 @@ public class DriverDWM {
                 return false;
             }
         });
-        myThread.quitSafely();
 
-        return ricezioneUart();
+        return ricezioneUart(myThread);
     }
 
     private synchronized void fineAttesaUart() {
@@ -308,7 +306,7 @@ public class DriverDWM {
         notify();
     }
 
-    private synchronized int[] ricezioneUart() throws IOException {
+    private synchronized int[] ricezioneUart(HandlerThread myThread) throws IOException {
         Log.i(TAG,"ricezioneUart()");
         long timer = System.currentTimeMillis();
         try {
@@ -317,6 +315,7 @@ public class DriverDWM {
         } catch (InterruptedException e) {
             Log.e(TAG, "Errore: ", e);
         }
+        myThread.quit();
         //se ha atteso fino a MAX_UART_WAIT non è stato ricevuto nulla
         if ((System.currentTimeMillis() - timer) >= MAX_UART_WAIT) {
             throw new IOException("Communication error via UART: nothing received");
