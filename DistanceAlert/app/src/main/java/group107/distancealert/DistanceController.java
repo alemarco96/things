@@ -202,8 +202,6 @@ public class DistanceController
                     stopUpdate();
 
                     Log.e(TAG, "*** Troppi errori di comunicazione avvenuti. Stop dell'aggiornamento del controller. ***");
-
-                    //throw new RuntimeException("Troppi errori di comunicazione avvenuti. Stop dell'aggiornamento del controller.");
                 }
             }
         }

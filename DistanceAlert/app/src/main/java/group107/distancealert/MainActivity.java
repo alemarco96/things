@@ -376,18 +376,6 @@ public class MainActivity extends Activity {
                         "addTagListener -> onTagHasConnected: Connesso a " +
                         Integer.toHexString(id));
                 setDistanceText(tagDistance, distanceView);
-                /*
-                if (alarmStatus) {
-                    alarmStatus = false;
-                    //alarmMuted = false;
-                    try {
-                        myAlarm.stop();
-                        pulsante.unregisterGpioCallback(pulsanteCallback);
-                    } catch (IOException e) {
-                        Log.e(MainActivityTAG, "Errore myAlarm.stop(): ", e);
-                    }
-                }
-                */
             }
 
             @Override
