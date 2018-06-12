@@ -65,6 +65,23 @@ public class MainActivity extends Activity {
     private boolean alarmMuted = false; //TODO flag utile per fermare allarme quando preme bottone fisico
     private boolean alarmStatus = false;
 
+    final private GpioCallback pulsanteCallback = new GpioCallback() {
+        @Override
+        public boolean onGpioEdge(Gpio gpio) {
+            try {
+                Log.i(MainActivityTAG, "distanceAlarm -> " +
+                        "GpioCallback");
+                myAlarm.stop();
+                pulsante.unregisterGpioCallback(pulsanteCallback);
+                alarmMuted = true;
+            } catch (IOException e) {
+                Log.e(MainActivityTAG, "distanceAlarm" +
+                        " -> Errore Pulsante:", e);
+            }
+            return false;
+        }
+    };
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         Log.i(MainActivityTAG, "onCreate");
@@ -361,8 +378,10 @@ public class MainActivity extends Activity {
                 setDistanceText(tagDistance, distanceView);
                 if (alarmStatus) {
                     alarmStatus = false;
+                    //alarmMuted = false;
                     try {
                         myAlarm.stop();
+                        pulsante.unregisterGpioCallback(pulsanteCallback);
                     } catch (IOException e) {
                         Log.e(MainActivityTAG, "Errore myAlarm.stop(): ", e);
                     }
@@ -412,6 +431,7 @@ public class MainActivity extends Activity {
                         alarmMuted = false;
                         alarmStatus = false;
                         myAlarm.stop();
+                        pulsante.unregisterGpioCallback(pulsanteCallback);
                     } catch (IOException e) {
                         Log.e(TAG, "Errore nella chiusura dell'allarme", e);
                     }
@@ -463,23 +483,7 @@ public class MainActivity extends Activity {
 
                     myAlarm.start();
 
-                    pulsante.registerGpioCallback(
-                        new GpioCallback() {
-                            @Override
-                            public boolean onGpioEdge(Gpio gpio) {
-                                try {
-                                    Log.i(MainActivityTAG, "distanceAlarm -> " +
-                                            "GpioCallback");
-                                    myAlarm.stop();
-                                    alarmMuted = true;
-                                } catch (IOException e) {
-                                    Log.e(MainActivityTAG, "distanceAlarm" +
-                                            " -> Errore Pulsante:", e);
-                                }
-                                return false;
-                            }
-                        }
-                    );
+                    pulsante.registerGpioCallback(pulsanteCallback);
 
                 } catch (IOException e) {
                     Log.e(MainActivityTAG, "distanceAlarm -> Errore:", e);
