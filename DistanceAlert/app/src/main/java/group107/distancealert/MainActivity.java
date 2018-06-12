@@ -21,9 +21,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-//TODO analizzare l'intero progetto e risolvere le varie segnalazioni
-//TODO tags specifici per ogni classe?
-
 public class MainActivity extends Activity {
     //Stringhe utili per TAGs della MainActivity
     private final String MainActivityTAG = "MainActivity";
