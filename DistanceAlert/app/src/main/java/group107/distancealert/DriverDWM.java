@@ -1,13 +1,16 @@
 package group107.distancealert;
 
+import android.provider.Settings;
 import android.util.Log;
 
 import com.google.android.things.pio.PeripheralManager;
 import com.google.android.things.pio.SpiDevice;
 import com.google.android.things.pio.UartDevice;
+import com.google.android.things.pio.UartDeviceCallback;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Timer;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Byte.toUnsignedInt;
@@ -277,16 +280,43 @@ public class DriverDWM {
      * @return Array int[] contentente i valori ricevuti convertiti in unsigned int
      * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      */
-    private int[] transferViaUART(byte[] transmit) throws IOException {
+    private int[] transferViaUART(final byte[] transmit) throws IOException {
         // Reset della comunicazione e invio della richiesta
         myUART.flush(UartDevice.FLUSH_IN_OUT);
         myUART.write(transmit, transmit.length);
+        //callback inviata quando arrivano i dati
+        myUART.registerUartDeviceCallback(new UartDeviceCallback() {
+            @Override
+            public boolean onUartDeviceDataAvailable(UartDevice uartDevice) {
+                fineAttesaUart();
+                return false;
+            }
+        });
 
+        return ricezioneUart();
+    }
+
+    private synchronized void fineAttesaUart() {
+        //notifica che l'attesa è finita
+        notify();
+    }
+
+    private synchronized int[] ricezioneUart() throws IOException {
+        long timer = System.currentTimeMillis();
+        try {
+            //attesa al massimo fino a MAX_UART_WAIT
+            wait(MAX_UART_WAIT);
+        } catch (InterruptedException e) {
+            Log.e(TAG, "Errore: ", e);
+        }
+        //se ha atteso fino a MAX_UART_WAIT non è stato ricevuto nulla
+        if ((System.currentTimeMillis() - timer) >= MAX_UART_WAIT) {
+            throw new IOException("Communication error via UART: nothing received");
+        }
+        //è stata notificata la ricezione dei dati quindi li processo
         byte[] totalReceive = new byte[255];
         int totalCount = 0;
-        long timer = System.currentTimeMillis();
-
-        while ((totalCount == 0) && ((System.currentTimeMillis() - timer) < MAX_UART_WAIT)) {
+        while (totalCount == 0) {
             byte[] tempReceive = new byte[20];
             int tempCount;
             while ((tempCount = myUART.read(tempReceive, tempReceive.length)) > 0) {
@@ -295,11 +325,11 @@ public class DriverDWM {
                     throw new IOException("Communication error via UART: endless communication");
                 }
 
-                /*
-                Se ha letto qualche byte li trasferisce dall'array temporaneo all'array complessivo.
-                Questo perché i byte non vengono ricevuti tutti assieme, ma in gruppi di
-                lunghezza variabile. La lunghezza massima è di 20 byte per ogni gruppo.
-                 */
+
+                //Se ha letto qualche byte li trasferisce dall'array temporaneo all'array complessivo.
+                //Questo perché i byte non vengono ricevuti tutti assieme, ma in gruppi di
+                //lunghezza variabile. La lunghezza massima è di 20 byte per ogni gruppo.
+
                 System.arraycopy(tempReceive, 0, totalReceive, totalCount, tempCount);
                 totalCount += tempCount;
             }
