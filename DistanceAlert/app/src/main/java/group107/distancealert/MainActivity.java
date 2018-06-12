@@ -160,15 +160,6 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 try {
-                    /*
-                    if (myController != null) {
-                        String busName = nextSpi ? RPI3_SPI : RPI3_UART;
-                        myController.switchBus(busName);
-                        nextSpi = !nextSpi;
-                        switchMethodView.setChecked(nextSpi);
-                    }
-                    */
-
                     //Se istanza di DistanceController già creata allora deve essere chiusa
                     if (myController != null) {
                         Log.i(MainActivityTAG, "onCreate -> " +

@@ -189,6 +189,7 @@ public class DistanceController
                     synchronized (dataLock)
                     {
                         data = cloneList(actualData);
+                        actualData = new ArrayList<>();
                     }
                     synchronized (listenersLock)
                     {
@@ -198,10 +199,9 @@ public class DistanceController
                         notifyToTagsListeners(new ArrayList<Entry>(), data, new ArrayList<Entry>());
                     }
 
-                    //stoppa il thread di aggiornamento
-                    stopUpdate();
+                    Log.e(TAG, "*** Troppi errori di comunicazione avvenuti. Tutti i tag sono stati dichiarati disconnessi. ***");
 
-                    Log.e(TAG, "*** Troppi errori di comunicazione avvenuti. Stop dell'aggiornamento del controller. ***");
+                    connectionErrors = 0;
                 }
             }
         }
