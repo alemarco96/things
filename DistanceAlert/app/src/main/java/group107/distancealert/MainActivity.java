@@ -376,6 +376,7 @@ public class MainActivity extends Activity {
                         "addTagListener -> onTagHasConnected: Connesso a " +
                         Integer.toHexString(id));
                 setDistanceText(tagDistance, distanceView);
+                /*
                 if (alarmStatus) {
                     alarmStatus = false;
                     //alarmMuted = false;
@@ -386,6 +387,7 @@ public class MainActivity extends Activity {
                         Log.e(MainActivityTAG, "Errore myAlarm.stop(): ", e);
                     }
                 }
+                */
             }
 
             @Override
@@ -397,10 +399,9 @@ public class MainActivity extends Activity {
                     @Override
                     public void run() {
                         distanceView.setText(R.string.noConnection);
-                        if (!alarmStatus) {
+                        if ((!alarmStatus) && (!alarmMuted)) {
                             distanceAlarm();
                             alarmStatus = true;
-                            alarmMuted = false;
                         }
                     }
                 });
