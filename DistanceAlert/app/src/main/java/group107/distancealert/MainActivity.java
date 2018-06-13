@@ -305,6 +305,9 @@ public class MainActivity extends Activity {
             myController.addAllTagsListener(new AllTagsListener() {
                 @Override
                 public void onTagHasConnected(final List<DistanceController.Entry> tags) {
+                    if(tags == null || tags.size() <= 0)
+                        return;
+
                     Log.i(MainActivityTAG, "startElaboration -> " +
                             "addAllTagListener -> onTagHasConnected: item.size() = " + item.size()
                             + ", tags.size() = " + tags.size());
@@ -313,6 +316,9 @@ public class MainActivity extends Activity {
 
                 @Override
                 public void onTagHasDisconnected(final List<DistanceController.Entry> tags) {
+                    if(tags == null || tags.size() <= 0)
+                        return;
+
                     Log.i(MainActivityTAG, "startElaboration -> addAllTagListener" +
                             " -> onTagHasDisconnected: item.size() = " + item.size()
                             + ", tags.size() = " + tags.size());
@@ -321,7 +327,10 @@ public class MainActivity extends Activity {
 
                 @Override
                 public void onTagDataAvailable(final List<DistanceController.Entry> tags) {
-                    Log.i(MainActivityTAG, "addAllTagListener" +
+                    if(tags == null || tags.size() <= 0)
+                        return;
+
+                    Log.i(MainActivityTAG, "startElaboration -> addAllTagListener" +
                             " -> onTagDataAvailable: item.size() = " + item.size()
                             + ", tags.size() = " + tags.size());
                     //se diversi sicuramente c'è da aggiornare la lista degli ids

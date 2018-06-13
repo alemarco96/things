@@ -199,7 +199,7 @@ public class DistanceController
                             //notifica a tutti i listeners che tutti i tag che erano connessi all'ultimo aggiornamento si sono disconnessi
 
                             notifyToAllTagsListeners(null, data, null);
-                            notifyToTagsListeners(new ArrayList<Entry>(), data, new ArrayList<Entry>());
+                            notifyToTagsListeners(null, data, null);
                         }
 
                         Log.e(TAG, "*** Troppi errori di comunicazione avvenuti. Tutti i tag sono stati dichiarati disconnessi. ***");
@@ -436,51 +436,60 @@ public class DistanceController
             int ID = pair.first;
             final TagListener listener = pair.second;
 
-            //connected, disconnected e data sono ordinati, per costruzione
-            final int r1 = Collections.binarySearch(connected, new Entry(ID, -1), MATCHING_ID_ENTRY_COMPARATOR);
-            if (r1 >= 0)
+            if (connected != null && connected.size() > 0)
             {
-                //il tag si è appena connesso
-                new Thread(new Runnable()
+                //connected, disconnected e data sono ordinati, per costruzione
+                final int r1 = Collections.binarySearch(connected, new Entry(ID, -1), MATCHING_ID_ENTRY_COMPARATOR);
+                if (r1 >= 0)
                 {
-                    @Override
-                    public void run()
+                    //il tag si è appena connesso
+                    new Thread(new Runnable()
                     {
-                        listener.onTagHasConnected(connected.get(r1).tagDistance);
-                    }
-                }).start();
+                        @Override
+                        public void run()
+                        {
+                            listener.onTagHasConnected(connected.get(r1).tagDistance);
+                        }
+                    }).start();
 
-                continue;
+                    continue;
+                }
             }
 
-            final int r2 = Collections.binarySearch(disconnected, new Entry(ID, -1), MATCHING_ID_ENTRY_COMPARATOR);
-            if (r2 >= 0)
+            if (disconnected != null && disconnected.size() > 0)
             {
-                //il tag si è appena disconnesso
-                new Thread(new Runnable()
+                final int r2 = Collections.binarySearch(disconnected, new Entry(ID, -1), MATCHING_ID_ENTRY_COMPARATOR);
+                if (r2 >= 0)
                 {
-                    @Override
-                    public void run()
+                    //il tag si è appena disconnesso
+                    new Thread(new Runnable()
                     {
-                        listener.onTagHasDisconnected(disconnected.get(r2).tagDistance);
-                    }
-                }).start();
+                        @Override
+                        public void run()
+                        {
+                            listener.onTagHasDisconnected(disconnected.get(r2).tagDistance);
+                        }
+                    }).start();
 
-                continue;
+                    continue;
+                }
             }
 
-            final int r3 = Collections.binarySearch(updated, new Entry(ID, -1), MATCHING_ID_ENTRY_COMPARATOR);
-            if (r3 >= 0)
+            if (updated != null && updated.size() > 0)
             {
-                //il tag è ancora connesso e si notifica la nuova posizione
-                new Thread(new Runnable()
+                final int r3 = Collections.binarySearch(updated, new Entry(ID, -1), MATCHING_ID_ENTRY_COMPARATOR);
+                if (r3 >= 0)
                 {
-                    @Override
-                    public void run()
+                    //il tag è ancora connesso e si notifica la nuova posizione
+                    new Thread(new Runnable()
                     {
-                        listener.onTagDataAvailable(updated.get(r3).tagDistance);
-                    }
-                }).start();
+                        @Override
+                        public void run()
+                        {
+                            listener.onTagDataAvailable(updated.get(r3).tagDistance);
+                        }
+                    }).start();
+                }
             }
         }
     }
