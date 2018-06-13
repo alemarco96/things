@@ -485,17 +485,20 @@ public class DistanceController
     @SuppressWarnings("WeakerAccess")
     public DistanceController(String busName) throws IllegalArgumentException, IOException
     {
-        driverDWM = new DriverDWM(busName);
-        tagListeners = new ArrayList<>();
-        allListeners = new ArrayList<>();
+        synchronized (workingLock)
+        {
+            driverDWM = new DriverDWM(busName);
+            tagListeners = new ArrayList<>();
+            allListeners = new ArrayList<>();
 
-        actualData = new ArrayList<>();
-        disconnectedData = new ArrayList<>();
+            actualData = new ArrayList<>();
+            disconnectedData = new ArrayList<>();
 
-        connectionErrors = 0;
+            connectionErrors = 0;
 
-        //controlla lo stato della connessione del modulo
-        driverDWM.checkDWM();
+            //controlla lo stato della connessione del modulo
+            driverDWM.checkDWM();
+        }
     }
 
     /**
