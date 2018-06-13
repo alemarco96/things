@@ -192,6 +192,9 @@ public class DistanceController
                         try
                         {
                             driverDWM.checkDWM();
+
+                            //canale di aggiornamento funzionante. Riprova a far funzionare il controller
+                            connectionErrors = 0;
                         } catch (IOException e2)
                         {
                             List<Entry> data;
@@ -207,15 +210,12 @@ public class DistanceController
                                 notifyToAllTagsListeners(null, data, null);
                                 notifyToTagsListeners(null, data, null);
                             }
+
                             stopUpdate();
 
-                            Log.e(TAG, "*** Bus di comunicazione non funzionante. Stop aggiornamenti. ***", e2);
                             Log.e(TAG, "*** Troppi errori di comunicazione avvenuti. Tutti i tag sono stati dichiarati disconnessi. ***");
-                            return;
+                            Log.e(TAG, "*** Bus di comunicazione non funzionante. Stop aggiornamenti. ***", e2);
                         }
-
-                        //canale di aggiornamento funzionante. Riprova a far funzionare il controller
-                        connectionErrors = 0;
                     }
                 }
             }
@@ -396,8 +396,10 @@ public class DistanceController
     {
         //lock già ottenuto
 
-        for (final AllTagsListener listener:allListeners)
+        for (int i = 0; i < allListeners.size(); i++)
         {
+            final AllTagsListener listener = allListeners.get(i);
+
             if (connected != null && connected.size() > 0)
             {
                 //presenti tags connessi nell'ultimo aggiornamento dei dati
@@ -452,8 +454,9 @@ public class DistanceController
     {
         //lock già ottenuto
 
-        for (Pair<Integer, TagListener> pair:tagListeners)
+        for (int i = 0; i < tagListeners.size(); i++)
         {
+            final Pair<Integer, TagListener> pair = tagListeners.get(i);
             int ID = pair.first;
             final TagListener listener = pair.second;
 
