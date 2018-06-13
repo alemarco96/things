@@ -145,7 +145,6 @@ public class DistanceController
     //memorizza tutti i listeners associati ad uno specifico tag
     private List<Pair<Integer, TagListener>> tagListeners;
 
-    //TODO: funziona, o è inutile?
     //oggetto usato per impedire la chiusura del controller mentre è in corso la comunicazione a basso livello
     private final Object workingLock = new Object();
 
@@ -204,6 +203,16 @@ public class DistanceController
                         }
 
                         Log.e(TAG, "*** Troppi errori di comunicazione avvenuti. Tutti i tag sono stati dichiarati disconnessi. ***");
+
+                        //ritesta la connessione per valutare se è ancora attiva
+                        try
+                        {
+                            driverDWM.checkDWM();
+                        } catch (IOException e2)
+                        {
+                            Log.e(TAG, "*** Bus di comunicazione non funzionante. Stop aggiornamenti. ***", e2);
+                            stopUpdate();
+                        }
                     }
                 }
             }
