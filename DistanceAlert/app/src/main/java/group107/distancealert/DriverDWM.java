@@ -395,7 +395,7 @@ public class DriverDWM {
     }
 
     /**
-     * Chiusura e rilascio della periferica SPI e/o UART
+     * Chiusura e rilascio della periferica SPI e UART se erano aperte
      *
      * @throws IOException Lanciata se ci sono problemi nella chiusura della periferica
      */
