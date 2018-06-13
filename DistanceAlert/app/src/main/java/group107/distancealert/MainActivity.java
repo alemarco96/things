@@ -25,9 +25,6 @@ public class MainActivity extends Activity {
     //Stringhe utili per TAGs della MainActivity
     private final String MainActivityTAG = "MainActivity";
 
-    //ritardo, in millisecondi, usato nella gestione del cambio di bus di comunicazione.
-    private static final long SWITCH_BUS_DELAY = 100L;
-
     /**
      * Stringhe costanti usate per identificare le periferiche
      */
@@ -56,6 +53,9 @@ public class MainActivity extends Activity {
     private boolean nextSpi = true;
     private boolean alarmMuted = false;
     private boolean alarmStatus = false;
+    
+    //ritardo, in millisecondi, usato nella gestione della comunicazione
+    private static final long BUS_DELAY = 100L;
 
     final private GpioCallback pulsanteCallback = new GpioCallback() {
         @Override
@@ -164,7 +164,7 @@ public class MainActivity extends Activity {
                             Log.v(MainActivityTAG, "onCreate -> " +
                                     "onClick switchMethodView -> " +
                                     "attesa per favorire la chiusura di DistanceController");
-                            Thread.sleep(SWITCH_BUS_DELAY);
+                            Thread.sleep(BUS_DELAY);
                         } catch (InterruptedException e) {
                             Log.e(MainActivityTAG, "Errore: ", e);
                         }
@@ -194,7 +194,7 @@ public class MainActivity extends Activity {
                         Log.v(MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView -> nextSpi == false" +
                                 "attesa per favorire la creazione di DistanceController");
-                        Thread.sleep(SWITCH_BUS_DELAY);
+                        Thread.sleep(BUS_DELAY);
                     } catch (InterruptedException e) {
                         Log.e(MainActivityTAG, "Errore: ", e);
                     }
@@ -219,7 +219,7 @@ public class MainActivity extends Activity {
                             Log.v(MainActivityTAG, "onCreate -> " +
                                     "onClick switchMethodView -> " +
                                     "attesa per favorire la chiusura di DistanceController");
-                            Thread.sleep(SWITCH_BUS_DELAY);
+                            Thread.sleep(BUS_DELAY);
                         } catch (InterruptedException f) {
                             Log.e(MainActivityTAG, "Errore: ", f);
                         }
@@ -239,7 +239,7 @@ public class MainActivity extends Activity {
                 //attesa per favorire crezione di DistanceController
                 Log.v(MainActivityTAG, "onCreate -> " +
                         "attesa per favorire la creazione di DistanceController");
-                Thread.sleep(SWITCH_BUS_DELAY);
+                Thread.sleep(BUS_DELAY);
             } catch (InterruptedException e) {
                 Log.e(MainActivityTAG, "Errore: ", e);
             }
@@ -258,7 +258,7 @@ public class MainActivity extends Activity {
                     Log.v(MainActivityTAG, "onCreate -> " +
                                     R.string.noDwm +
                                     "attesa per favorire la chiusura di DistanceController");
-                    Thread.sleep(SWITCH_BUS_DELAY);
+                    Thread.sleep(BUS_DELAY);
                 } catch (InterruptedException f) {
                     Log.e(MainActivityTAG, "Errore: ", f);
                 }
@@ -535,7 +535,7 @@ public class MainActivity extends Activity {
                 //attesa per favorire la chiusura di DistanceController
                 Log.v(MainActivityTAG, "onPause -> " +
                         "attesa per favorire la chiusura di DistanceController");
-                Thread.sleep(300L);
+                Thread.sleep(BUS_DELAY);
             } catch (InterruptedException e) {
                 Log.e(MainActivityTAG, "Errore: ", e);
             }
