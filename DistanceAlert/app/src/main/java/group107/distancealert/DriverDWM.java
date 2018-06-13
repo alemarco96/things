@@ -112,7 +112,7 @@ public class DriverDWM {
      * Nel caso non ottenga una risposta corretta, ovvero ci sono dei problemi gravi,
      * probabilmente nell'hardware. Dunque lancia le relative eccezioni.
      *
-     * @throws IOException          Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
+     * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      */
     public void checkDWM() throws IOException {
         // Reset: caso SPI
@@ -350,27 +350,13 @@ public class DriverDWM {
      * @throws IOException Lanciata se ci sono problemi di accesso alla periferica
      */
     private void waitUART(long maxTimeWait_millis) throws IOException {
-        // Oggetto usato per la sincronizzazione tra il thread principale e il thread della callback
-        final Object lock = new Object();
-
         // Creazione di un thread separato su cui svolgere la callback della UART
-        HandlerThread myThread = new HandlerThread("UartCallbackThread");
+        myThread = new HandlerThread("UartCallbackThread");
         myThread.start();
         Handler myHandler = new Handler(myThread.getLooper());
 
         // Registrazione della callback
-        myUART.registerUartDeviceCallback(myHandler, new UartDeviceCallback() {
-            @Override
-            public boolean onUartDeviceDataAvailable(UartDevice uartDevice) {
-                synchronized (lock) {
-                    // Risveglia il thread principale
-                    lock.notify();
-                }
-
-                // Callback viene eseguita solo una volta e poi si deregistra
-                return false;
-            }
-        });
+        myUART.registerUartDeviceCallback(myHandler, myUartDeviceCallBack);
 
         synchronized (lock) {
             try {
@@ -383,7 +369,29 @@ public class DriverDWM {
 
         // Chiusura del thread della callback
         myThread.quitSafely();
+        myThread = null;
+
+        // Nel caso durante l'attesa fosse stata chiusa la periferica, lancia la seguente ecezione
+        if (myUART == null) {
+            throw new IOException("Communication error via UART: communication interrupted");
+        }
     }
+
+    // Oggetto usato per la sincronizzazione tra il thread principale e il thread della callback
+    private final Object lock = new Object();//TODO commenti
+    private HandlerThread myThread;
+    private final UartDeviceCallback myUartDeviceCallBack = new UartDeviceCallback() {
+        @Override
+        public boolean onUartDeviceDataAvailable(UartDevice uartDevice) {
+            synchronized (lock) {
+                // Risveglia il thread principale
+                lock.notify();
+            }
+
+            // Callback viene eseguita solo una volta e poi si deregistra
+            return false;
+        }
+    };
 
     /**
      * Chiusura e rilascio della periferica SPI e UART se erano aperte
@@ -392,13 +400,26 @@ public class DriverDWM {
      */
     public void close() throws IOException {
         if (mySPI != null) {
+            // Chiusura SPI
             mySPI.close();
             mySPI = null;
         }
 
         if (myUART != null) {
+            // Deregitro la callback
+            myUART.unregisterUartDeviceCallback(myUartDeviceCallBack);
+
+            //Chiusura UART
             myUART.close();
             myUART = null;
+
+            // Eventuale terminazione del thread della callback e risveglio del thread principale
+            if (myThread != null) {
+                myThread.quitSafely();
+                synchronized (lock) {
+                    lock.notify();
+                }
+            }
         }
     }
 }
