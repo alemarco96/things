@@ -194,7 +194,7 @@ public class MainActivity extends Activity {
                         //attesa per favorire DistanceController
                         Log.v(MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView -> nextSpi == false" +
-                                "attesa per favorire la creazione di DistanceController");
+                                "attesa per favorire DistanceController");
                         Thread.sleep(BUS_DELAY);
                     } catch (InterruptedException e) {
                         Log.e(MainActivityTAG, "Errore: ", e);
@@ -226,14 +226,6 @@ public class MainActivity extends Activity {
             Log.v(MainActivityTAG, "onCreate: default lancia SPI");
             nextSpi = false;
             myController = new DistanceController(RPI3_SPI, update);
-            try {
-                //attesa per favorire crezione di DistanceController
-                Log.v(MainActivityTAG, "onCreate -> " +
-                        "attesa per favorire la creazione di DistanceController");
-                Thread.sleep(BUS_DELAY);
-            } catch (InterruptedException e) {
-                Log.e(MainActivityTAG, "Errore: ", e);
-            }
             switchMethodView.setChecked(true);
             startElaboration();
         } catch (IOException e) {
