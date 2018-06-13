@@ -63,7 +63,7 @@ public class MainActivity extends Activity {
     private final Object controllerLock = new Object();
 
     //periodo, in millisecondi, di aggiornamento del distanceController
-    private static final long UPDATE_PERIOD = 3000L;
+    private static final long UPDATE_PERIOD = 300L;
     //ritardo, in millisecondi, usato nella gestione della comunicazione
     private static final long BUS_DELAY = 100L;
 
