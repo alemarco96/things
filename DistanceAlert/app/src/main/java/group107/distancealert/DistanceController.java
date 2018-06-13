@@ -145,6 +145,10 @@ public class DistanceController
     //memorizza tutti i listeners associati ad uno specifico tag
     private List<Pair<Integer, TagListener>> tagListeners;
 
+    //TODO: funziona, o è inutile?
+    //oggetto usato per impedire la chiusura del controller mentre è in corso la comunicazione a basso livello
+    private final Object workingLock = new Object();
+
     //oggetto usato per gestire l'accesso in mutua esclusione ai dati
     private final Object dataLock = new Object();
     //oggetto usato per gestire l'accesso in mutua esclusione ai listeners
@@ -168,38 +172,39 @@ public class DistanceController
         @Override
         public void run()
         {
-            try
+            synchronized (workingLock)
             {
-                List<Entry> data = updateData();
-                classifyDataAndNotify(data);
-                synchronized (dataLock)
+                try
                 {
-                    actualData = data;
-                }
-                connectionErrors = 0;
-            } catch (Throwable e)
-            {
-                Log.e(TAG, "Avvenuta eccezione in updateDataTask", e);
-                connectionErrors++;
-                if (connectionErrors >= COUNTER_FOR_CONNECTION_ERRORS)
-                {
-                    List<Entry> data;
+                    List<Entry> data = updateData();
+                    classifyDataAndNotify(data);
                     synchronized (dataLock)
                     {
-                        data = cloneList(actualData);
-                        actualData = new ArrayList<>();
+                        actualData = data;
                     }
-                    synchronized (listenersLock)
-                    {
-                        //notifica a tutti i listeners che tutti i tag che erano connessi all'ultimo aggiornamento si sono disconnessi
-
-                        notifyToAllTagsListeners(null, data, null);
-                        notifyToTagsListeners(new ArrayList<Entry>(), data, new ArrayList<Entry>());
-                    }
-
-                    Log.e(TAG, "*** Troppi errori di comunicazione avvenuti. Tutti i tag sono stati dichiarati disconnessi. ***");
-
                     connectionErrors = 0;
+                } catch (Throwable e)
+                {
+                    Log.e(TAG, "Avvenuta eccezione in updateDataTask", e);
+                    connectionErrors++;
+                    if (connectionErrors >= COUNTER_FOR_CONNECTION_ERRORS)
+                    {
+                        List<Entry> data;
+                        synchronized (dataLock)
+                        {
+                            data = cloneList(actualData);
+                            actualData = new ArrayList<>();
+                        }
+                        synchronized (listenersLock)
+                        {
+                            //notifica a tutti i listeners che tutti i tag che erano connessi all'ultimo aggiornamento si sono disconnessi
+
+                            notifyToAllTagsListeners(null, data, null);
+                            notifyToTagsListeners(new ArrayList<Entry>(), data, new ArrayList<Entry>());
+                        }
+
+                        Log.e(TAG, "*** Troppi errori di comunicazione avvenuti. Tutti i tag sono stati dichiarati disconnessi. ***");
+                    }
                 }
             }
         }
@@ -610,28 +615,31 @@ public class DistanceController
      */
     public void close()
     {
-        if (updateDataTimer != null)
+        synchronized (workingLock)
         {
-            updateDataTimer.cancel();
-            updateDataTimer = null;
-        }
-
-        if (driverDWM != null)
-        {
-            try
+            if (updateDataTimer != null)
             {
-                driverDWM.close();
-            } catch (IOException e)
-            {
-                Log.e(TAG, "Eccezione in chiusura del driver DWM", e);
+                updateDataTimer.cancel();
+                updateDataTimer = null;
             }
-            driverDWM = null;
-        }
 
-        synchronized (listenersLock)
-        {
-            allListeners = null;
-            tagListeners = null;
+            if (driverDWM != null)
+            {
+                try
+                {
+                    driverDWM.close();
+                } catch (IOException e)
+                {
+                    Log.e(TAG, "Eccezione in chiusura del driver DWM", e);
+                }
+                driverDWM = null;
+            }
+
+            synchronized (listenersLock)
+            {
+                allListeners = null;
+                tagListeners = null;
+            }
         }
     }
 
