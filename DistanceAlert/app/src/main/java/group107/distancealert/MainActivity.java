@@ -189,8 +189,9 @@ public class MainActivity extends Activity {
                         switchMethodView.setChecked(false);
                         myController = new DistanceController(RPI3_UART);
                     }
+                    myController.startUpdate(update);
                     try {
-                        //attesa per favorire crezione di DistanceController
+                        //attesa per favorire DistanceController
                         Log.v(MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView -> nextSpi == false" +
                                 "attesa per favorire la creazione di DistanceController");
@@ -198,7 +199,6 @@ public class MainActivity extends Activity {
                     } catch (InterruptedException e) {
                         Log.e(MainActivityTAG, "Errore: ", e);
                     }
-                    myController.startUpdate(update);
                     startElaboration();
                     if (id != -1) {
                         //id già selezionato in precedenza
@@ -214,15 +214,6 @@ public class MainActivity extends Activity {
                     t.show();
                     if (myController != null) {
                         myController.close();
-                        try {
-                            //attesa per favorire la chiusura di DistanceController
-                            Log.v(MainActivityTAG, "onCreate -> " +
-                                    "onClick switchMethodView -> " +
-                                    "attesa per favorire la chiusura di DistanceController");
-                            Thread.sleep(BUS_DELAY);
-                        } catch (InterruptedException f) {
-                            Log.e(MainActivityTAG, "Errore: ", f);
-                        }
                         myController = null;
                     }
                 }
@@ -253,15 +244,6 @@ public class MainActivity extends Activity {
             t.show();
             if (myController != null) {
                 myController.close();
-                try {
-                    //attesa per favorire la chiusura di DistanceController
-                    Log.v(MainActivityTAG, "onCreate -> " +
-                                    R.string.noDwm +
-                                    "attesa per favorire la chiusura di DistanceController");
-                    Thread.sleep(BUS_DELAY);
-                } catch (InterruptedException f) {
-                    Log.e(MainActivityTAG, "Errore: ", f);
-                }
                 myController = null;
             }
         }
@@ -531,14 +513,6 @@ public class MainActivity extends Activity {
             Log.d(MainActivityTAG, "onPause -> chiusura controller");
             //chiusura controller
             myController.close();
-            try {
-                //attesa per favorire la chiusura di DistanceController
-                Log.v(MainActivityTAG, "onPause -> " +
-                        "attesa per favorire la chiusura di DistanceController");
-                Thread.sleep(BUS_DELAY);
-            } catch (InterruptedException e) {
-                Log.e(MainActivityTAG, "Errore: ", e);
-            }
             myController = null;
         }
     }
