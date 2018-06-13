@@ -25,6 +25,11 @@ public class MainActivity extends Activity {
     //Stringhe utili per TAGs della MainActivity
     private final String MainActivityTAG = "MainActivity";
 
+    //ritardo, in millisecondi, necessario prima di poter cambiare nuovamente bus di comunicazione
+    private static final long SWITCH_BUS_DELAY = 100L;
+
+    private long lastBusSwitch = Long.MIN_VALUE;
+
     /**
      * Stringhe costanti usate per identificare le periferiche
      */
@@ -148,6 +153,13 @@ public class MainActivity extends Activity {
         switchMethodView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                long time = System.currentTimeMillis();
+
+                if ((lastBusSwitch - time) < SWITCH_BUS_DELAY)
+                    return;
+
+                lastBusSwitch = time;
+
                 try {
                     //Se istanza di DistanceController già creata allora deve essere chiusa
                     if (myController != null) {
