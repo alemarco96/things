@@ -55,6 +55,7 @@ public class MainActivity extends Activity {
     private boolean alarmStatus = false;
 
     /*
+    566586
       oggetto necessario per evitare race-conditions nell'accesso al distanceController
       da vari thread
      */
