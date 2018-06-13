@@ -11,7 +11,6 @@ import com.google.android.things.pio.UartDeviceCallback;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
 import static java.lang.Byte.toUnsignedInt;
 
@@ -131,7 +130,6 @@ public class DriverDWM {
             separati da delle brevi pause per dare tempo al modulo di fare quello che deve fare
             */
             transferViaSPI(new byte[1], true);
-            // Breve pausa tra due trasferimenti consecutivi
             SleepHelper.sleepMicros(SPI_SLEEP_TIME);
             transferViaSPI(new byte[1], true);
             SleepHelper.sleepMicros(SPI_SLEEP_TIME);

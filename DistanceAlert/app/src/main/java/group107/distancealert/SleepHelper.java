@@ -1,9 +1,13 @@
 package group107.distancealert;
 
+import android.util.Log;
+
 import java.util.concurrent.TimeUnit;
 
 public final class SleepHelper
 {
+    private static final String TAG = "SleepHelper";
+
     @SuppressWarnings("EmptyCatchBlock")
     public static void sleepMillis(long timeout)
     {
@@ -14,7 +18,9 @@ public final class SleepHelper
             try
             {
                 TimeUnit.MILLISECONDS.sleep(timeout - (System.currentTimeMillis() - startTime));
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+                Log.w(TAG, "Sleep interrupted", e);
+            }
         }while((System.currentTimeMillis() - startTime) < timeout);
     }
 
@@ -28,7 +34,9 @@ public final class SleepHelper
             try
             {
                 TimeUnit.MICROSECONDS.sleep(timeout - ((System.currentTimeMillis() / 1000L) - startTime));
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+                Log.w(TAG, "Sleep interrupted", e);
+            }
         }while(((System.nanoTime() / 1000L) - startTime) < timeout);
     }
 
@@ -42,7 +50,9 @@ public final class SleepHelper
             try
             {
                 TimeUnit.NANOSECONDS.sleep(timeout - (System.currentTimeMillis() - startTime));
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+                Log.w(TAG, "Sleep interrupted", e);
+            }
         }while((System.nanoTime() - startTime) < timeout);
     }
 }
