@@ -25,10 +25,8 @@ public class MainActivity extends Activity {
     //Stringhe utili per TAGs della MainActivity
     private final String MainActivityTAG = "MainActivity";
 
-    //ritardo, in millisecondi, necessario prima di poter cambiare nuovamente bus di comunicazione
+    //ritardo, in millisecondi, usato nella gestione del cambio di bus di comunicazione.
     private static final long SWITCH_BUS_DELAY = 100L;
-
-    private long lastBusSwitch = Long.MIN_VALUE;
 
     /**
      * Stringhe costanti usate per identificare le periferiche
@@ -160,8 +158,6 @@ public class MainActivity extends Activity {
                                 "onClick switchMethodView: myController != null");
                         myController.stopUpdate();
                         myController.close();
-
-                        long time = System.currentTimeMillis();
 
                         try {
                             //attesa per favorire la chiusura di DistanceController
