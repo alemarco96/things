@@ -378,8 +378,12 @@ public class DriverDWM {
     }
 
     // Oggetto usato per la sincronizzazione tra il thread principale e il thread della callback
-    private final Object lock = new Object();//TODO commenti
+    private final Object lock = new Object();
+
+    // Thread usato per la callback della UART
     private HandlerThread myThread;
+
+    // Callback eseguita solo una volta in seguito alla ricezione di dati dalla periferica UART
     private final UartDeviceCallback myUartDeviceCallBack = new UartDeviceCallback() {
         @Override
         public boolean onUartDeviceDataAvailable(UartDevice uartDevice) {
