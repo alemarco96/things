@@ -34,8 +34,8 @@ public class DriverDWM {
     /**
      * Parametri costanti usati per gestire la temporizzazione durante le comunicazioni SPI e UART
      */
-    private static final long SPI_SLEEP_TIME = 50L; // microsecondi
-    private static final long MAX_SPI_WAIT = 10L;   // millisecondi
+    private static final long SPI_SLEEP_TIME = 100L; // microsecondi
+    private static final long MAX_SPI_WAIT = 20L;   // millisecondi
     private static final long MAX_UART_WAIT = 50L;  // millisecondi
 
     /**
@@ -198,34 +198,39 @@ public class DriverDWM {
 
         // Caso SPI
         if (mySPI != null) {
-            // Trasferimento pacchetto a DWM
+            // Trasferimento pacchetto a DWM contentente la richiesta
             transferViaSPI(buffer, false);
 
             /*
             Attesa della costruzione della risposta da parte del modulo.
             Finché non è pronta lui risponde sempre 0x00.
             Quando è pronta, invece, comunica la lunghezza totale della risposta da leggere.
-            Se l'attesa va oltre i 10ms significa che ci sono dei problemi.
+            Se l'attesa va oltre il tempo massimo significa che ci sono dei problemi.
              */
             int length;
             long timer = System.currentTimeMillis();
             do {
                 try {
+                    // Breve pausa tra due trasferimenti consecutivi
                     TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
                 } catch (InterruptedException e) {
                     Log.w(TAG, "Sleep interrupted", e);
                 }
+
+                // Ricezzione del byte contente la lunghezza della risposta
                 length = transferViaSPI(new byte[1], true)[0];
             } while ((length == 0x00) && ((System.currentTimeMillis() - timer) < MAX_SPI_WAIT));
-            try {
-                TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
-            } catch (InterruptedException e) {
-                Log.w(TAG, "Sleep interrupted", e);
-            }
 
             // Nel caso ci siano stati problemi di comunicazione
             if (length == 0x00 || length == 0xff) {
                 throw new IOException("Communication error via SPI");
+            }
+
+            try {
+                // Breve pausa tra due trasferimenti consecutivi
+                TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
+            } catch (InterruptedException e) {
+                Log.w(TAG, "Sleep interrupted", e);
             }
 
             // Ricezione della risposta
@@ -364,7 +369,7 @@ public class DriverDWM {
                 // Thread principale in pausa per il tempo impostato o finché callback non lo sveglia
                 lock.wait(maxTimeWait_millis);
             } catch (InterruptedException e) {
-                Log.d(TAG, "UART wait interrupted");
+                Log.w(TAG, "UART wait interrupted");
             }
         }
 
