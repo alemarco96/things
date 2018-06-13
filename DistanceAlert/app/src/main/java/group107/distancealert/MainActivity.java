@@ -53,7 +53,15 @@ public class MainActivity extends Activity {
     private boolean nextSpi = true;
     private boolean alarmMuted = false;
     private boolean alarmStatus = false;
-    
+
+    /*
+      oggetto necessario per evitare race-conditions nell'accesso al distanceController
+      da vari thread
+     */
+    private final Object controllerLock = new Object();
+
+    //periodo, in millisecondi, di aggiornamento del distanceController
+    private static final long UPDATE_PERIOD = 300L;
     //ritardo, in millisecondi, usato nella gestione della comunicazione
     private static final long BUS_DELAY = 100L;
 
@@ -91,9 +99,6 @@ public class MainActivity extends Activity {
         //dichiarazione e inizializzazione Elementi Grafici utilizzati solo in onCreate
         Button plusMaxDistanceButton = findViewById(R.id.plusMaxDistance);
         Button minusMaxDistanceButton = findViewById(R.id.minusMaxDistance);
-
-        //periodo polling
-        final long update = 300L;
         
         //Collegamento RadioGroup al LinearLayout ospitante
         idLayout.addView(listIDsGroup);
@@ -152,12 +157,20 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 try {
+                    boolean flag;
+
+                    synchronized (controllerLock) {
+                        flag = myController != null;
+                    }
                     //Se istanza di DistanceController già creata allora deve essere chiusa
-                    if (myController != null) {
+                    if (flag) {
                         Log.v(MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView: myController != null");
-                        myController.stopUpdate();
-                        myController.close();
+                        synchronized (controllerLock) {
+                            myController.stopUpdate();
+                            myController.close();
+                            myController = null;
+                        }
 
                         try {
                             //attesa per favorire la chiusura di DistanceController
@@ -168,7 +181,6 @@ public class MainActivity extends Activity {
                         } catch (InterruptedException e) {
                             Log.e(MainActivityTAG, "Errore: ", e);
                         }
-                        myController = null;
                     } else {
                         Log.v(MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView: myController == null");
@@ -180,24 +192,30 @@ public class MainActivity extends Activity {
                                 "onClick switchMethodView: nextSpi == true");
                         nextSpi = false; //prossimo click a switch si deve avviare UART
                         switchMethodView.setChecked(true);
-                        myController = new DistanceController(RPI3_SPI);
+                        synchronized (controllerLock) {
+                            myController = new DistanceController(RPI3_SPI);
+                        }
                     } else {
                         //Chiudo sessione precedente e avvio UART
                         Log.d(MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView: nextSpi == false");
                         nextSpi = true; //prossimo click a switch si deve avviare SPI
                         switchMethodView.setChecked(false);
-                        myController = new DistanceController(RPI3_UART);
+                        synchronized (controllerLock) {
+                            myController = new DistanceController(RPI3_UART);
+                        }
                     }
-                    myController.startUpdate(update);
                     try {
-                        //attesa per favorire DistanceController
+                        //attesa per favorire crezione di DistanceController
                         Log.v(MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView -> nextSpi == false" +
-                                "attesa per favorire DistanceController");
+                                "attesa per favorire la creazione di DistanceController");
                         Thread.sleep(BUS_DELAY);
                     } catch (InterruptedException e) {
                         Log.e(MainActivityTAG, "Errore: ", e);
+                    }
+                    synchronized (controllerLock) {
+                        myController.startUpdate(UPDATE_PERIOD);
                     }
                     startElaboration();
                     if (id != -1) {
@@ -212,9 +230,27 @@ public class MainActivity extends Activity {
                     Toast t = Toast.makeText(getApplicationContext(), R.string.noDwm,
                             Toast.LENGTH_LONG);
                     t.show();
-                    if (myController != null) {
-                        myController.close();
-                        myController = null;
+
+                    boolean flag;
+
+                    synchronized (controllerLock) {
+                        flag = myController != null;
+                    }
+
+                    if (flag) {
+                        synchronized (controllerLock) {
+                            myController.close();
+                            myController = null;
+                        }
+                        try {
+                            //attesa per favorire la chiusura di DistanceController
+                            Log.v(MainActivityTAG, "onCreate -> " +
+                                    "onClick switchMethodView -> " +
+                                    "attesa per favorire la chiusura di DistanceController");
+                            Thread.sleep(BUS_DELAY);
+                        } catch (InterruptedException f) {
+                            Log.e(MainActivityTAG, "Errore: ", f);
+                        }
                     }
                 }
 
@@ -225,8 +261,18 @@ public class MainActivity extends Activity {
         try {
             Log.v(MainActivityTAG, "onCreate: default lancia SPI");
             nextSpi = false;
-            myController = new DistanceController(RPI3_SPI, update);
             switchMethodView.setChecked(true);
+            synchronized (controllerLock) {
+                myController = new DistanceController(RPI3_SPI, UPDATE_PERIOD);
+            }
+            try {
+                //attesa per favorire crezione di DistanceController
+                Log.v(MainActivityTAG, "onCreate -> " +
+                        "attesa per favorire la creazione di DistanceController");
+                Thread.sleep(BUS_DELAY);
+            } catch (InterruptedException e) {
+                Log.e(MainActivityTAG, "Errore: ", e);
+            }
             startElaboration();
         } catch (IOException e) {
             Log.e(MainActivityTAG, "onCreate Errore:\n", e);
@@ -234,9 +280,28 @@ public class MainActivity extends Activity {
             quindi lo notifico sullo schermo utilizzato dall'utente*/
             Toast t = Toast.makeText(getApplicationContext(), R.string.noDwm, Toast.LENGTH_LONG);
             t.show();
-            if (myController != null) {
-                myController.close();
-                myController = null;
+
+
+            boolean flag;
+
+            synchronized (controllerLock) {
+                flag = myController != null;
+            }
+
+            if (flag) {
+                synchronized (controllerLock) {
+                    myController.close();
+                    myController = null;
+                }
+                try {
+                    //attesa per favorire la chiusura di DistanceController
+                    Log.v(MainActivityTAG, "onCreate -> " +
+                                    R.string.noDwm +
+                                    "attesa per favorire la chiusura di DistanceController");
+                    Thread.sleep(BUS_DELAY);
+                } catch (InterruptedException f) {
+                    Log.e(MainActivityTAG, "Errore: ", f);
+                }
             }
         }
     }
@@ -249,47 +314,49 @@ public class MainActivity extends Activity {
             /*Connessione ai listeners generali per creare lista di IDs rilevati
             visualizzabile su schermo e completa di bottoni per la visione dei dati relativi
             allo specifico id selezionato */
-        myController.addAllTagsListener(new AllTagsListener() {
-            @Override
-            public void onTagHasConnected(final List<DistanceController.Entry> tags) {
-                Log.i(MainActivityTAG, "startElaboration -> " +
-                        "addAllTagListener -> onTagHasConnected: item.size() = " + item.size()
-                        + ", tags.size() = " + tags.size());
-                regenerateRadioGroup();
-            }
-
-            @Override
-            public void onTagHasDisconnected(final List<DistanceController.Entry> tags) {
-                Log.i(MainActivityTAG, "startElaboration -> addAllTagListener" +
-                        " -> onTagHasDisconnected: item.size() = " + item.size()
-                        + ", tags.size() = " + tags.size());
-                regenerateRadioGroup();
-            }
-
-            @Override
-            public void onTagDataAvailable(final List<DistanceController.Entry> tags) {
-                Log.i(MainActivityTAG, "addAllTagListener" +
-                        " -> onTagDataAvailable: item.size() = " + item.size()
-                        + ", tags.size() = " + tags.size());
-                //se diversi sicuramente c'è da aggiornare la lista degli ids
-                if (item.size() != tags.size()) {
-                    //sicuramente c'è differenza tra la lista mostrata e quella reale
+        synchronized (controllerLock) {
+            myController.addAllTagsListener(new AllTagsListener() {
+                @Override
+                public void onTagHasConnected(final List<DistanceController.Entry> tags) {
+                    Log.i(MainActivityTAG, "startElaboration -> " +
+                            "addAllTagListener -> onTagHasConnected: item.size() = " + item.size()
+                            + ", tags.size() = " + tags.size());
                     regenerateRadioGroup();
-                    return;
                 }
-                //Controllo siano presenti i tags giusti
-                for (int i = 0; i < tags.size(); i++) {
-                    for (int j = 0; j < item.size(); j++) {
-                        String itemText = (String) item.get(j).getText();
-                        if (!(Integer.toHexString(tags.get(i).tagID).equals(itemText))) {
-                            //trovato id rilevato non presente nella lista, quindi la aggiorno
-                            regenerateRadioGroup();
-                            return;
+
+                @Override
+                public void onTagHasDisconnected(final List<DistanceController.Entry> tags) {
+                    Log.i(MainActivityTAG, "startElaboration -> addAllTagListener" +
+                            " -> onTagHasDisconnected: item.size() = " + item.size()
+                            + ", tags.size() = " + tags.size());
+                    regenerateRadioGroup();
+                }
+
+                @Override
+                public void onTagDataAvailable(final List<DistanceController.Entry> tags) {
+                    Log.i(MainActivityTAG, "addAllTagListener" +
+                            " -> onTagDataAvailable: item.size() = " + item.size()
+                            + ", tags.size() = " + tags.size());
+                    //se diversi sicuramente c'è da aggiornare la lista degli ids
+                    if (item.size() != tags.size()) {
+                        //sicuramente c'è differenza tra la lista mostrata e quella reale
+                        regenerateRadioGroup();
+                        return;
+                    }
+                    //Controllo siano presenti i tags giusti
+                    for (int i = 0; i < tags.size(); i++) {
+                        for (int j = 0; j < item.size(); j++) {
+                            String itemText = (String) item.get(j).getText();
+                            if (!(Integer.toHexString(tags.get(i).tagID).equals(itemText))) {
+                                //trovato id rilevato non presente nella lista, quindi la aggiorno
+                                regenerateRadioGroup();
+                                return;
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -302,7 +369,10 @@ public class MainActivity extends Activity {
             public void run() {
                 Log.v(MainActivityTAG, "regenerateRadioGroup: running");
                 //ricezione IDs connessi
-                List<Integer> ids = myController.getTagIDs();
+                List<Integer> ids;
+                synchronized (controllerLock) {
+                    ids = myController.getTagIDs();
+                }
                 //pulizia RadioGroup ospitante i RadioButtons
                 listIDsGroup.removeAllViews();
                 //pulizia RadioButtons
@@ -326,7 +396,9 @@ public class MainActivity extends Activity {
                                 Log.v(MainActivityTAG, "regenerateRadioGroup -> " +
                                         "(id == " + id + ") !=-1");
                                 //esiste già un tagListener, quindi è da rimuovere
-                                myController.removeTagListener(idTagListener);
+                                synchronized (controllerLock) {
+                                    myController.removeTagListener(idTagListener);
+                                }
                                 idTagListener = null;
                             }
                             connectToSpecificListener(singleId);
@@ -501,11 +573,26 @@ public class MainActivity extends Activity {
 
         }
 
-        if (myController != null) {
+        boolean flag;
+
+        synchronized (controllerLock) {
+            flag = myController != null;
+        }
+        if (flag) {
             Log.d(MainActivityTAG, "onPause -> chiusura controller");
             //chiusura controller
-            myController.close();
-            myController = null;
+            synchronized (controllerLock) {
+                myController.close();
+                myController = null;
+            }
+            try {
+                //attesa per favorire la chiusura di DistanceController
+                Log.v(MainActivityTAG, "onPause -> " +
+                        "attesa per favorire la chiusura di DistanceController");
+                Thread.sleep(BUS_DELAY);
+            } catch (InterruptedException e) {
+                Log.e(MainActivityTAG, "Errore: ", e);
+            }
         }
     }
 }
