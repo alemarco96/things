@@ -52,23 +52,14 @@ public class DriverDWM {
 
         /*
         Se il busName è un bus SPI, prova ad ottenere un'istanza della periferica SPI.
-        Nel caso in precedenza fosse stata istanziata la UART, viene chiusa.
          */
         if (busName.contains("SPI")) {
             mySPI = manager.openSpiDevice(busName);
-            if (myUART != null) {
-                myUART.close();
-            }
-            myUART = null;
         }
 
-        // Se, invece, il busName è un bus UART faccio l'opposto.
+        // Se invece il busName è un bus UART, prova ad ottenere un'istanza della periferica UART.
         else if (busName.contains("UART")) {
             myUART = manager.openUartDevice(busName);
-            if (mySPI != null) {
-                mySPI.close();
-            }
-            mySPI = null;
         }
 
         // Se il busName non viene riconosciuto, lancia un'eccezione
