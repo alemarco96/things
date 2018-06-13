@@ -1,7 +1,6 @@
 package group107.distancealert;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -35,6 +34,8 @@ public class MainActivity extends Activity {
     private static final String RPI3_UART = "MINIUART";
     private static final String RPI3_SPI = "SPI0.0";
 
+    private static final boolean STARTING_BUS = false;
+
     //Dichiarazione Elementi grafici condivisi da più metodi all'interno di MainActivity
     private LinearLayout idLayout;
     private RadioGroup listIDsGroup;
@@ -51,12 +52,11 @@ public class MainActivity extends Activity {
     private int id = -1;
     private int maxDistance = 2000;
     final private List<RadioButton> item = new ArrayList<>();
-    private boolean nextSpi = false;
+    private boolean nextSpi = STARTING_BUS;
     private boolean alarmMuted = false;
     private boolean alarmStatus = false;
 
     /*
-    566586
       oggetto necessario per evitare race-conditions nell'accesso al distanceController
       da vari thread
      */
@@ -158,93 +158,71 @@ public class MainActivity extends Activity {
         switchMethodView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    synchronized (controllerLock) {
-                        boolean flag = myController == null;
-
-                        //Se istanza di DistanceController già creata allora deve essere chiusa
-                        if (flag) {
-                            //nessuna istanza di DistanceController creata
-                            Log.v(MainActivityTAG, "onCreate -> " +
-                                    "onClick switchMethodView: myController == null");
-                            return;
-                        }
-                        Log.v(MainActivityTAG, "onCreate -> " +
-                                "onClick switchMethodView: myController != null");
-                        myController.stopUpdate();
-                        myController.close();
-                        myController = null;
-                    }
-
-                    //attesa per favorire la chiusura di DistanceController
-                    SleepHelper.sleepMillis(BUS_DELAY);
-
-                    Log.d(MainActivityTAG, "onCreate -> " +
-                            "onClick switchMethodView: nextSpi == " + (nextSpi ? "true" : false));
-                    nextSpi = !nextSpi;
-                    switchMethodView.setChecked(!nextSpi);
-                    synchronized (controllerLock) {
-                        myController = new DistanceController(nextSpi ? RPI3_UART : RPI3_SPI, UPDATE_PERIOD);
-                    }
-                    startElaboration();
-                    if (id != -1) {
-                        //id già selezionato in precedenza
-                        connectToSpecificListener(id);
-                    }
-                } catch (IOException e) {
-                    Log.e(MainActivityTAG, "onCreate -> onClick switchMethodView:" +
-                            " Errore:\n", e);
-                    /*Generata un'eccezione al momento della creazione dell'instanza
-                    DistanceController quindi lo notifico sullo schermo utilizzato dall'utente*/
-                    Toast t = Toast.makeText(getApplicationContext(), R.string.noDwm,
-                            Toast.LENGTH_LONG);
-                    t.show();
-
-                    synchronized (controllerLock) {
-                        boolean flag = myController == null;
-
-                        if (flag)
-                            return;
-
-                        myController.close();
-                        myController = null;
-                    }
-                    //attesa per favorire la chiusura di DistanceController
-                    SleepHelper.sleepMillis(BUS_DELAY);
-                }
+                closeController();
+                setupCommunication(!nextSpi);
             }
         });
 
-        //default lancia SPI
+        //inizializzazione comunicazione
+        setupCommunication(nextSpi);
+    }
+
+    private void closeController()
+    {
+        synchronized (controllerLock) {
+            boolean flag = myController == null;
+
+            //Se istanza di DistanceController già creata allora deve essere chiusa
+            if (flag) {
+                //nessuna istanza di DistanceController creata
+                Log.v(MainActivityTAG, "closeController: myController == null");
+                return;
+            }
+            Log.v(MainActivityTAG, "closeController: chiusura del controller.");
+            myController.stopUpdate();
+            myController.close();
+            myController = null;
+        }
+
+        //attesa per favorire la chiusura di DistanceController
+        SleepHelper.sleepMillis(BUS_DELAY);
+    }
+
+    private void setupCommunication(boolean isNextSpi)
+    {
+        nextSpi = isNextSpi;
+        switchMethodView.setChecked(!nextSpi);
+        //TODO: avvia la cosa corretta?
+        Log.d(MainActivityTAG,"setupCommunication: now " + (nextSpi ? "SPI" : "UART"));
+
         try {
-            Log.v(MainActivityTAG, "onCreate: default lancia SPI");
-            nextSpi = false;
-            switchMethodView.setChecked(true);
             synchronized (controllerLock) {
-                myController = new DistanceController(RPI3_SPI, UPDATE_PERIOD);
+                myController = new DistanceController(nextSpi ? RPI3_SPI : RPI3_UART, UPDATE_PERIOD);
             }
             startElaboration();
+            if (id != -1) {
+                //id già selezionato in precedenza
+                connectToSpecificListener(id);
+            }
         } catch (IOException e) {
-            Log.e(MainActivityTAG, "onCreate Errore:\n", e);
+            Log.e(MainActivityTAG, "setupCommunication -> Errore nel setup della comunicazione:\n", e);
             /*Generata un'eccezione al momento della creazione dell'instanza DistanceController
             quindi lo notifico sullo schermo utilizzato dall'utente*/
             Toast t = Toast.makeText(getApplicationContext(), R.string.noDwm, Toast.LENGTH_LONG);
             t.show();
 
-            boolean flag;
-
             synchronized (controllerLock) {
-                flag = myController != null;
+                boolean flag = myController == null;
+
+                if (flag)
+                    return;
+
+                myController.close();
+                myController = null;
             }
 
-            if (flag) {
-                synchronized (controllerLock) {
-                    myController.close();
-                    myController = null;
-                }
-                //attesa per favorire la chiusura di DistanceController
-                SleepHelper.sleepMillis(BUS_DELAY);
-            }
+            //attesa per favorire la chiusura di DistanceController
+            SleepHelper.sleepMillis(BUS_DELAY);
         }
     }
 
@@ -527,15 +505,17 @@ public class MainActivity extends Activity {
         boolean flag;
 
         synchronized (controllerLock) {
-            flag = myController != null;
-        }
-        if (flag) {
+            flag = myController == null;
+
+            if (flag)
+                return;
             Log.d(MainActivityTAG, "onPause -> chiusura controller");
             //chiusura controller
-            synchronized (controllerLock) {
-                myController.close();
-                myController = null;
-            }
+            myController.close();
+            myController = null;
         }
+
+        //attesa per favorire la chiusura di DistanceController
+        SleepHelper.sleepMillis(BUS_DELAY);
     }
 }
