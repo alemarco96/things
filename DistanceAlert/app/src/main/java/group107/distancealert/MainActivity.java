@@ -192,7 +192,7 @@ public class MainActivity extends Activity {
     private void setupCommunication(boolean isNextSpi)
     {
         nextSpi = isNextSpi;
-        switchMethodView.setChecked(!nextSpi);
+        switchMethodView.setChecked(nextSpi);
         //TODO: avvia la cosa corretta?
         Log.d(MainActivityTAG,"setupCommunication: now " + (nextSpi ? "SPI" : "UART"));
 
