@@ -316,14 +316,11 @@ public class DriverDWM {
             Log.e(TAG, "Errore: ", e);
         }
         myThread.quit();
-        //se ha atteso fino a MAX_UART_WAIT non è stato ricevuto nulla
-        if ((System.currentTimeMillis() - timer) >= MAX_UART_WAIT) {
-            throw new IOException("Communication error via UART: nothing received");
-        }
+
         //è stata notificata la ricezione dei dati quindi li processo
         byte[] totalReceive = new byte[255];
         int totalCount = 0;
-        while (totalCount == 0) {
+        while ((totalCount == 0) && ((System.currentTimeMillis() - timer) < MAX_UART_WAIT)) {
             byte[] tempReceive = new byte[20];
             int tempCount;
             while ((tempCount = myUART.read(tempReceive, tempReceive.length)) > 0) {
