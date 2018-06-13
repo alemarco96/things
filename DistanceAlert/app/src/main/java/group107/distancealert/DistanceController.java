@@ -188,31 +188,34 @@ public class DistanceController
                     connectionErrors++;
                     if (connectionErrors >= COUNTER_FOR_CONNECTION_ERRORS)
                     {
-                        List<Entry> data;
-                        synchronized (dataLock)
-                        {
-                            data = cloneList(actualData);
-                            actualData = new ArrayList<>();
-                        }
-                        synchronized (listenersLock)
-                        {
-                            //notifica a tutti i listeners che tutti i tag che erano connessi all'ultimo aggiornamento si sono disconnessi
-
-                            notifyToAllTagsListeners(null, data, null);
-                            notifyToTagsListeners(null, data, null);
-                        }
-
-                        Log.e(TAG, "*** Troppi errori di comunicazione avvenuti. Tutti i tag sono stati dichiarati disconnessi. ***");
-
                         //ritesta la connessione per valutare se è ancora attiva
                         try
                         {
                             driverDWM.checkDWM();
                         } catch (IOException e2)
                         {
-                            Log.e(TAG, "*** Bus di comunicazione non funzionante. Stop aggiornamenti. ***", e2);
+                            List<Entry> data;
+                            synchronized (dataLock)
+                            {
+                                data = cloneList(actualData);
+                                actualData = new ArrayList<>();
+                            }
+                            synchronized (listenersLock)
+                            {
+                                //notifica a tutti i listeners che tutti i tag che erano connessi all'ultimo aggiornamento si sono disconnessi
+
+                                notifyToAllTagsListeners(null, data, null);
+                                notifyToTagsListeners(null, data, null);
+                            }
                             stopUpdate();
+
+                            Log.e(TAG, "*** Bus di comunicazione non funzionante. Stop aggiornamenti. ***", e2);
+                            Log.e(TAG, "*** Troppi errori di comunicazione avvenuti. Tutti i tag sono stati dichiarati disconnessi. ***");
+                            return;
                         }
+
+                        //canale di aggiornamento funzionante. Riprova a far funzionare il controller
+                        connectionErrors = 0;
                     }
                 }
             }
