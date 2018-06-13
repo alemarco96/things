@@ -280,6 +280,8 @@ public class DistanceController
         {
             Entry discEntry = disconnectedData.get(i);
 
+            String toLog = "updateData() -> Esaminando tag disconnesso: " + Integer.toHexString(discEntry.tagID);
+
             int result = Collections.binarySearch(newData, discEntry, MATCHING_ID_ENTRY_COMPARATOR);
             if (result >= 0)
             {
@@ -289,15 +291,22 @@ public class DistanceController
                 if(newEntry.tagDistance == discEntry.tagDistance)
                 {
                     //tag disconnesso. eliminare entry dai dati attuali
+                    toLog += " rimossa entry dalla lista.";
                     newData.remove(result);
                 } else
                 {
                     //tag prima disconnesso, ed ora si è riconnesso. rimuovere dalla lista dei tag disconnessi
                     //la sua riconnessione verrà riconosciuta al prossimo passo
+                    toLog += " tag riconnesso.";
                     disconnectedData.remove(i);
                     i--;
                 }
             }
+            else
+                //newData non presente in disconnectedData
+                toLog += " non presente.";
+
+            Log.v(TAG, toLog);
         }
 
         return newData;
@@ -321,6 +330,8 @@ public class DistanceController
             {
                 Entry newEntry = newData.get(i);
 
+                String toLog = "classifyDataAndNotify() -> Esaminando tag: " + Integer.toHexString(newEntry.tagID);
+
                 //ricerca di entry in actualData con lo stesso tagID
                 int result = Collections.binarySearch(actualData, newEntry, MATCHING_ID_ENTRY_COMPARATOR);
                 if (result >= 0)
@@ -331,26 +342,33 @@ public class DistanceController
                     {
                         //tag appena disconnesso
                         newEntry.counter = actualEntry.counter + 1;
+
                         if (newEntry.counter >= COUNTER_FOR_DISCONNECTED)
                         {
+                            toLog += " appena disconnesso.";
                             disconnected.add(new Entry(newEntry));
                             disconnectedData.add(new Entry(newEntry));
                         }
                         else
                         {
+                            toLog += (" potrebbe essere disconnesso, con counter: " + newEntry.counter + ".");
                             updated.add(new Entry(newEntry));
                         }
                     } else
                     {
                         newEntry.counter = 0;
+                        toLog += " tag aggiornato.";
                         updated.add(new Entry(newEntry));
                     }
                 } else
                 {
                     //tag appena connesso
                     newEntry.counter = 0;
+                    toLog += " appena connesso.";
                     connected.add(new Entry(newEntry));
                 }
+
+                Log.v(TAG, toLog);
             }
 
             Collections.sort(disconnectedData, MATCHING_ID_ENTRY_COMPARATOR);
