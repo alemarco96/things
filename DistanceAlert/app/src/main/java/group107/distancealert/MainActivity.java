@@ -165,6 +165,7 @@ public class MainActivity extends Activity {
         });
 
         //inizializzazione comunicazione
+        closeController();
         setupCommunication(nextSpi);
     }
 
