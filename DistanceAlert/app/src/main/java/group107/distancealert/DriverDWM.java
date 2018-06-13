@@ -75,6 +75,8 @@ public class DriverDWM {
             throw new IllegalArgumentException("Unrecognized bus name");
         }
 
+        Log.w("LKNTH", "COSTRUTTORE " + busName);//TODO remove
+
         // Configurazione dei parametri della comunicazione per il modulo DWM
         configureCommunication();
     }
@@ -182,6 +184,8 @@ public class DriverDWM {
             throw new IllegalArgumentException("Bad parameters");
         }
 
+        Log.w("LKNTH", "ReqAPI: TX= " + tag);//TODO remove
+
         // Praparo il pacchetto TLV da inviare al modulo
         byte[] buffer = new byte[L + 2];
         buffer[0] = tag;
@@ -272,6 +276,8 @@ public class DriverDWM {
             intReceive[i] = toUnsignedInt(receive[i]);
         }
 
+        Log.w("LKNTH", "ReqAPI: SPI RX= " + Arrays.toString(intReceive));//TODO remove
+
         return intReceive;
     }
 
@@ -329,6 +335,8 @@ public class DriverDWM {
         for (int i = 0; i < totalReceive.length; i++) {
             intReceive[i] = toUnsignedInt(totalReceive[i]);
         }
+
+        Log.w("LKNTH", "ReqAPI: UART RX= " + Arrays.toString(intReceive));//TODO remove
 
         return intReceive;
     }
@@ -403,5 +411,7 @@ public class DriverDWM {
                 }
             }
         }
+
+        Log.w("LKNTH", "CLOSE");//TODO remove
     }
 }
