@@ -297,14 +297,14 @@ public class DistanceController
                 {
                     //tag prima disconnesso, ed ora si è riconnesso. rimuovere dalla lista dei tag disconnessi
                     //la sua riconnessione verrà riconosciuta al prossimo passo
-                    toLog += " tag riconnesso.";
+                    toLog += " tag si è riconnesso.";
                     disconnectedData.remove(i);
                     i--;
                 }
             }
             else
                 //newData non presente in disconnectedData
-                toLog += " non presente.";
+                toLog += " tag non è presente.";
 
             Log.v(TAG, toLog);
         }
