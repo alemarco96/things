@@ -1,10 +1,13 @@
 package group107.distancealert;
 
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
 
 import com.google.android.things.pio.PeripheralManager;
 import com.google.android.things.pio.SpiDevice;
 import com.google.android.things.pio.UartDevice;
+import com.google.android.things.pio.UartDeviceCallback;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -31,8 +34,8 @@ public class DriverDWM {
     /**
      * Parametri costanti usati per gestire la temporizzazione durante le comunicazioni SPI e UART
      */
-    private static final long MAX_SPI_WAIT = 10L;   // millisecondi
     private static final long SPI_SLEEP_TIME = 50L; // microsecondi
+    private static final long MAX_SPI_WAIT = 10L;   // millisecondi
     private static final long MAX_UART_WAIT = 50L;  // millisecondi
 
     /**
@@ -236,7 +239,7 @@ public class DriverDWM {
     }
 
     /**
-     * Gestisce lo scambio di dati  via SPI, con l'opzione (utile per le specifiche del DWM) di
+     * Gestisce lo scambio di dati  via SPI, con l'opzione, utile per le specifiche del DWM, di
      * riempire automaticamente di 0xff l'array di byte da inviare.
      *
      * @param transmit array contenete i byte da inviare via SPI
@@ -282,27 +285,29 @@ public class DriverDWM {
         myUART.flush(UartDevice.FLUSH_IN_OUT);
         myUART.write(transmit, transmit.length);
 
+        // Preparazione dei buffer e dei contatori usati per salvare la risposta
         byte[] totalReceive = new byte[255];
         int totalCount = 0;
-        long timer = System.currentTimeMillis();
+        byte[] tempReceive = new byte[20];
+        int tempCount;
 
-        while ((totalCount == 0) && ((System.currentTimeMillis() - timer) < MAX_UART_WAIT)) {
-            byte[] tempReceive = new byte[20];
-            int tempCount;
-            while ((tempCount = myUART.read(tempReceive, tempReceive.length)) > 0) {
-                // Nel caso ci siano problemi di comunicazione, lancia eccezione
-                if (totalCount + tempCount > 255) {
-                    throw new IOException("Communication error via UART: endless communication");
-                }
+        // Aspetta che arrivi la risposta entro il tempo d'attesa massimo
+        waitUART(MAX_UART_WAIT);
 
-                /*
-                Se ha letto qualche byte li trasferisce dall'array temporaneo all'array complessivo.
-                Questo perché i byte non vengono ricevuti tutti assieme, ma in gruppi di
-                lunghezza variabile. La lunghezza massima è di 20 byte per ogni gruppo.
-                 */
-                System.arraycopy(tempReceive, 0, totalReceive, totalCount, tempCount);
-                totalCount += tempCount;
+        // Leggi i dati in arrivo
+        while ((tempCount = myUART.read(tempReceive, tempReceive.length)) > 0) {
+            // Nel caso ci siano problemi di comunicazione, lancia eccezione
+            if (totalCount + tempCount > 255) {
+                throw new IOException("Communication error via UART: endless communication");
             }
+
+            /*
+            Se ha letto qualche byte li trasferisce dall'array temporaneo all'array complessivo.
+            Questo perché i byte non vengono ricevuti tutti assieme, ma in gruppi di
+            lunghezza variabile. La lunghezza massima è di 20 byte per ogni gruppo.
+             */
+            System.arraycopy(tempReceive, 0, totalReceive, totalCount, tempCount);
+            totalCount += tempCount;
         }
 
         // Nel caso ci siano problemi di comunicazione, lancia eccezione
@@ -322,6 +327,49 @@ public class DriverDWM {
         }
 
         return intReceive;
+    }
+
+    /**
+     * Aspetta che siano ricevuti dei dati dalla periferica UART.
+     * Se l'attesa si protrae oltre il limite impostato viene comunque terminata
+     *
+     * @param maxTimeWait_millis tempo d'attesa massimo
+     * @throws IOException Lanciata se ci sono problemi di accesso alla periferica
+     */
+    private void waitUART(long maxTimeWait_millis) throws IOException {
+        // Oggetto usato per la sincronizzazione tra il thread principale e il thread della callback
+        final Object lock = new Object();
+
+        // Creazione di un thread separato su cui svolgere la callback della UART
+        HandlerThread myThread = new HandlerThread("UartCallbackThread");
+        myThread.start();
+        Handler myHandler = new Handler(myThread.getLooper());
+
+        // Registrazione della callback
+        myUART.registerUartDeviceCallback(myHandler, new UartDeviceCallback() {
+            @Override
+            public boolean onUartDeviceDataAvailable(UartDevice uartDevice) {
+                synchronized (lock) {
+                    // Risveglia il thread principale
+                    lock.notify();
+                }
+
+                // Callback viene eseguita solo una volta e poi si deregistra
+                return false;
+            }
+        });
+
+        synchronized (lock) {
+            try {
+                // Thread principale in pausa per il tempo impostato o finché callback non lo sveglia
+                lock.wait(maxTimeWait_millis);
+            } catch (InterruptedException e) {
+                Log.d(TAG, "UART wait interrupted");
+            }
+        }
+
+        // Chiusura del thread della callback
+        myThread.quitSafely();
     }
 
     /**
