@@ -673,17 +673,18 @@ public class DistanceController
      */
     public List<Integer> getTagIDs()
     {
-        synchronized (dataLock)
+        synchronized (workingLock)
         {
-            List<Integer> tags = new ArrayList<>(actualData.size());
-            for (int i = 0; i < actualData.size(); i++)
+            synchronized (dataLock)
             {
-                int result = Collections.binarySearch(disconnectedData, actualData.get(i), MATCHING_ID_ENTRY_COMPARATOR);
-                if (result < 0)
+                List<Integer> tags = new ArrayList<>(actualData.size());
+                for (int i = 0; i < actualData.size(); i++)
+                {
                     tags.add(actualData.get(i).tagID);
-            }
+                }
 
-            return tags;
+                return tags;
+            }
         }
     }
 }
