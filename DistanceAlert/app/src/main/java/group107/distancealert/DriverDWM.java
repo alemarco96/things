@@ -307,7 +307,7 @@ public class DriverDWM {
      * notifica che i dati sono disponibili
      */
     private synchronized void fineAttesaUart() {
-        Log.i(TAG,"fineAttesaUart()");
+        Log.v(TAG,"fineAttesaUart()");
         //notifica che l'attesa è finita
         notify();
     }
@@ -319,7 +319,7 @@ public class DriverDWM {
      * @throws IOException errori di comunicazione via UART
      */
     private synchronized int[] ricezioneUart(HandlerThread myThread) throws IOException {
-        Log.i(TAG,"ricezioneUart()");
+        Log.v(TAG,"ricezioneUart()");
         long timer = System.currentTimeMillis();
         try {
             //attesa al massimo fino a MAX_UART_WAIT
@@ -333,23 +333,22 @@ public class DriverDWM {
         //è stata notificata la ricezione dei dati quindi li processo
         byte[] totalReceive = new byte[255];
         int totalCount = 0;
-        while ((totalCount == 0) && ((System.currentTimeMillis() - timer) < MAX_UART_WAIT)) {
-            byte[] tempReceive = new byte[20];
-            int tempCount;
-            while ((tempCount = myUART.read(tempReceive, tempReceive.length)) > 0) {
-                // Nel caso ci siano problemi di comunicazione, lancia eccezione
-                if (totalCount + tempCount > 255) {
-                    throw new IOException("Communication error via UART: endless communication");
-                }
-
-
-                //Se ha letto qualche byte li trasferisce dall'array temporaneo all'array complessivo.
-                //Questo perché i byte non vengono ricevuti tutti assieme, ma in gruppi di
-                //lunghezza variabile. La lunghezza massima è di 20 byte per ogni gruppo.
-
-                System.arraycopy(tempReceive, 0, totalReceive, totalCount, tempCount);
-                totalCount += tempCount;
+        byte[] tempReceive = new byte[20];
+        int tempCount;
+        while ((tempCount = myUART.read(tempReceive, tempReceive.length)) > 0) {
+            // Nel caso ci siano problemi di comunicazione, lancia eccezione
+            if (totalCount + tempCount > 255) {
+                throw new IOException("Communication error via UART: endless communication");
             }
+
+
+            /*
+            Se ha letto qualche byte li trasferisce dall'array temporaneo all'array complessivo.
+            Questo perché i byte non vengono ricevuti tutti assieme, ma in gruppi di
+            lunghezza variabile. La lunghezza massima è di 20 byte per ogni gruppo.
+            */
+            System.arraycopy(tempReceive, 0, totalReceive, totalCount, tempCount);
+            totalCount += tempCount;
         }
 
         // Nel caso ci siano problemi di comunicazione, lancia eccezione
