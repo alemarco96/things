@@ -153,13 +153,6 @@ public class MainActivity extends Activity {
         switchMethodView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                long time = System.currentTimeMillis();
-
-                if ((lastBusSwitch - time) < SWITCH_BUS_DELAY)
-                    return;
-
-                lastBusSwitch = time;
-
                 try {
                     //Se istanza di DistanceController già creata allora deve essere chiusa
                     if (myController != null) {
@@ -167,12 +160,15 @@ public class MainActivity extends Activity {
                                 "onClick switchMethodView: myController != null");
                         myController.stopUpdate();
                         myController.close();
+
+                        long time = System.currentTimeMillis();
+
                         try {
                             //attesa per favorire la chiusura di DistanceController
                             Log.v(MainActivityTAG, "onCreate -> " +
                                     "onClick switchMethodView -> " +
                                     "attesa per favorire la chiusura di DistanceController");
-                            Thread.sleep(300L);
+                            Thread.sleep(SWITCH_BUS_DELAY);
                         } catch (InterruptedException e) {
                             Log.e(MainActivityTAG, "Errore: ", e);
                         }
@@ -187,45 +183,30 @@ public class MainActivity extends Activity {
                         Log.d(MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView: nextSpi == true");
                         nextSpi = false; //prossimo click a switch si deve avviare UART
-                        myController = new DistanceController(RPI3_SPI);
-                        try {
-                            //attesa per favorire crezione di DistanceController
-                            Log.v(MainActivityTAG, "onCreate -> " +
-                                    "onClick switchMethodView -> nextSpi == true" +
-                                    "attesa per favorire la creazione di DistanceController");
-                            Thread.sleep(300L);
-                        } catch (InterruptedException e) {
-                            Log.e(MainActivityTAG, "Errore: ", e);
-                        }
-                        myController.startUpdate(update);
                         switchMethodView.setChecked(true);
-                        startElaboration();
-                        if (id != -1) {
-                            //id già selezionato in precedenza
-                            connectToSpecificListener(id);
-                        }
+                        myController = new DistanceController(RPI3_SPI);
                     } else {
                         //Chiudo sessione precedente e avvio UART
                         Log.d(MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView: nextSpi == false");
                         nextSpi = true; //prossimo click a switch si deve avviare SPI
-                        myController = new DistanceController(RPI3_UART);
-                        try {
-                            //attesa per favorire crezione di DistanceController
-                            Log.v(MainActivityTAG, "onCreate -> " +
-                                    "onClick switchMethodView -> nextSpi == false" +
-                                    "attesa per favorire la creazione di DistanceController");
-                            Thread.sleep(300L);
-                        } catch (InterruptedException e) {
-                            Log.e(MainActivityTAG, "Errore: ", e);
-                        }
-                        myController.startUpdate(update);
                         switchMethodView.setChecked(false);
-                        startElaboration();
-                        if (id != -1) {
-                            //id già selezionato in precedenza
-                            connectToSpecificListener(id);
-                        }
+                        myController = new DistanceController(RPI3_UART);
+                    }
+                    try {
+                        //attesa per favorire crezione di DistanceController
+                        Log.v(MainActivityTAG, "onCreate -> " +
+                                "onClick switchMethodView -> nextSpi == false" +
+                                "attesa per favorire la creazione di DistanceController");
+                        Thread.sleep(SWITCH_BUS_DELAY);
+                    } catch (InterruptedException e) {
+                        Log.e(MainActivityTAG, "Errore: ", e);
+                    }
+                    myController.startUpdate(update);
+                    startElaboration();
+                    if (id != -1) {
+                        //id già selezionato in precedenza
+                        connectToSpecificListener(id);
                     }
                 } catch (IOException e) {
                     Log.e(MainActivityTAG, "onCreate -> onClick switchMethodView:" +
@@ -242,7 +223,7 @@ public class MainActivity extends Activity {
                             Log.v(MainActivityTAG, "onCreate -> " +
                                     "onClick switchMethodView -> " +
                                     "attesa per favorire la chiusura di DistanceController");
-                            Thread.sleep(300L);
+                            Thread.sleep(SWITCH_BUS_DELAY);
                         } catch (InterruptedException f) {
                             Log.e(MainActivityTAG, "Errore: ", f);
                         }
@@ -262,7 +243,7 @@ public class MainActivity extends Activity {
                 //attesa per favorire crezione di DistanceController
                 Log.v(MainActivityTAG, "onCreate -> " +
                         "attesa per favorire la creazione di DistanceController");
-                Thread.sleep(300L);
+                Thread.sleep(SWITCH_BUS_DELAY);
             } catch (InterruptedException e) {
                 Log.e(MainActivityTAG, "Errore: ", e);
             }
@@ -281,7 +262,7 @@ public class MainActivity extends Activity {
                     Log.v(MainActivityTAG, "onCreate -> " +
                                     R.string.noDwm +
                                     "attesa per favorire la chiusura di DistanceController");
-                    Thread.sleep(300L);
+                    Thread.sleep(SWITCH_BUS_DELAY);
                 } catch (InterruptedException f) {
                     Log.e(MainActivityTAG, "Errore: ", f);
                 }
