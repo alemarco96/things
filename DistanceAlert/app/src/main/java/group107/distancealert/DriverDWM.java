@@ -11,7 +11,6 @@ import com.google.android.things.pio.UartDeviceCallback;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Timer;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Byte.toUnsignedInt;
