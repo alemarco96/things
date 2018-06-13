@@ -38,6 +38,16 @@ public class DriverDWM {
     private static final long MAX_SPI_WAIT = 20L;   // millisecondi
     private static final long MAX_UART_WAIT = 50L;  // millisecondi
 
+
+    /**
+     * Oggetto usato per la sincronizzazione tra il thread principale e il thread della callbacK
+     */
+    private final Object lock = new Object();
+    /**
+     * Oggetto riferito al thread usato per la callback della periferica UART
+     */
+    private HandlerThread myThread;
+
     /**
      * Costruttore: verica la validità del busName richiesto e configura la comunicazione
      *
@@ -356,7 +366,18 @@ public class DriverDWM {
         Handler myHandler = new Handler(myThread.getLooper());
 
         // Registrazione della callback
-        myUART.registerUartDeviceCallback(myHandler, myUartDeviceCallBack);
+        myUART.registerUartDeviceCallback(myHandler, new UartDeviceCallback() {
+            @Override
+            public boolean onUartDeviceDataAvailable(UartDevice uartDevice) {
+                synchronized (lock) {
+                    // Risveglia il thread principale
+                    lock.notify();
+                }
+
+                // Callback viene eseguita solo una volta e poi si deregistra
+                return false;
+            }
+        });
 
         synchronized (lock) {
             try {
@@ -377,26 +398,6 @@ public class DriverDWM {
         }
     }
 
-    // Oggetto usato per la sincronizzazione tra il thread principale e il thread della callback
-    private final Object lock = new Object();
-
-    // Thread usato per la callback della UART
-    private HandlerThread myThread;
-
-    // Callback eseguita solo una volta in seguito alla ricezione di dati dalla periferica UART
-    private final UartDeviceCallback myUartDeviceCallBack = new UartDeviceCallback() {
-        @Override
-        public boolean onUartDeviceDataAvailable(UartDevice uartDevice) {
-            synchronized (lock) {
-                // Risveglia il thread principale
-                lock.notify();
-            }
-
-            // Callback viene eseguita solo una volta e poi si deregistra
-            return false;
-        }
-    };
-
     /**
      * Chiusura e rilascio della periferica SPI e UART se erano aperte
      *
@@ -410,16 +411,12 @@ public class DriverDWM {
         }
 
         if (myUART != null) {
-            // Deregitro la callback
-            myUART.unregisterUartDeviceCallback(myUartDeviceCallBack);
-
             //Chiusura UART
             myUART.close();
             myUART = null;
 
             // Eventuale terminazione del thread della callback e risveglio del thread principale
             if (myThread != null) {
-                myThread.quitSafely();
                 synchronized (lock) {
                     lock.notify();
                 }
