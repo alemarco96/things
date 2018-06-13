@@ -186,14 +186,21 @@ public class MainActivity extends Activity {
                                 "onClick switchMethodView: myController == null");
                         //nessuna istanza di DistanceController creata
                     }
-                    if (nextSpi) {
+                    Log.d(MainActivityTAG, "onCreate -> " +
+                            "onClick switchMethodView: nextSpi == " + (nextSpi ? "true" : false));
+                    nextSpi = !nextSpi;
+                    switchMethodView.setChecked(!nextSpi);
+                    synchronized (controllerLock) {
+                        myController = new DistanceController(nextSpi ? RPI3_UART : RPI3_SPI, UPDATE_PERIOD);
+                    }
+                    /*if (nextSpi) {
                         //Chiudo sessione precedente e avvio SPI
                         Log.d(MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView: nextSpi == true");
                         nextSpi = false; //prossimo click a switch si deve avviare UART
                         switchMethodView.setChecked(true);
                         synchronized (controllerLock) {
-                            myController = new DistanceController(RPI3_SPI);
+                            myController = new DistanceController(RPI3_SPI, UPDATE_PERIOD);
                         }
                     } else {
                         //Chiudo sessione precedente e avvio UART
@@ -202,21 +209,10 @@ public class MainActivity extends Activity {
                         nextSpi = true; //prossimo click a switch si deve avviare SPI
                         switchMethodView.setChecked(false);
                         synchronized (controllerLock) {
-                            myController = new DistanceController(RPI3_UART);
+                            myController = new DistanceController(RPI3_UART, UPDATE_PERIOD);
                         }
                     }
-                    try {
-                        //attesa per favorire crezione di DistanceController
-                        Log.v(MainActivityTAG, "onCreate -> " +
-                                "onClick switchMethodView -> nextSpi == false" +
-                                "attesa per favorire la creazione di DistanceController");
-                        Thread.sleep(BUS_DELAY);
-                    } catch (InterruptedException e) {
-                        Log.e(MainActivityTAG, "Errore: ", e);
-                    }
-                    synchronized (controllerLock) {
-                        myController.startUpdate(UPDATE_PERIOD);
-                    }
+                    */
                     startElaboration();
                     if (id != -1) {
                         //id già selezionato in precedenza
@@ -265,14 +261,6 @@ public class MainActivity extends Activity {
             synchronized (controllerLock) {
                 myController = new DistanceController(RPI3_SPI, UPDATE_PERIOD);
             }
-            try {
-                //attesa per favorire crezione di DistanceController
-                Log.v(MainActivityTAG, "onCreate -> " +
-                        "attesa per favorire la creazione di DistanceController");
-                Thread.sleep(BUS_DELAY);
-            } catch (InterruptedException e) {
-                Log.e(MainActivityTAG, "Errore: ", e);
-            }
             startElaboration();
         } catch (IOException e) {
             Log.e(MainActivityTAG, "onCreate Errore:\n", e);
@@ -280,7 +268,6 @@ public class MainActivity extends Activity {
             quindi lo notifico sullo schermo utilizzato dall'utente*/
             Toast t = Toast.makeText(getApplicationContext(), R.string.noDwm, Toast.LENGTH_LONG);
             t.show();
-
 
             boolean flag;
 
