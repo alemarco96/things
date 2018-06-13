@@ -1,6 +1,7 @@
 package group107.distancealert;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -50,7 +51,7 @@ public class MainActivity extends Activity {
     private int id = -1;
     private int maxDistance = 2000;
     final private List<RadioButton> item = new ArrayList<>();
-    private boolean nextSpi = true;
+    private boolean nextSpi = false;
     private boolean alarmMuted = false;
     private boolean alarmStatus = false;
 
@@ -158,35 +159,26 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 try {
-                    boolean flag;
-
                     synchronized (controllerLock) {
-                        flag = myController != null;
-                    }
-                    //Se istanza di DistanceController già creata allora deve essere chiusa
-                    if (flag) {
+                        boolean flag = myController == null;
+
+                        //Se istanza di DistanceController già creata allora deve essere chiusa
+                        if (flag) {
+                            //nessuna istanza di DistanceController creata
+                            Log.v(MainActivityTAG, "onCreate -> " +
+                                    "onClick switchMethodView: myController == null");
+                            return;
+                        }
                         Log.v(MainActivityTAG, "onCreate -> " +
                                 "onClick switchMethodView: myController != null");
-                        synchronized (controllerLock) {
-                            myController.stopUpdate();
-                            myController.close();
-                            myController = null;
-                        }
-
-                        try {
-                            //attesa per favorire la chiusura di DistanceController
-                            Log.v(MainActivityTAG, "onCreate -> " +
-                                    "onClick switchMethodView -> " +
-                                    "attesa per favorire la chiusura di DistanceController");
-                            Thread.sleep(BUS_DELAY);
-                        } catch (InterruptedException e) {
-                            Log.e(MainActivityTAG, "Errore: ", e);
-                        }
-                    } else {
-                        Log.v(MainActivityTAG, "onCreate -> " +
-                                "onClick switchMethodView: myController == null");
-                        //nessuna istanza di DistanceController creata
+                        myController.stopUpdate();
+                        myController.close();
+                        myController = null;
                     }
+
+                    //attesa per favorire la chiusura di DistanceController
+                    SleepHelper.sleepMillis(BUS_DELAY);
+
                     Log.d(MainActivityTAG, "onCreate -> " +
                             "onClick switchMethodView: nextSpi == " + (nextSpi ? "true" : false));
                     nextSpi = !nextSpi;
@@ -194,26 +186,6 @@ public class MainActivity extends Activity {
                     synchronized (controllerLock) {
                         myController = new DistanceController(nextSpi ? RPI3_UART : RPI3_SPI, UPDATE_PERIOD);
                     }
-                    /*if (nextSpi) {
-                        //Chiudo sessione precedente e avvio SPI
-                        Log.d(MainActivityTAG, "onCreate -> " +
-                                "onClick switchMethodView: nextSpi == true");
-                        nextSpi = false; //prossimo click a switch si deve avviare UART
-                        switchMethodView.setChecked(true);
-                        synchronized (controllerLock) {
-                            myController = new DistanceController(RPI3_SPI, UPDATE_PERIOD);
-                        }
-                    } else {
-                        //Chiudo sessione precedente e avvio UART
-                        Log.d(MainActivityTAG, "onCreate -> " +
-                                "onClick switchMethodView: nextSpi == false");
-                        nextSpi = true; //prossimo click a switch si deve avviare SPI
-                        switchMethodView.setChecked(false);
-                        synchronized (controllerLock) {
-                            myController = new DistanceController(RPI3_UART, UPDATE_PERIOD);
-                        }
-                    }
-                    */
                     startElaboration();
                     if (id != -1) {
                         //id già selezionato in precedenza
@@ -228,29 +200,18 @@ public class MainActivity extends Activity {
                             Toast.LENGTH_LONG);
                     t.show();
 
-                    boolean flag;
-
                     synchronized (controllerLock) {
-                        flag = myController != null;
-                    }
+                        boolean flag = myController == null;
 
-                    if (flag) {
-                        synchronized (controllerLock) {
-                            myController.close();
-                            myController = null;
-                        }
-                        try {
-                            //attesa per favorire la chiusura di DistanceController
-                            Log.v(MainActivityTAG, "onCreate -> " +
-                                    "onClick switchMethodView -> " +
-                                    "attesa per favorire la chiusura di DistanceController");
-                            Thread.sleep(BUS_DELAY);
-                        } catch (InterruptedException f) {
-                            Log.e(MainActivityTAG, "Errore: ", f);
-                        }
+                        if (flag)
+                            return;
+
+                        myController.close();
+                        myController = null;
                     }
+                    //attesa per favorire la chiusura di DistanceController
+                    SleepHelper.sleepMillis(BUS_DELAY);
                 }
-
             }
         });
 
@@ -281,15 +242,8 @@ public class MainActivity extends Activity {
                     myController.close();
                     myController = null;
                 }
-                try {
-                    //attesa per favorire la chiusura di DistanceController
-                    Log.v(MainActivityTAG, "onCreate -> " +
-                            R.string.noDwm +
-                            "attesa per favorire la chiusura di DistanceController");
-                    Thread.sleep(BUS_DELAY);
-                } catch (InterruptedException f) {
-                    Log.e(MainActivityTAG, "Errore: ", f);
-                }
+                //attesa per favorire la chiusura di DistanceController
+                SleepHelper.sleepMillis(BUS_DELAY);
             }
         }
     }
@@ -390,9 +344,9 @@ public class MainActivity extends Activity {
                             Log.i(MainActivityTAG, "regenerateRadioGroup:"
                                     + " onClick " + idText);
                             if(id != -1) {
+                                //esiste già un tagListener, quindi è da rimuovere
                                 Log.v(MainActivityTAG, "regenerateRadioGroup -> " +
                                         "(id == " + id + ") !=-1");
-                                //esiste già un tagListener, quindi è da rimuovere
                                 synchronized (controllerLock) {
                                     myController.removeTagListener(idTagListener);
                                 }
@@ -581,14 +535,6 @@ public class MainActivity extends Activity {
             synchronized (controllerLock) {
                 myController.close();
                 myController = null;
-            }
-            try {
-                //attesa per favorire la chiusura di DistanceController
-                Log.v(MainActivityTAG, "onPause -> " +
-                        "attesa per favorire la chiusura di DistanceController");
-                Thread.sleep(BUS_DELAY);
-            } catch (InterruptedException e) {
-                Log.e(MainActivityTAG, "Errore: ", e);
             }
         }
     }

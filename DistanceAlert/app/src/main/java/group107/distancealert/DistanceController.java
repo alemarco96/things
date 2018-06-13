@@ -659,6 +659,7 @@ public class DistanceController
     {
         synchronized (workingLock)
         {
+            //stop update
             if (updateDataTimer != null)
             {
                 updateDataTimer.cancel();
