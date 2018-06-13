@@ -99,7 +99,7 @@ public class MainActivity extends Activity {
         //dichiarazione e inizializzazione Elementi Grafici utilizzati solo in onCreate
         Button plusMaxDistanceButton = findViewById(R.id.plusMaxDistance);
         Button minusMaxDistanceButton = findViewById(R.id.minusMaxDistance);
-        
+
         //Collegamento RadioGroup al LinearLayout ospitante
         idLayout.addView(listIDsGroup);
 
@@ -296,8 +296,8 @@ public class MainActivity extends Activity {
                 try {
                     //attesa per favorire la chiusura di DistanceController
                     Log.v(MainActivityTAG, "onCreate -> " +
-                                    R.string.noDwm +
-                                    "attesa per favorire la chiusura di DistanceController");
+                            R.string.noDwm +
+                            "attesa per favorire la chiusura di DistanceController");
                     Thread.sleep(BUS_DELAY);
                 } catch (InterruptedException f) {
                     Log.e(MainActivityTAG, "Errore: ", f);
