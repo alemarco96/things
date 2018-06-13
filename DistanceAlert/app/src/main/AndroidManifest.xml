@@ -12,8 +12,6 @@
             android:name=".MainActivity"
             android:label="@string/app_name">
 
-            <!--ATTENZIONE questa parte è commentata perché prima c'è l'activity di scelta dell'ID-->
-
             <!-- Activity di default da lanciare come entry point dell'applicazione -->
 
             <intent-filter>
@@ -30,7 +28,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
-                <!--<category android:name="android.intent.category.HOME" />-->
+                <category android:name="android.intent.category.HOME" />
 
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
