@@ -19,7 +19,7 @@ public final class SleepHelper
             {
                 TimeUnit.MILLISECONDS.sleep(timeout - (System.currentTimeMillis() - startTime));
             } catch (InterruptedException e) {
-                Log.w(TAG, "Sleep interrupted", e);
+                Log.e(TAG, "Sleep interrupted", e);
             }
         }while((System.currentTimeMillis() - startTime) < timeout);
     }
@@ -35,7 +35,7 @@ public final class SleepHelper
             {
                 TimeUnit.MICROSECONDS.sleep(timeout - ((System.currentTimeMillis() / 1000L) - startTime));
             } catch (InterruptedException e) {
-                Log.w(TAG, "Sleep interrupted", e);
+                Log.e(TAG, "Sleep interrupted", e);
             }
         }while(((System.nanoTime() / 1000L) - startTime) < timeout);
     }
@@ -51,7 +51,7 @@ public final class SleepHelper
             {
                 TimeUnit.NANOSECONDS.sleep(timeout - (System.currentTimeMillis() - startTime));
             } catch (InterruptedException e) {
-                Log.w(TAG, "Sleep interrupted", e);
+                Log.e(TAG, "Sleep interrupted", e);
             }
         }while((System.nanoTime() - startTime) < timeout);
     }
