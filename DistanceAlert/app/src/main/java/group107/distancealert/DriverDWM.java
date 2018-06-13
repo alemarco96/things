@@ -284,9 +284,12 @@ public class DriverDWM {
         // Reset della comunicazione e invio della richiesta
         myUART.flush(UartDevice.FLUSH_IN_OUT);
         myUART.write(transmit, transmit.length);
+
+        //Thread per la callback
         HandlerThread myThread = new HandlerThread("UartCallBackThread");
         myThread.start();
         Handler myHandler = new Handler(myThread.getLooper());
+
         //callback inviata quando arrivano i dati
         myUART.registerUartDeviceCallback(myHandler, new UartDeviceCallback() {
             @Override
@@ -296,15 +299,25 @@ public class DriverDWM {
             }
         });
 
+        //restuire i dati ricevuti
         return ricezioneUart(myThread);
     }
 
+    /**
+     * notifica che i dati sono disponibili
+     */
     private synchronized void fineAttesaUart() {
         Log.i(TAG,"fineAttesaUart()");
         //notifica che l'attesa è finita
         notify();
     }
 
+    /**
+     * Riceve i dati via UART
+     * @param myThread Handler della callback da chiudere
+     * @return array int[] dati
+     * @throws IOException errori di comunicazione via UART
+     */
     private synchronized int[] ricezioneUart(HandlerThread myThread) throws IOException {
         Log.i(TAG,"ricezioneUart()");
         long timer = System.currentTimeMillis();
@@ -314,6 +327,7 @@ public class DriverDWM {
         } catch (InterruptedException e) {
             Log.e(TAG, "Errore: ", e);
         }
+        //Chiude la callback
         myThread.quit();
 
         //è stata notificata la ricezione dei dati quindi li processo
