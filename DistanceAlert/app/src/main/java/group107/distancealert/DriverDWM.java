@@ -126,9 +126,13 @@ public class DriverDWM {
     public void checkDWM() throws IOException {
         // Reset: caso SPI
         if (mySPI != null) {
-            // Invio 3 byte 0xff al modulo DWM per resettare lo stato della comunicazione SPI
+            /*
+            Per resettare lo stato della comunicazione SPI, si inviano 3 byte 0xff in 3 trasferimenti
+            separati da delle brevi pause per dare tempo al modulo di fare quello che deve fare
+            */
             transferViaSPI(new byte[1], true);
             try {
+                // Breve pausa tra due trasferimenti consecutivi
                 TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
             } catch (InterruptedException e) {
                 Log.w(TAG, "Sleep interrupted", e);
@@ -198,34 +202,37 @@ public class DriverDWM {
 
         // Caso SPI
         if (mySPI != null) {
-            // Trasferimento pacchetto a DWM contentente la richiesta
-            transferViaSPI(buffer, false);
+            return requestViaSPI(buffer);
+        }
 
-            /*
-            Attesa della costruzione della risposta da parte del modulo.
-            Finché non è pronta lui risponde sempre 0x00.
-            Quando è pronta, invece, comunica la lunghezza totale della risposta da leggere.
-            Se l'attesa va oltre il tempo massimo significa che ci sono dei problemi.
-             */
-            int length;
-            long timer = System.currentTimeMillis();
-            do {
-                try {
-                    // Breve pausa tra due trasferimenti consecutivi
-                    TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
-                } catch (InterruptedException e) {
-                    Log.w(TAG, "Sleep interrupted", e);
-                }
+        // Caso UART
+        else {
+            return requestViaUART(buffer);
+        }
+    }
 
-                // Ricezzione del byte contente la lunghezza della risposta
-                length = transferViaSPI(new byte[1], true)[0];
-            } while ((length == 0x00) && ((System.currentTimeMillis() - timer) < MAX_SPI_WAIT));
+    /**
+     * Gestisce le varie fasei dello scambio di dati via SPI, ovvero l'invio della richiesta,
+     * l'attesa della preparazione della risposta dal modulo DWM e la ricezione della stessa.
+     * Se non riceve alcuna risposta entro MAX_SPI_WAIT lancia la relativa eccezione.
+     *
+     * @param transmit array contenete i byte da inviare via UART
+     * @return Array int[] contentente i valori ricevuti convertiti in unsigned int
+     * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
+     */
+    private int[] requestViaSPI(byte[] transmit) throws IOException {
+        // Trasferimento pacchetto a DWM contentente la richiesta
+        transferViaSPI(transmit, false);
 
-            // Nel caso ci siano stati problemi di comunicazione
-            if (length == 0x00 || length == 0xff) {
-                throw new IOException("Communication error via SPI");
-            }
-
+        /*
+        Attesa della costruzione della risposta da parte del modulo.
+        Finché non è pronta lui risponde sempre 0x00.
+        Quando è pronta, invece, comunica la lunghezza totale della risposta da leggere.
+        Se l'attesa va oltre il tempo massimo significa che ci sono dei problemi.
+         */
+        int length;
+        long timer = System.currentTimeMillis();
+        do {
             try {
                 // Breve pausa tra due trasferimenti consecutivi
                 TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
@@ -233,14 +240,24 @@ public class DriverDWM {
                 Log.w(TAG, "Sleep interrupted", e);
             }
 
-            // Ricezione della risposta
-            return transferViaSPI(new byte[length], true);
+            // Ricezzione del byte contente la lunghezza della risposta
+            length = transferViaSPI(new byte[1], true)[0];
+        } while ((length == 0x00) && ((System.currentTimeMillis() - timer) < MAX_SPI_WAIT));
+
+        // Nel caso ci siano stati problemi di comunicazione
+        if (length == 0x00 || length == 0xff) {
+            throw new IOException("Communication error via SPI");
         }
 
-        // Caso UART
-        else {
-            return transferViaUART(buffer);
+        try {
+            // Breve pausa tra due trasferimenti consecutivi
+            TimeUnit.MICROSECONDS.sleep(SPI_SLEEP_TIME);
+        } catch (InterruptedException e) {
+            Log.w(TAG, "Sleep interrupted", e);
         }
+
+        // Ricezione della risposta
+        return transferViaSPI(new byte[length], true);
     }
 
     /**
@@ -279,13 +296,13 @@ public class DriverDWM {
     /**
      * Gestisce le varie fasei dello scambio di dati via UART, ovvero l'invio della richiesta e
      * l'attesa della risposta dal modulo DWM.
-     * Se non riceve alcuna risposta entro 50ms lancia la relativa eccezione.
+     * Se non riceve alcuna risposta entro MAX_UART_WAIT lancia la relativa eccezione.
      *
      * @param transmit array contenete i byte da inviare via UART
      * @return Array int[] contentente i valori ricevuti convertiti in unsigned int
      * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      */
-    private int[] transferViaUART(byte[] transmit) throws IOException {
+    private int[] requestViaUART(byte[] transmit) throws IOException {
         // Reset della comunicazione e invio della richiesta
         myUART.flush(UartDevice.FLUSH_IN_OUT);
         myUART.write(transmit, transmit.length);
