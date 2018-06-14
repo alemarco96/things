@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="group107.distancealert">
 
     <!-- Permesso necessario per usare le periferiche hardware come SPI, UART e GPIO -->
     <uses-permission android:name="com.google.android.things.permission.USE_PERIPHERAL_IO" />
 
-    <application>
+    <application
+        tools:ignore="GoogleAppIndexingWarning">
         <uses-library android:name="com.google.android.things" />
 
         <activity

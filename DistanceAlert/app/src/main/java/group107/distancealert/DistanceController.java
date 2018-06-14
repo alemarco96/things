@@ -576,12 +576,6 @@ public class DistanceController
     public DistanceController(String busName, long period) throws IllegalArgumentException, IOException
     {
         this(busName);
-
-        if (period < 0)
-            throw new IllegalArgumentException("Il periodo di aggiornamento deve essere positivo. Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
-        else if (period < MINIMUM_UPDATE_PERIOD)
-            throw new IllegalArgumentException("Il periodo di aggiornamento è troppo basso. Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
-
         startUpdate(period);
     }
 
