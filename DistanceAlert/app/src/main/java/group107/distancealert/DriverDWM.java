@@ -34,8 +34,8 @@ public class DriverDWM {
      * Parametri costanti usati per gestire la temporizzazione durante le comunicazioni SPI e UART
      */
     private static final long SPI_SLEEP_TIME = 100L; // microsecondi
-    private static final long MAX_SPI_WAIT = 20L;   // millisecondi
-    private static final long MAX_UART_WAIT = 50L;  // millisecondi
+    private static final long MAX_SPI_WAIT = 20L;    // millisecondi
+    private static final long MAX_UART_WAIT = 50L;   // millisecondi
 
     /**
      * Oggetto usato per la sincronizzazione tra il thread principale e il thread della callbacK
