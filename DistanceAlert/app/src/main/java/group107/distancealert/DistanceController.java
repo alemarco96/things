@@ -145,8 +145,9 @@ public class DistanceController
     //memorizza tutti i listeners associati ad uno specifico tag
     private List<Pair<Integer, TagListener>> tagListeners;
 
+    //TODO:serve davvero?
     //oggetto usato per impedire la chiusura del controller mentre è in corso la comunicazione a basso livello
-    private final Object workingLock = new Object();
+    //private final Object workingLock = new Object();
 
     //oggetto usato per gestire l'accesso in mutua esclusione ai dati
     private final Object dataLock = new Object();
@@ -188,8 +189,10 @@ public class DistanceController
                 SleepHelper.sleepMillis(updateDataTask.scheduledExecutionTime() - elapsed);
             }
 
+            /*
             synchronized (workingLock)
             {
+            */
                 try
                 {
                     List<Entry> data = updateData();
@@ -235,7 +238,7 @@ public class DistanceController
                         }
                     }
                 }
-            }
+            //}
         }
     };
 
@@ -544,8 +547,10 @@ public class DistanceController
     @SuppressWarnings("WeakerAccess")
     public DistanceController(String busName) throws IllegalArgumentException, IOException
     {
+        /*
         synchronized (workingLock)
         {
+        */
             driverDWM = new DriverDWM(busName);
             tagListeners = new ArrayList<>();
             allListeners = new ArrayList<>();
@@ -557,7 +562,7 @@ public class DistanceController
 
             //controlla lo stato della connessione del modulo
             driverDWM.checkDWM();
-        }
+        //}
     }
 
     /**
@@ -680,8 +685,10 @@ public class DistanceController
      */
     public void close()
     {
+        /*
         synchronized (workingLock)
         {
+        */
             //stop update
             if (updateDataTimer != null)
             {
@@ -706,7 +713,7 @@ public class DistanceController
                 allListeners = null;
                 tagListeners = null;
             }
-        }
+        //}
     }
 
     /**
@@ -715,8 +722,10 @@ public class DistanceController
      */
     public List<Integer> getTagIDs()
     {
+        /*
         synchronized (workingLock)
         {
+        */
             synchronized (dataLock)
             {
                 List<Integer> tags = new ArrayList<>(actualData.size());
@@ -727,6 +736,6 @@ public class DistanceController
 
                 return tags;
             }
-        }
+        //}
     }
 }
