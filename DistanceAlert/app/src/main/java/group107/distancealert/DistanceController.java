@@ -186,6 +186,7 @@ public class DistanceController
             //necessario per verificare che il periodo di aggiornamento sia rispettato
             if (elapsed < updateDataTask.scheduledExecutionTime())
             {
+                Log.w("ABCD", "Invocazione: " + (++counter) + "Sleep necessario di: " + (updateDataTask.scheduledExecutionTime() - elapsed) + " ms.");
                 SleepHelper.sleepMillis(updateDataTask.scheduledExecutionTime() - elapsed);
             }
 
