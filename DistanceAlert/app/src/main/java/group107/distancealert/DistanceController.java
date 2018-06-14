@@ -21,7 +21,7 @@ public class DistanceController
     //numero di byte usati dal modulo DWM per descrivere i dati relativi a ciascun tag
     private static final int BYTES_PER_ENTRY = 20;
     //numero di volte per cui ricevendo gli stessi dati dal modulo DWM, un tag viene dichiarato disconnesso
-    private static final int COUNTER_FOR_DISCONNECTED = 3;
+    private static final int COUNTER_FOR_DISCONNECTED = 4;
     //numero di volte per cui avvenendo un errore nella comunicazione con il modulo DWM, dichiara disconnessi tutti i tag e stoppa il polling
     private static final int COUNTER_FOR_CONNECTION_ERRORS = COUNTER_FOR_DISCONNECTED;
     //periodo minimo di aggiornamento a cui può essere settato il controller (<= 10 Hz)
