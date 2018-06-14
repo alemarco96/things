@@ -217,6 +217,8 @@ public class DistanceController
                         //ritesta la connessione per valutare se è ancora attiva
                         try
                         {
+                            SleepHelper.sleepMillis(MINIMUM_UPDATE_PERIOD);
+
                             driverDWM.checkDWM();
 
                             //canale di aggiornamento funzionante. Riprova a far funzionare il controller

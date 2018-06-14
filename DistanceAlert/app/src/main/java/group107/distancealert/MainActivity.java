@@ -164,6 +164,8 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 Log.v(MainActivityTAG,"onCreate -> switchMethodView -> onClick");
                 closeController();
+                //attesa per favorire la chiusura di DistanceController
+                SleepHelper.sleepMillis(BUS_DELAY);
                 setupCommunication(!nextSpi);
             }
         });
@@ -190,9 +192,6 @@ public class MainActivity extends Activity {
             myController.close();
             myController = null;
         }
-
-        //attesa per favorire la chiusura di DistanceController
-        SleepHelper.sleepMillis(BUS_DELAY);
     }
 
     private void setupCommunication(boolean isNextSpi)
@@ -525,8 +524,5 @@ public class MainActivity extends Activity {
             //chiusura Controller
             closeController();
         }
-
-        //attesa per favorire la chiusura di DistanceController
-        SleepHelper.sleepMillis(BUS_DELAY);
     }
 }
