@@ -1,5 +1,6 @@
 package group107.distancealert;
 
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.util.concurrent.TimeUnit;
@@ -11,48 +12,43 @@ public final class SleepHelper
     @SuppressWarnings("EmptyCatchBlock")
     public static void sleepMillis(long timeout)
     {
-        long startTime = System.currentTimeMillis();
+        long startTime = SystemClock.uptimeMillis();
 
         //se lo sleep fallisce, viene fatto busy-waiting
         do {
-            try
-            {
-                TimeUnit.MILLISECONDS.sleep(timeout - (System.currentTimeMillis() - startTime));
-            } catch (InterruptedException e) {
-                Log.e(TAG, "Sleep interrupted", e);
-            }
-        }while((System.currentTimeMillis() - startTime) < timeout);
+            SystemClock.sleep(timeout - (SystemClock.uptimeMillis() - startTime));
+        }while((SystemClock.uptimeMillis() - startTime) < timeout);
     }
 
     @SuppressWarnings("EmptyCatchBlock")
     public static void sleepMicros(long timeout)
     {
-        long startTime = System.nanoTime() / 1000L;
+        long startTime = SystemClock.elapsedRealtimeNanos() / 1000L;
 
         //se lo sleep fallisce, viene fatto busy-waiting
         do {
             try
             {
-                TimeUnit.MICROSECONDS.sleep(timeout - ((System.currentTimeMillis() / 1000L) - startTime));
+                TimeUnit.MICROSECONDS.sleep(timeout - ((SystemClock.elapsedRealtimeNanos() / 1000L) - startTime));
             } catch (InterruptedException e) {
                 Log.e(TAG, "Sleep interrupted", e);
             }
-        }while(((System.nanoTime() / 1000L) - startTime) < timeout);
+        }while(((SystemClock.elapsedRealtimeNanos() / 1000L) - startTime) < timeout);
     }
 
     @SuppressWarnings({"unused", "EmptyCatchBlock"})
     public static void sleepNanos(long timeout)
     {
-        long startTime = System.nanoTime();
+        long startTime = SystemClock.elapsedRealtimeNanos();
 
         //se lo sleep fallisce, viene fatto busy-waiting
         do {
             try
             {
-                TimeUnit.NANOSECONDS.sleep(timeout - (System.currentTimeMillis() - startTime));
+                TimeUnit.NANOSECONDS.sleep(timeout - (SystemClock.elapsedRealtimeNanos() - startTime));
             } catch (InterruptedException e) {
                 Log.e(TAG, "Sleep interrupted", e);
             }
-        }while((System.nanoTime() - startTime) < timeout);
+        }while((SystemClock.elapsedRealtimeNanos() - startTime) < timeout);
     }
 }
