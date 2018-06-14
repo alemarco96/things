@@ -33,7 +33,7 @@ public class MainActivity extends Activity {
     private static final String RPI3_SPI = "SPI0.0";
 
     //Bus iniziale: true: SPI  false: UART
-    private static final boolean STARTING_BUS = false;
+    private static final boolean STARTING_BUS = true;
 
     //Dichiarazione Elementi grafici condivisi da più metodi all'interno di MainActivity
     private LinearLayout idLayout;
