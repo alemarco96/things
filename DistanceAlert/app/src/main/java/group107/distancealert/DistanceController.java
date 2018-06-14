@@ -178,16 +178,19 @@ public class DistanceController
         {
             //TODO:togliere
             long time = System.currentTimeMillis();
+            long period = updateDataTask.scheduledExecutionTime();
 
             long elapsed = time - lastTime;
+            if (elapsed > period)
+                elapsed = period;
             lastTime = time;
             Log.v("ABCD", "Invocazione: " + (++counter) + " Tempo impiegato dalla scorsa esecuzione: " + elapsed);
 
             //necessario per verificare che il periodo di aggiornamento sia rispettato
-            if (elapsed < updateDataTask.scheduledExecutionTime())
+            if (elapsed < period)
             {
-                Log.w("ABCD", "Invocazione: " + (++counter) + "Sleep necessario di: " + (updateDataTask.scheduledExecutionTime() - elapsed) + " ms.");
-                SleepHelper.sleepMillis(updateDataTask.scheduledExecutionTime() - elapsed);
+                Log.w("ABCD", "Invocazione: " + (++counter) + "Sleep necessario di: " + (period - elapsed) + " ms.");
+                SleepHelper.sleepMillis(period - elapsed);
             }
 
             /*
