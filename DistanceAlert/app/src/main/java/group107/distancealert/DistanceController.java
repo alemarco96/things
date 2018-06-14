@@ -180,7 +180,13 @@ public class DistanceController
 
             long elapsed = time - lastTime;
             lastTime = time;
-            Log.v("ABCD", "Invocazione: " + (++counter) + " Tempo impiegato per la scorsa esecuzione: " + elapsed);
+            Log.v("ABCD", "Invocazione: " + (++counter) + " Tempo impiegato dalla scorsa esecuzione: " + elapsed);
+
+            //necessario per verificare che il periodo di aggiornamento sia rispettato
+            if (elapsed < updateDataTask.scheduledExecutionTime())
+            {
+                SleepHelper.sleepMillis(updateDataTask.scheduledExecutionTime() - elapsed);
+            }
 
             synchronized (workingLock)
             {
