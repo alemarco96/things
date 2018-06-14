@@ -163,7 +163,9 @@ public class DistanceController
     //il polling del modulo DWM per ottenere le distanze
     private Timer updateDataTimer;
 
+    //TODO:togliere
     private long lastTime;
+    private int counter = 0;
 
     /**
      * Oggetto che definisce la routine di aggiornamento periodica
@@ -173,11 +175,12 @@ public class DistanceController
         @Override
         public void run()
         {
+            //TODO:togliere
             long time = System.currentTimeMillis();
 
             long elapsed = time - lastTime;
             lastTime = time;
-            Log.v("ABCD", "Tempo impiegato per la scorsa esecuzione: " + elapsed);
+            Log.v("ABCD", "Invocazione: " + (++counter) + " Tempo impiegato per la scorsa esecuzione: " + elapsed);
 
             synchronized (workingLock)
             {
@@ -642,6 +645,7 @@ public class DistanceController
         else if (period < MINIMUM_UPDATE_PERIOD)
             throw new IllegalArgumentException("Il periodo di aggiornamento è troppo basso. Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
 
+        //TODO:togliere
         lastTime = System.currentTimeMillis();
 
         if (updateDataTimer == null)
