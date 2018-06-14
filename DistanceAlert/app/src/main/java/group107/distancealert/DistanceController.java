@@ -1,5 +1,6 @@
 package group107.distancealert;
 
+import android.os.SystemClock;
 import android.util.Log;
 import android.util.Pair;
 
@@ -8,8 +9,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Classe che rappresenta un sensore di distanza.
@@ -162,7 +163,9 @@ public class DistanceController
 
     //oggetto che, usando un thread secondario che autogestisce la sua schedulazione periodica, si occupa di effettuare
     //il polling del modulo DWM per ottenere le distanze
-    private Timer updateDataTimer;
+    private ScheduledThreadPoolExecutor updateDataTimer;
+    //periodo in millisecondi
+    private long period;
 
     //TODO:togliere
     private long lastTime;
@@ -171,27 +174,26 @@ public class DistanceController
     /**
      * Oggetto che definisce la routine di aggiornamento periodica
      */
-    private final TimerTask updateDataTask = new TimerTask()
+    private final Runnable updateDataTask = new Runnable()
     {
         @Override
         public void run()
         {
             //TODO:togliere
-            long time = System.currentTimeMillis();
-            long period = updateDataTask.scheduledExecutionTime();
+            long time = SystemClock.elapsedRealtime();
 
             long elapsed = time - lastTime;
-            if (elapsed > period)
-                elapsed = period;
             lastTime = time;
             Log.v("ABCD", "Invocazione: " + (++counter) + " Tempo impiegato dalla scorsa esecuzione: " + elapsed);
 
+            /*
             //necessario per verificare che il periodo di aggiornamento sia rispettato
             if (elapsed < period)
             {
                 Log.w("ABCD", "Invocazione: " + (++counter) + "Sleep necessario di: " + (period - elapsed) + " ms.");
                 SleepHelper.sleepMillis(period - elapsed);
             }
+            */
 
             /*
             synchronized (workingLock)
@@ -655,12 +657,13 @@ public class DistanceController
             throw new IllegalArgumentException("Il periodo di aggiornamento è troppo basso. Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
 
         //TODO:togliere
-        lastTime = System.currentTimeMillis();
+        lastTime = SystemClock.elapsedRealtime();
+        this.period = period;
 
         if (updateDataTimer == null)
         {
-            updateDataTimer = new Timer(true);
-            updateDataTimer.scheduleAtFixedRate(updateDataTask, 0L, period);
+            updateDataTimer = new ScheduledThreadPoolExecutor(20);
+            updateDataTimer.scheduleAtFixedRate(updateDataTask, 0L, period, TimeUnit.MILLISECONDS);
         } else
             throw new IllegalStateException("Timer già avviato");
     }
@@ -673,7 +676,7 @@ public class DistanceController
     {
         if (updateDataTimer != null)
         {
-            updateDataTimer.cancel();
+            updateDataTimer.shutdown();
             updateDataTimer = null;
         }
     }
@@ -690,7 +693,7 @@ public class DistanceController
             //stop update
             if (updateDataTimer != null)
             {
-                updateDataTimer.cancel();
+                updateDataTimer.shutdown();
                 updateDataTimer = null;
             }
 
