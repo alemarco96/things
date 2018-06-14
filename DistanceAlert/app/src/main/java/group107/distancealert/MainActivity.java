@@ -25,16 +25,14 @@ public class MainActivity extends Activity {
     //Stringhe utili per TAGs della MainActivity
     private final String MainActivityTAG = "MainActivity";
 
-    /**
-     * Stringhe costanti usate per identificare le periferiche
-     */
+    //Stringhe costanti usate per identificare le periferiche
     private static final String PWM_BUZZER = "PWM1";
     private static final String GPIO_LED = "BCM16";
     private static final String GPIO_PULSANTE = "BCM26";
     private static final String RPI3_UART = "MINIUART";
     private static final String RPI3_SPI = "SPI0.0";
 
-    //true: SPI  false: UART
+    //Bus iniziale: true: SPI  false: UART
     private static final boolean STARTING_BUS = false;
 
     //Dichiarazione Elementi grafici condivisi da più metodi all'interno di MainActivity
@@ -68,18 +66,19 @@ public class MainActivity extends Activity {
     //ritardo, in millisecondi, usato nella gestione della comunicazione
     private static final long BUS_DELAY = 100L;
 
+    //Callback del pulsante fisico
     final private GpioCallback pulsanteCallback = new GpioCallback() {
         @Override
         public boolean onGpioEdge(Gpio gpio) {
             try {
-                Log.d(MainActivityTAG, "distanceAlarm -> " +
-                        "GpioCallback");
+                //tasto fisico premuto: spengo allarme
+                Log.d(MainActivityTAG, "pulsanteCallback -> onGpioEdge: spengo allarme");
                 myAlarm.stop();
                 pulsante.unregisterGpioCallback(pulsanteCallback);
                 alarmMuted = true;
             } catch (IOException e) {
-                Log.e(MainActivityTAG, "distanceAlarm" +
-                        " -> Errore Pulsante:", e);
+                Log.e(MainActivityTAG, "pulsanteCallback -> onGpioEdge -> " +
+                        "Errore Pulsante:", e);
             }
             return false;
         }
@@ -99,30 +98,35 @@ public class MainActivity extends Activity {
         maxDistanceView = findViewById(R.id.maxDistance);
         switchMethodView = findViewById(R.id.switchMethod);
 
-        //dichiarazione e inizializzazione Elementi Grafici utilizzati solo in onCreate
+        //dichiarazione e inizializzazione Elementi Grafici utilizzati localmente
         Button plusMaxDistanceButton = findViewById(R.id.plusMaxDistance);
         Button minusMaxDistanceButton = findViewById(R.id.minusMaxDistance);
 
         //Collegamento RadioGroup al LinearLayout ospitante
         idLayout.addView(listIDsGroup);
 
+        //Visualizza distanza di allerta di default
         setDistanceText(maxDistance, maxDistanceView);
+
         //Bottone che aumenta la distanza limite
         plusMaxDistanceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.v(MainActivityTAG, "plusMaxDistanceButton -> onClick");
+                Log.v(MainActivityTAG, "plusMaxDistanceButton -> onClick: " +
+                        "aumento distanza di allerta");
                 if (maxDistance < 5000) {
                     maxDistance += 200;
                     setDistanceText(maxDistance, maxDistanceView);
                 }
             }
         });
+
         //Bottone che diminuisce la distanza limite
         minusMaxDistanceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.v(MainActivityTAG, "minusMaxDistanceButton -> onClick");
+                Log.v(MainActivityTAG, "minusMaxDistanceButton -> onClick: " +
+                        "diminuisco distanza di allerta");
                 if (maxDistance > 200) {
                     maxDistance -= 200;
                     setDistanceText(maxDistance, maxDistanceView);
@@ -130,7 +134,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        //Inizializzazione pulsante
+        //Inizializzazione pulsante fisico
         PeripheralManager manager = PeripheralManager.getInstance();
         try {
             pulsante = manager.openGpio(GPIO_PULSANTE);
@@ -144,7 +148,6 @@ public class MainActivity extends Activity {
                     Toast.LENGTH_LONG);
             t.show();
         }
-
         // SOLO SE IL PULSANTE FUNZIONA, creo istanza dell'allarme
         if (pulsante != null) {
             try {
@@ -159,13 +162,13 @@ public class MainActivity extends Activity {
         switchMethodView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.v(MainActivityTAG,"onCreate -> switchMethodView -> onClick");
                 closeController();
                 setupCommunication(!nextSpi);
             }
         });
 
         //inizializzazione comunicazione
-        closeController();
         setupCommunication(nextSpi);
     }
 
@@ -177,10 +180,12 @@ public class MainActivity extends Activity {
             //Se istanza di DistanceController già creata allora deve essere chiusa
             if (flag) {
                 //nessuna istanza di DistanceController creata
-                Log.v(MainActivityTAG, "closeController: myController == null");
+                Log.v(MainActivityTAG, "closeController: myController == null: " +
+                        "niente da chiudere");
                 return;
             }
-            Log.v(MainActivityTAG, "closeController: chiusura del controller.");
+            Log.v(MainActivityTAG, "closeController: myController =! null: " +
+                    " chiusura del controller.");
             myController.stopUpdate();
             myController.close();
             myController = null;
@@ -192,38 +197,30 @@ public class MainActivity extends Activity {
 
     private void setupCommunication(boolean isNextSpi)
     {
+        //scelta se inizializzare o SPI (isNextSpi == true) o UART (isNextSpi == false)
         nextSpi = isNextSpi;
         switchMethodView.setChecked(nextSpi);
         Log.d(MainActivityTAG,"setupCommunication: now " + (nextSpi ? "SPI" : "UART"));
 
         try {
             synchronized (controllerLock) {
-                myController = new DistanceController(nextSpi ? RPI3_SPI : RPI3_UART, UPDATE_PERIOD);
+                myController = new DistanceController(nextSpi ? RPI3_SPI : RPI3_UART,UPDATE_PERIOD);
             }
+            //inizio elaborazione dati ricevuti
             startElaboration();
             if (id != -1) {
                 //id già selezionato in precedenza
                 connectToSpecificListener(id);
             }
         } catch (IOException e) {
-            Log.e(MainActivityTAG, "setupCommunication -> Errore nel setup della comunicazione:\n", e);
+            Log.e(MainActivityTAG, "setupCommunication -> " +
+                    "Errore nel setup della comunicazione:\n", e);
             /*Generata un'eccezione al momento della creazione dell'instanza DistanceController
             quindi lo notifico sullo schermo utilizzato dall'utente*/
             Toast t = Toast.makeText(getApplicationContext(), R.string.noDwm, Toast.LENGTH_LONG);
             t.show();
-
-            synchronized (controllerLock) {
-                boolean flag = myController == null;
-
-                if (flag)
-                    return;
-
-                myController.close();
-                myController = null;
-            }
-
-            //attesa per favorire la chiusura di DistanceController
-            SleepHelper.sleepMillis(BUS_DELAY);
+            //chiusura Controller
+            closeController();
         }
     }
 
@@ -241,7 +238,7 @@ public class MainActivity extends Activity {
                 public void onTagHasConnected(final List<DistanceController.Entry> tags) {
                     if(tags == null || tags.size() <= 0)
                         return;
-
+                    //ulteriore/i tag connesso/i: rigenerare RadioGroup
                     Log.i(MainActivityTAG, "startElaboration -> " +
                             "addAllTagListener -> onTagHasConnected: item.size() = " + item.size()
                             + ", tags.size() = " + tags.size());
@@ -252,7 +249,7 @@ public class MainActivity extends Activity {
                 public void onTagHasDisconnected(final List<DistanceController.Entry> tags) {
                     if(tags == null || tags.size() <= 0)
                         return;
-
+                    //ulteriore/i tag disconnesso/i: rigenerare RadioGroup
                     Log.i(MainActivityTAG, "startElaboration -> addAllTagListener" +
                             " -> onTagHasDisconnected: item.size() = " + item.size()
                             + ", tags.size() = " + tags.size());
@@ -263,7 +260,7 @@ public class MainActivity extends Activity {
                 public void onTagDataAvailable(final List<DistanceController.Entry> tags) {
                     if(tags == null || tags.size() <= 0)
                         return;
-
+                    //dati dal/dai tag ricevuti
                     Log.i(MainActivityTAG, "startElaboration -> addAllTagListener" +
                             " -> onTagDataAvailable: item.size() = " + item.size()
                             + ", tags.size() = " + tags.size());
@@ -324,8 +321,8 @@ public class MainActivity extends Activity {
                                     + " onClick " + idText);
                             if(id != -1) {
                                 //esiste già un tagListener, quindi è da rimuovere
-                                Log.v(MainActivityTAG, "regenerateRadioGroup -> " +
-                                        "(id == " + id + ") !=-1");
+                                Log.v(MainActivityTAG, "regenerateRadioGroup -> onClick " +
+                                        "(id == " + id + ") !=-1: rimuovo lo scorso tagListener");
                                 synchronized (controllerLock) {
                                     myController.removeTagListener(idTagListener);
                                 }
@@ -365,13 +362,15 @@ public class MainActivity extends Activity {
         //visualizzazione a schermo dell'ID al quale si è connessi
         String idText = Integer.toHexString(id);
         connectedToId.setText(idText);
-        //collegamento a listeners di un solo tag id
+
+        //listener di un solo tag id
         idTagListener = new TagListener() {
             @Override
             public void onTagHasConnected(final int tagDistance) {
                 Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                         "addTagListener -> onTagHasConnected: Connesso a " +
                         Integer.toHexString(id));
+                //mostro distanza rilevata
                 setDistanceText(tagDistance, distanceView);
             }
 
@@ -379,7 +378,8 @@ public class MainActivity extends Activity {
             public void onTagHasDisconnected(final int tagLastKnownDistance) {
                 Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                         "addTagListener -> onTagHasDisconnected: disconnesso id = " +
-                        Integer.toHexString(id));
+                        Integer.toHexString(id) + " --> suono allarme");
+                //tag disconnesso quindi suono allarme
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -397,6 +397,8 @@ public class MainActivity extends Activity {
                 Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                         "addTagListener -> onTagDataAvailable: id = " + Integer.toHexString(id) +
                         ", tagDistance = " + tagDistance);
+
+                //controllo se è il caso di accendere l'allarme, se si la accendo
                 if ((tagDistance > maxDistance) && (!alarmMuted) && (!alarmStatus)) {
                     Log.i(MainActivityTAG, "connectToSpecificListener -> " +
                             "addTagListener -> onTagDataAvailable: " +
@@ -406,6 +408,11 @@ public class MainActivity extends Activity {
                     alarmStatus = true;
                     distanceAlarm();
                 }
+
+                /*
+                controllo se tag rientra entro la distanza impostata, se si e allarme è accesa
+                allora la spengo
+                 */
                 if ((tagDistance <= maxDistance) && (alarmStatus)) {
                     try {
                         Log.i(MainActivityTAG, "connectToSpecificListener -> " +
@@ -421,9 +428,13 @@ public class MainActivity extends Activity {
                         Log.e(MainActivityTAG, "Errore nella chiusura dell'allarme", e);
                     }
                 }
+
+                //mostro distanza rilevata
                 setDistanceText(tagDistance, distanceView);
             }
         };
+
+        //aggiungo il listener precedentemente di un solo tag id
         myController.addTagListener(id, idTagListener);
     }
 
@@ -454,7 +465,7 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * Lancia l'allarme spegnibile dal bottone fisico
+     * Lancia l'allarme spegnibile dal bottone fisico o da condizioni di posizione del tag
      */
     private void distanceAlarm() {
         runOnUiThread(new Runnable() {
@@ -511,9 +522,8 @@ public class MainActivity extends Activity {
             if (flag)
                 return;
             Log.d(MainActivityTAG, "onPause -> chiusura controller");
-            //chiusura controller
-            myController.close();
-            myController = null;
+            //chiusura Controller
+            closeController();
         }
 
         //attesa per favorire la chiusura di DistanceController
