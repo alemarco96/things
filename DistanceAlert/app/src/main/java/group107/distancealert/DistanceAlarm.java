@@ -50,6 +50,7 @@ public class DistanceAlarm {
 
     // Variabile che funge da indice dell'array tone
     private int toneIndex;
+
     // Oggetto ScheduledThreadPoolExecutor usato per gestire la programmazione temporizzata dell'allarme
     private ScheduledThreadPoolExecutor timer;
 
