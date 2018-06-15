@@ -31,11 +31,11 @@ public class DriverDWM {
     private UartDevice myUART;
 
     /**
-     * Parametri costanti usati per gestire la temporizzazione durante le comunicazioni SPI e UART
+     * Parametri costanti usati per gestire la temporizzazione durante le comunicazioni SPI e UART,
+     * indicano il limite massimo di attesa di una risposta espresso in millisecondi
      */
-    private static final long SPI_SLEEP_TIME = 100L; // microsecondi
-    private static final long MAX_SPI_WAIT = 10L;    // millisecondi
-    private static final long MAX_UART_WAIT = 30L;   // millisecondi
+    private static final long MAX_SPI_WAIT = 10L;
+    private static final long MAX_UART_WAIT = 30L;
 
     /**
      * Oggetto usato per la sincronizzazione tra il thread principale e il thread della callback
@@ -124,13 +124,11 @@ public class DriverDWM {
         // Reset: caso SPI
         if (mySPI != null) {
             /*
-            Per resettare lo stato della comunicazione SPI, si inviano 3 byte 0xff in 3 trasferimenti
-            separati da delle brevi pause per dare tempo al modulo di fare quello che deve fare
+            Per resettare lo stato della comunicazione SPI con in modulo DWM,
+            si inviano 3 byte 0xff in 3 trasferimenti separati
             */
             transferViaSPI(new byte[1], true);
-            SleepHelper.sleepMicros(SPI_SLEEP_TIME);
             transferViaSPI(new byte[1], true);
-            SleepHelper.sleepMicros(SPI_SLEEP_TIME);
             int response = transferViaSPI(new byte[1], true)[0];
 
             // Se l'ultimo byte ricevuto è diverso da 0xff significa che c'è un problema
@@ -221,9 +219,6 @@ public class DriverDWM {
         int length;
         long timer = System.currentTimeMillis();
         do {
-            // Breve pausa tra due trasferimenti consecutivi
-            SleepHelper.sleepMicros(SPI_SLEEP_TIME);
-
             // Ricezione del byte contente la lunghezza della risposta
             length = transferViaSPI(new byte[1], true)[0];
         } while ((length == 0x00) && ((System.currentTimeMillis() - timer) < MAX_SPI_WAIT));
@@ -232,9 +227,6 @@ public class DriverDWM {
         if (length == 0x00 || length == 0xff) {
             throw new IOException("Communication error via SPI");
         }
-
-        // Breve pausa tra due trasferimenti consecutivi
-        SleepHelper.sleepMicros(SPI_SLEEP_TIME);
 
         // Ricezione della risposta
         return transferViaSPI(new byte[length], true);
