@@ -569,7 +569,13 @@ public class DistanceController
             connectionErrors = 0;
 
             //controlla lo stato della connessione del modulo
-            driverDWM.checkDWM();
+            try {
+                driverDWM.checkDWM();
+            } catch (IOException e) {
+                //connessione non funzionante. Rilascia risorse
+                driverDWM.close();
+                throw e;
+            }
         //}
     }
 
@@ -596,6 +602,9 @@ public class DistanceController
     {
         synchronized (listenersLock)
         {
+            if (tagListeners == null)
+                return;
+
             tagListeners.add(new Pair<>(tagID, listener));
         }
     }
@@ -609,6 +618,9 @@ public class DistanceController
     {
         synchronized (listenersLock)
         {
+            if (tagListeners == null)
+                return;
+
             for (int i = 0; i < tagListeners.size(); i++)
             {
                 Pair<Integer, TagListener> pair = tagListeners.get(i);
@@ -629,6 +641,9 @@ public class DistanceController
     {
         synchronized (listenersLock)
         {
+            if (allListeners == null)
+                return;
+
             allListeners.add(listener);
         }
     }
@@ -642,6 +657,9 @@ public class DistanceController
     {
         synchronized (listenersLock)
         {
+            if (allListeners == null)
+                return;
+
             allListeners.remove(listener);
         }
     }
