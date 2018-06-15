@@ -715,6 +715,11 @@ public class DistanceController
             if (updateDataTimer != null)
             {
                 updateDataTimer.shutdown();
+                try {
+                    updateDataTimer.awaitTermination(365, TimeUnit.DAYS);
+                } catch (InterruptedException e) {
+                    Log.e(TAG, "timer.awaitTermination() interrotto.");
+                }
                 updateDataTimer = null;
             }
 
