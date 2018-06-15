@@ -18,6 +18,7 @@ import com.google.android.things.pio.GpioCallback;
 import com.google.android.things.pio.PeripheralManager;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -448,16 +449,8 @@ public class MainActivity extends Activity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                String decimal = Integer.toString(distance % 1000);
-                if (decimal.length() < 2) {
-                    //un solo numero dopo la virgola, aggiungo uno zero a destra
-                    decimal += "0";
-                } else {
-                    //o due o più numeri dopo la virgola, ne considero solo due
-                    decimal = decimal.substring(0, 2);
-                }
-                String newText = (distance / 1000) +
-                        "." + decimal + " m";
+                String newText = (new DecimalFormat("#0.00")
+                        .format((double)distance*1e-3)) + " m";
                 distanceView.setText(newText);
             }
         });
