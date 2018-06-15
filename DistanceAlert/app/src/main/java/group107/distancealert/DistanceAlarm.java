@@ -7,8 +7,8 @@ import com.google.android.things.pio.PeripheralManager;
 import com.google.android.things.pio.Pwm;
 
 import java.io.IOException;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Questa classe ha lo scopo di gestire completamente l'allarme, ovvero il led lampeggiante e il
@@ -19,11 +19,15 @@ import java.util.TimerTask;
 public class DistanceAlarm {
     private final static String TAG = "DistanceAlarm";
 
+    private static final long ALARM_BUZZER_PERIOD = 250L;
+
     /**
      * Oggetti riferiti alle periferiche GPIO e PWM
      */
     private Gpio led;
     private Pwm buzzer;
+
+    private final Object lock = new Object();
 
     /**
      * Sequenza di frequenze del segnale PWM utilizzate per realizzare il motivetto musicale
@@ -39,8 +43,8 @@ public class DistanceAlarm {
 
     // Variabile che funge da indice dell'array tone
     private int toneIndex;
-    // Oggetto Timer usato per gestire la programmazione temporizzata dell'allarme
-    private Timer timer;
+    // Oggetto ScheduledThreadPoolExecutor usato per gestire la programmazione temporizzata dell'allarme
+    private ScheduledThreadPoolExecutor timer;
 
     /**
      * Costruttore: ottiene accesso alle periferiche e le inizializza
@@ -85,27 +89,29 @@ public class DistanceAlarm {
         // Reset inizio motivetto musicale
         toneIndex = 0;
 
-        // Avvio programmazione ogni 250ms
-        timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
+        // Avvio programmazione ogni 400ms
+        timer = new ScheduledThreadPoolExecutor(1);
+        timer.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
+        timer.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 toneIndex = (toneIndex + 1) % tone.length;
                 try {
-                    // Cambio tono emesso dal buzzer
-                    buzzer.setPwmFrequencyHz(tone[toneIndex]);
-
-                    // Cambio stato al GPIO del LED
-                    // Se, nel frattempo, è stato spendo l'allarme, lo spengne
-                    led.setValue(!led.getValue() && timer != null);
+                    synchronized (lock) {
+                        //Cambio tono emesso dal buzzer e cambio stato al GPIO del LED
+                        buzzer.setPwmFrequencyHz(tone[toneIndex]);
+                        led.setValue((!led.getValue()) && (timer != null));
+                    }
                 } catch (IOException e) {
                     Log.w(TAG, "Exception updating alarm state", e);
                 }
             }
-        }, 0, 250);
+        }, 0L, ALARM_BUZZER_PERIOD, TimeUnit.MILLISECONDS);
 
-        // Abilito la periferica PWM
-        buzzer.setEnabled(true);
+        synchronized (lock) {
+            // Abilito la periferica PWM
+            buzzer.setEnabled(true);
+        }
     }
 
     /**
@@ -119,12 +125,14 @@ public class DistanceAlarm {
         }
 
         // Fermo timer
-        timer.cancel();
+        timer.shutdown();
         timer = null;
 
-        // Spengo LED e buzzer
-        led.setValue(false);
-        buzzer.setEnabled(false);
+        synchronized (lock) {
+            // Spengo LED e buzzer
+            led.setValue(false);
+            buzzer.setEnabled(false);
+        }
     }
 
     /**
@@ -138,14 +146,16 @@ public class DistanceAlarm {
             stop();
         }
 
-        if (led != null) {
-            led.close();
-            led = null;
-        }
+        synchronized (lock) {
+            if (led != null) {
+                led.close();
+                led = null;
+            }
 
-        if (buzzer != null) {
-            buzzer.close();
-            buzzer = null;
+            if (buzzer != null) {
+                buzzer.close();
+                buzzer = null;
+            }
         }
     }
 }
