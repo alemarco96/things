@@ -29,6 +29,10 @@ public final class SleepHelper
             //equivalente a TimeUnit.MILLISECONDS.sleep(), ma ignora automaticamente l'interrupt del thread
             SystemClock.sleep(timeout - (SystemClock.uptimeMillis() - startTime));
         }while((SystemClock.uptimeMillis() - startTime) < timeout);
+
+        long endTime = SystemClock.uptimeMillis();
+
+        Log.v(TAG, "sleepMillis(" + timeout + " ms)=> tempo atteso: " + (endTime - startTime) + " ms.");
     }
 
     /**
@@ -50,6 +54,10 @@ public final class SleepHelper
                 Log.e(TAG, "Sleep interrupted", e);
             }
         }while(((SystemClock.elapsedRealtimeNanos() / 1000L) - startTime) < timeout);
+
+        long endTime = SystemClock.elapsedRealtimeNanos() / 1000L;
+
+        Log.v(TAG, "sleepMicros(" + timeout + " us)=> tempo atteso: " + (endTime - startTime) + " us.");
     }
 
     /**
@@ -71,5 +79,9 @@ public final class SleepHelper
                 Log.e(TAG, "Sleep interrupted", e);
             }
         }while((SystemClock.elapsedRealtimeNanos() - startTime) < timeout);
+
+        long endTime = SystemClock.elapsedRealtimeNanos();
+
+        Log.v(TAG, "sleepNanos(" + timeout + " ns)=> tempo atteso: " + (endTime - startTime) + " ns.");
     }
 }

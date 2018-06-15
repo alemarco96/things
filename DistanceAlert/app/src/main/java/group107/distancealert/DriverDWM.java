@@ -38,7 +38,7 @@ public class DriverDWM {
     private static final long MAX_UART_WAIT = 30L;   // millisecondi
 
     /**
-     * Oggetto usato per la sincronizzazione tra il thread principale e il thread della callbacK
+     * Oggetto usato per la sincronizzazione tra il thread principale e il thread della callback
      */
     private final Object lock = new Object();
     /**
