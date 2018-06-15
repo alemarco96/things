@@ -19,14 +19,21 @@ import java.util.concurrent.TimeUnit;
 public class DistanceAlarm {
     private final static String TAG = "DistanceAlarm";
 
-    private static final long ALARM_BUZZER_PERIOD = 250L;
-
     /**
      * Oggetti riferiti alle periferiche GPIO e PWM
      */
     private Gpio led;
     private Pwm buzzer;
 
+    /**
+     * Periodi di aggiornamento temporizzato dell'allarme (durata dei toni e del lampeggio del LED)
+     */
+    private static final long ALARM_BUZZER_PERIOD = 250L;
+
+    /**
+     * Oggetto usato per la sincronizzazione tra il thread della UI
+     * e il thread dell'aggiornamneto temporizzato dell'allarme
+     */
     private final Object lock = new Object();
 
     /**
@@ -89,7 +96,7 @@ public class DistanceAlarm {
         // Reset inizio motivetto musicale
         toneIndex = 0;
 
-        // Avvio programmazione ogni 400ms
+        // Avvio programmazione temporizzata
         timer = new ScheduledThreadPoolExecutor(1);
         timer.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
         timer.scheduleAtFixedRate(new Runnable() {
