@@ -44,6 +44,7 @@ public final class SleepHelper
     {
         long startTime = SystemClock.elapsedRealtimeNanos() / 1000L;
 
+        /*
         //se lo sleep fallisce, viene fatto busy-waiting
         do {
             try
@@ -54,6 +55,10 @@ public final class SleepHelper
                 Log.e(TAG, "Sleep interrupted", e);
             }
         }while(((SystemClock.elapsedRealtimeNanos() / 1000L) - startTime) < timeout);
+        */
+
+        //per intervalli così brevi fare busy-waiting
+        while(((SystemClock.elapsedRealtimeNanos() / 1000L) - startTime) < timeout);
 
         long endTime = SystemClock.elapsedRealtimeNanos() / 1000L;
 

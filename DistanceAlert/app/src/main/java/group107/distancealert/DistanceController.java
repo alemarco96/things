@@ -148,7 +148,7 @@ public class DistanceController
 
     //TODO:serve davvero?
     //oggetto usato per impedire la chiusura del controller mentre è in corso la comunicazione a basso livello
-    //private final Object workingLock = new Object();
+    private final Object workingLock = new Object();
 
     //oggetto usato per gestire l'accesso in mutua esclusione ai dati
     private final Object dataLock = new Object();
@@ -164,7 +164,8 @@ public class DistanceController
     //oggetto che, usando un thread secondario che autogestisce la sua schedulazione periodica, si occupa di effettuare
     //il polling del modulo DWM per ottenere le distanze
     private ScheduledThreadPoolExecutor updateDataTimer;
-    //periodo in millisecondi
+
+    //periodo in millisecondi con cui avviene l'aggiornamento
     private long period;
 
     //TODO:togliere
@@ -195,10 +196,8 @@ public class DistanceController
             }
             */
 
-            /*
             synchronized (workingLock)
             {
-            */
                 try
                 {
                     List<Entry> data = updateData();
@@ -246,7 +245,7 @@ public class DistanceController
                         }
                     }
                 }
-            //}
+            }
         }
     };
 
@@ -555,10 +554,8 @@ public class DistanceController
     @SuppressWarnings("WeakerAccess")
     public DistanceController(String busName) throws IllegalArgumentException, IOException
     {
-        /*
         synchronized (workingLock)
         {
-        */
             driverDWM = new DriverDWM(busName);
             tagListeners = new ArrayList<>();
             allListeners = new ArrayList<>();
@@ -576,7 +573,7 @@ public class DistanceController
                 driverDWM.close();
                 throw e;
             }
-        //}
+        }
     }
 
     /**
@@ -600,12 +597,15 @@ public class DistanceController
      */
     public void addTagListener(int tagID, TagListener listener)
     {
-        synchronized (listenersLock)
+        synchronized (workingLock)
         {
-            if (tagListeners == null)
-                return;
+            synchronized (listenersLock)
+            {
+                if (tagListeners == null)
+                    return;
 
-            tagListeners.add(new Pair<>(tagID, listener));
+                tagListeners.add(new Pair<>(tagID, listener));
+            }
         }
     }
 
@@ -616,18 +616,21 @@ public class DistanceController
     @SuppressWarnings("unused")
     public void removeTagListener(TagListener listener)
     {
-        synchronized (listenersLock)
+        synchronized (workingLock)
         {
-            if (tagListeners == null)
-                return;
-
-            for (int i = 0; i < tagListeners.size(); i++)
+            synchronized (listenersLock)
             {
-                Pair<Integer, TagListener> pair = tagListeners.get(i);
+                if (tagListeners == null)
+                    return;
 
-                if (pair.second.equals(listener))
+                for (int i = 0; i < tagListeners.size(); i++)
                 {
-                    tagListeners.remove(i);
+                    Pair<Integer, TagListener> pair = tagListeners.get(i);
+
+                    if (pair.second.equals(listener))
+                    {
+                        tagListeners.remove(i);
+                    }
                 }
             }
         }
@@ -639,12 +642,15 @@ public class DistanceController
      */
     public void addAllTagsListener(AllTagsListener listener)
     {
-        synchronized (listenersLock)
+        synchronized (workingLock)
         {
-            if (allListeners == null)
-                return;
+            synchronized (listenersLock)
+            {
+                if (allListeners == null)
+                    return;
 
-            allListeners.add(listener);
+                allListeners.add(listener);
+            }
         }
     }
 
@@ -655,12 +661,15 @@ public class DistanceController
     @SuppressWarnings("unused")
     public void removeAllTagsListener(AllTagsListener listener)
     {
-        synchronized (listenersLock)
+        synchronized (workingLock)
         {
-            if (allListeners == null)
-                return;
+            synchronized (listenersLock)
+            {
+                if (allListeners == null)
+                    return;
 
-            allListeners.remove(listener);
+                allListeners.remove(listener);
+            }
         }
     }
 
@@ -680,13 +689,15 @@ public class DistanceController
         lastTime = SystemClock.elapsedRealtime();
         this.period = period;
 
-        if (updateDataTimer == null)
-        {
-            updateDataTimer = new ScheduledThreadPoolExecutor(1);
-            updateDataTimer.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
-            updateDataTimer.scheduleAtFixedRate(updateDataTask, period, period, TimeUnit.MILLISECONDS);
-        } else
-            throw new IllegalStateException("Timer già avviato");
+        synchronized (workingLock) {
+            if (updateDataTimer == null)
+            {
+                updateDataTimer = new ScheduledThreadPoolExecutor(1);
+                updateDataTimer.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
+                updateDataTimer.scheduleAtFixedRate(updateDataTask, period, period, TimeUnit.MILLISECONDS);
+            } else
+                throw new IllegalStateException("Timer già avviato");
+        }
     }
 
     /**
@@ -695,10 +706,13 @@ public class DistanceController
     @SuppressWarnings("WeakerAccess")
     public void stopUpdate()
     {
-        if (updateDataTimer != null)
+        synchronized (workingLock)
         {
-            updateDataTimer.shutdown();
-            updateDataTimer = null;
+            if (updateDataTimer != null)
+            {
+                updateDataTimer.shutdown();
+                updateDataTimer = null;
+            }
         }
     }
 
@@ -707,19 +721,20 @@ public class DistanceController
      */
     public void close()
     {
-        /*
         synchronized (workingLock)
         {
-        */
             //stop update
             if (updateDataTimer != null)
             {
+
                 updateDataTimer.shutdown();
+                /*
                 try {
                     updateDataTimer.awaitTermination(365, TimeUnit.DAYS);
                 } catch (InterruptedException e) {
                     Log.e(TAG, "timer.awaitTermination() interrotto.");
                 }
+                */
                 updateDataTimer = null;
             }
 
@@ -740,7 +755,7 @@ public class DistanceController
                 allListeners = null;
                 tagListeners = null;
             }
-        //}
+        }
     }
 
     /**
@@ -749,10 +764,8 @@ public class DistanceController
      */
     public List<Integer> getTagIDs()
     {
-        /*
         synchronized (workingLock)
         {
-        */
             synchronized (dataLock)
             {
                 List<Integer> tags = new ArrayList<>(actualData.size());
@@ -763,6 +776,6 @@ public class DistanceController
 
                 return tags;
             }
-        //}
+        }
     }
 }
