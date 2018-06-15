@@ -319,6 +319,14 @@ public class MainActivity extends Activity {
                         public void onClick(View v) {
                             Log.i(MainActivityTAG, "regenerateRadioGroup:"
                                     + " onClick " + idText);
+
+                            synchronized (controllerLock) {
+                                if (myController == null) {
+                                    Log.i(MainActivityTAG, "regenerateRadioGroup:"
+                                            + " onClick " + idText + ": myController == null");
+                                    return;
+                                }
+                            }
                             if(id != -1) {
                                 //esiste già un tagListener, quindi è da rimuovere
                                 Log.v(MainActivityTAG, "regenerateRadioGroup -> onClick " +
