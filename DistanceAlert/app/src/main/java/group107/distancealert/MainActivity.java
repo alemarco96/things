@@ -434,8 +434,10 @@ public class MainActivity extends Activity {
             }
         };
 
-        //aggiungo il listener precedentemente di un solo tag id
-        myController.addTagListener(id, idTagListener);
+        synchronized (controllerLock) {
+            //aggiungo il listener precedentemente di un solo tag id
+            myController.addTagListener(id, idTagListener);
+        }
     }
 
     /**
