@@ -34,7 +34,7 @@ public class DriverDWM {
      * Parametri costanti usati per gestire la temporizzazione durante le comunicazioni SPI e UART
      */
     private static final long SPI_SLEEP_TIME = 100L; // microsecondi
-    private static final long MAX_SPI_WAIT = 20L;    // millisecondi
+    private static final long MAX_SPI_WAIT = 40L;    // millisecondi
     private static final long MAX_UART_WAIT = 50L;   // millisecondi
 
     /**
@@ -58,9 +58,7 @@ public class DriverDWM {
         // Ottengo istanza di PeripheralManager per poter gestire le periferiche
         PeripheralManager manager = PeripheralManager.getInstance();
 
-        /*
-        Se il busName è un bus SPI, prova ad ottenere un'istanza della periferica SPI.
-         */
+        // Se il busName è un bus SPI, prova ad ottenere un'istanza della periferica SPI.
         if (busName.contains("SPI")) {
             mySPI = manager.openSpiDevice(busName);
         }

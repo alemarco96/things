@@ -665,6 +665,7 @@ public class DistanceController
         if (updateDataTimer == null)
         {
             updateDataTimer = new ScheduledThreadPoolExecutor(20);
+            updateDataTimer.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
             updateDataTimer.scheduleAtFixedRate(updateDataTask, period, period, TimeUnit.MILLISECONDS);
         } else
             throw new IllegalStateException("Timer già avviato");
