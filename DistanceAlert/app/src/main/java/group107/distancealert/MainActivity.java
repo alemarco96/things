@@ -212,7 +212,7 @@ public class MainActivity extends Activity {
                 //id già selezionato in precedenza
                 connectToSpecificListener(id);
             }
-        } catch (IOException e) {
+        } catch (Throwable e) {
             Log.e(MainActivityTAG, "setupCommunication -> " +
                     "Errore nel setup della comunicazione:\n", e);
             /*Generata un'eccezione al momento della creazione dell'instanza DistanceController
