@@ -82,24 +82,27 @@ public class DistanceAlarm {
             return;
         }
 
+        // Reset inizio motivetto musicale
         toneIndex = 0;
-        // Avvio programmazione ogni 400ms
-        (timer = new Timer()).scheduleAtFixedRate(new TimerTask() {
 
+        // Avvio programmazione ogni 250ms
+        timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 toneIndex = (toneIndex + 1) % tone.length;
                 try {
-
-                    //Cambio tono emesso dal buzzer e cambio stato al GPIO del LED
+                    // Cambio tono emesso dal buzzer
                     buzzer.setPwmFrequencyHz(tone[toneIndex]);
-                    led.setValue(!led.getValue());
 
+                    // Cambio stato al GPIO del LED
+                    // Se, nel frattempo, è stato spendo l'allarme, lo spengne
+                    led.setValue(!led.getValue() && timer != null);
                 } catch (IOException e) {
                     Log.w(TAG, "Exception updating alarm state", e);
                 }
             }
-        }, 0, 300);
+        }, 0, 250);
 
         // Abilito la periferica PWM
         buzzer.setEnabled(true);
@@ -122,7 +125,6 @@ public class DistanceAlarm {
         // Spengo LED e buzzer
         led.setValue(false);
         buzzer.setEnabled(false);
-
     }
 
     /**
