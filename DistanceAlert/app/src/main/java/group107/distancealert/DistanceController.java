@@ -208,7 +208,7 @@ public class DistanceController
                         actualData = data;
                     }
                     connectionErrors = 0;
-                } catch (Throwable e)
+                } catch (IOException e)
                 {
                     Log.e(TAG, "Avvenuta eccezione in updateDataTask", e);
                     connectionErrors++;
