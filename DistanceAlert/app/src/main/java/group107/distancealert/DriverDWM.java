@@ -38,9 +38,16 @@ public class DriverDWM {
     private static final long MAX_UART_WAIT = 30L;
 
     /**
+     * Parametri costanti usati per gestire i tentativi di accesso alle periferiche SPI e UART
+     */
+    private static final int RETRY_OPEN_NUMBER = 3;
+    private static final long RETRY_OPEN_DELAY = 20L;
+
+    /**
      * Oggetto usato per la sincronizzazione tra il thread principale e il thread della callback
      */
     private final Object lock = new Object();
+
     /**
      * Oggetto riferito al thread usato per la callback della periferica UART
      */
@@ -58,31 +65,51 @@ public class DriverDWM {
         // Ottengo istanza di PeripheralManager per poter gestire le periferiche
         PeripheralManager manager = PeripheralManager.getInstance();
 
-        // Se il busName è un bus SPI, prova ad ottenere un'istanza della periferica SPI.
-        if (busName.contains("SPI")) {
-            try {
-                mySPI = manager.openSpiDevice(busName);
-            } catch (IOException e) {
-                // Se c'è stato un'eccezione, riprova ancora una volta
-                Log.d(TAG, "Failed to open SPI. Trying to reopen it.", e);
-                mySPI = manager.openSpiDevice(busName);
-            }
-        }
+        /*
+        Prova a ottiene l'accesso alla periferica selezionata finché non lo ottiene e finché il
+        numero di tentativi è minore di quello limite.
+        Questo serve perché a volte Android Things da degli errori che dopo pochi millisecondi
+        si risolvono automaticamente.
+         */
+        int retryCounter = 0;
+        while (mySPI == null && myUART == null) {
 
-        // Se invece il busName è un bus UART, prova ad ottenere un'istanza della periferica UART.
-        else if (busName.contains("UART")) {
-            try {
-                myUART = manager.openUartDevice(busName);
-            } catch (IOException e) {
-                // Se c'è stato un'eccezione, riprova ancora una volta
-                Log.d(TAG, "Failed to open UART. Trying to to reopen it.", e);
-                myUART = manager.openUartDevice(busName);
-            }
-        }
+            // Se il busName è un bus SPI, prova ad ottenere un'istanza della periferica SPI.
+            if (busName.contains("SPI")) {
+                try {
+                    mySPI = manager.openSpiDevice(busName);
+                } catch (IOException e) {
+                    // Se ci sono stati troppi fallimenti lanca un'eccezione
+                    if (++retryCounter > RETRY_OPEN_NUMBER) {
+                        throw e;
+                    }
 
-        // Se il busName non viene riconosciuto, lancia un'eccezione
-        else {
-            throw new IllegalArgumentException("Unrecognized bus name");
+                    // Se c'è stato un'eccezione, riprova ancora
+                    Log.d(TAG, "Failed to open SPI. Trying to to reopen it.", e);
+                    SleepHelper.sleepMillis(RETRY_OPEN_DELAY);
+                }
+            }
+
+            // Se invece il busName è un bus UART, prova ad ottenere un'istanza della periferica UART.
+            else if (busName.contains("UART")) {
+                try {
+                    myUART = manager.openUartDevice(busName);
+                } catch (IOException e) {
+                    // Se ci sono stati troppi fallimenti lanca un'eccezione
+                    if (++retryCounter > RETRY_OPEN_NUMBER) {
+                        throw e;
+                    }
+
+                    // Se c'è stato un'eccezione, aspetta un po' e poi riprova
+                    Log.d(TAG, "Failed to open UART. Trying to to reopen it soon.", e);
+                    SleepHelper.sleepMillis(RETRY_OPEN_DELAY);
+                }
+            }
+
+            // Se il busName non viene riconosciuto, lancia un'eccezione
+            else {
+                throw new IllegalArgumentException("Unrecognized bus name");
+            }
         }
 
         // Configurazione dei parametri della comunicazione per il modulo DWM
