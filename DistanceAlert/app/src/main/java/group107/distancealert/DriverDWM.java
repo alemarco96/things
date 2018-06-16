@@ -305,16 +305,15 @@ public class DriverDWM {
         }
 
         // Nel caso ci siano problemi di comunicazione, lancia eccezione
-        if (totalCount == 0) {
+        if (totalCount < 3) {
             throw new IOException("Communication error via UART: nothing received");
         }
 
-        // Ritaglia array tenendo solo la parte interessante
-        if (totalCount > 0) {
-            totalReceive = Arrays.copyOfRange(totalReceive, 0, totalCount);
-        }
-
-        // Conversione dei dati ricevuti a unsigned int
+        /*
+        Ritaglia array tenendo solo la parte interessante e poi fa la
+        conversione dei dati ricevuti a unsigned int
+         */
+        totalReceive = Arrays.copyOfRange(totalReceive, 0, totalCount);
         int[] intReceive = new int[totalReceive.length];
         for (int i = 0; i < totalReceive.length; i++) {
             intReceive[i] = toUnsignedInt(totalReceive[i]);
