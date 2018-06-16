@@ -27,6 +27,9 @@ public class DistanceController
     //periodo minimo di aggiornamento a cui può essere settato il controller (<= 10 Hz)
     private static final long MINIMUM_UPDATE_PERIOD = 100L;
 
+    private static long dwmBugTimer = 0;
+    private static final long DWM_BUG_PAUSE = 30000L;
+
     /**
      * Oggetto che serve per ordinare in ordine crescente per tagID le entry
      */
@@ -180,6 +183,12 @@ public class DistanceController
         @Override
         public void run()
         {
+            if (System.currentTimeMillis() - dwmBugTimer < DWM_BUG_PAUSE) {
+                Log.i(TAG, "Aggiornamento distanza in pausa per un problema sul modulo DWM.\n" +
+                        "Prossimo tentativo tra: " + (dwmBugTimer + DWM_BUG_PAUSE - System.currentTimeMillis()) + "ms");
+                return;
+            }
+
             //TODO:togliere
             long time = SystemClock.elapsedRealtime();
 
@@ -217,13 +226,17 @@ public class DistanceController
                         try
                         {
                             SleepHelper.sleepMillis(MINIMUM_UPDATE_PERIOD);
-//TODO--------> vedi onenote
+
                             driverDWM.checkDWM();
 
                             //canale di aggiornamento funzionante. Riprova a far funzionare il controller
                             connectionErrors = 0;
                         } catch (IOException e2)
                         {
+                            dwmBugTimer = System.currentTimeMillis();
+                            Log.e(TAG, "Aggiornamento distanza in pausa per un problema sul modulo DWM.\n" +
+                                    "Prossimo tentativo tra: " + (dwmBugTimer + DWM_BUG_PAUSE - System.currentTimeMillis()) + "ms", e2);
+                            /*
                             List<Entry> data;
                             synchronized (dataLock)
                             {
@@ -242,6 +255,7 @@ public class DistanceController
 
                             Log.e(TAG, "*** Troppi errori di comunicazione avvenuti. Tutti i tag sono stati dichiarati disconnessi. ***");
                             Log.e(TAG, "*** Bus di comunicazione non funzionante. Stop aggiornamenti. ***", e2);
+                            */
                         }
                     }
                 }
