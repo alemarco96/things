@@ -64,7 +64,7 @@ public class DriverDWM {
                 mySPI = manager.openSpiDevice(busName);
             } catch (IOException e) {
                 // Se c'è stato un'eccezione, riprova ancora una volta
-                Log.d(TAG, "Failed to open SPI. I'm trying to re-open it.", e);
+                Log.d(TAG, "Failed to open SPI. Trying to reopen it.", e);
                 mySPI = manager.openSpiDevice(busName);
             }
         }
@@ -75,7 +75,7 @@ public class DriverDWM {
                 myUART = manager.openUartDevice(busName);
             } catch (IOException e) {
                 // Se c'è stato un'eccezione, riprova ancora una volta
-                Log.d(TAG, "Failed to open UART. I'm trying to to re-open it.", e);
+                Log.d(TAG, "Failed to open UART. Trying to to reopen it.", e);
                 myUART = manager.openUartDevice(busName);
             }
         }
