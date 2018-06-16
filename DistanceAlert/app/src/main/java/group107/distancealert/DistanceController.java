@@ -183,7 +183,7 @@ public class DistanceController
         @Override
         public void run()
         {
-            if (System.currentTimeMillis() - dwmBugTimer < DWM_BUG_PAUSE) {
+            if (System.currentTimeMillis() - dwmBugTimer < DWM_BUG_PAUSE && dwmBugTimer != 0) {
                 Log.i(TAG, "Aggiornamento distanza in pausa per un problema sul modulo DWM.\n" +
                         "Prossimo tentativo tra: " + (dwmBugTimer + DWM_BUG_PAUSE - System.currentTimeMillis()) + "ms");
                 return;
@@ -579,7 +579,7 @@ public class DistanceController
 
             connectionErrors = 0;
 
-            if (System.currentTimeMillis() - dwmBugTimer < DWM_BUG_PAUSE) {
+            if (System.currentTimeMillis() - dwmBugTimer < DWM_BUG_PAUSE && dwmBugTimer != 0) {
                 return;
             }
 
