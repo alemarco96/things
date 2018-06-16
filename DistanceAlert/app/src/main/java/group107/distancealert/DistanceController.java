@@ -579,6 +579,10 @@ public class DistanceController
 
             connectionErrors = 0;
 
+            if (System.currentTimeMillis() - dwmBugTimer < DWM_BUG_PAUSE) {
+                return;
+            }
+
             //controlla lo stato della connessione del modulo
             try {
                 driverDWM.checkDWM();
