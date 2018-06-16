@@ -217,7 +217,7 @@ public class DistanceController
                         try
                         {
                             SleepHelper.sleepMillis(MINIMUM_UPDATE_PERIOD);
-
+//TODO--------> vedi onenote
                             driverDWM.checkDWM();
 
                             //canale di aggiornamento funzionante. Riprova a far funzionare il controller

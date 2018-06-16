@@ -37,7 +37,13 @@ public class DistanceAlarm {
     private final Object lock = new Object();
 
     /**
+     * Oggetto ScheduledThreadPoolExecutor usato per gestire la programmazione temporizzata dell'allarme
+     */
+    private ScheduledThreadPoolExecutor timer;
+
+    /**
      * Sequenza di frequenze del segnale PWM utilizzate per realizzare il motivetto musicale
+     * e relativo indice usato per puntare alla nota da eseguire
      */
     private final int[] tone = {
             400, 400, 400,
@@ -47,12 +53,7 @@ public class DistanceAlarm {
             400, 440, 500,
             400, 440, 500
     };
-
-    // Variabile che funge da indice dell'array tone
     private int toneIndex;
-
-    // Oggetto ScheduledThreadPoolExecutor usato per gestire la programmazione temporizzata dell'allarme
-    private ScheduledThreadPoolExecutor timer;
 
     /**
      * Costruttore: ottiene accesso alle periferiche e le inizializza
@@ -103,23 +104,25 @@ public class DistanceAlarm {
         timer.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                toneIndex = (toneIndex + 1) % tone.length;
-                try {
-                    synchronized (lock) {
-                        //Cambio tono emesso dal buzzer e cambio stato al GPIO del LED
+                /*
+                Cambio tono emesso dal buzzer e cambio stato al GPIO del LED
+                facendo in modo che un eventuale chiamata ai metodi stop e close
+                non si sovrapponga
+                 */
+                synchronized (lock) {
+                    toneIndex = (toneIndex + 1) % tone.length;
+                    try {
                         buzzer.setPwmFrequencyHz(tone[toneIndex]);
                         led.setValue((!led.getValue()) && (timer != null));
+                    } catch (IOException e) {
+                        Log.w(TAG, "Exception updating alarm state", e);
                     }
-                } catch (IOException e) {
-                    Log.w(TAG, "Exception updating alarm state", e);
                 }
             }
         }, 0L, ALARM_BUZZER_PERIOD, TimeUnit.MILLISECONDS);
 
-        synchronized (lock) {
-            // Abilito la periferica PWM
-            buzzer.setEnabled(true);
-        }
+        // Abilito la periferica PWM
+        buzzer.setEnabled(true);
     }
 
     /**
@@ -136,8 +139,11 @@ public class DistanceAlarm {
         timer.shutdown();
         timer = null;
 
+        /*
+         Spengo LED e buzzer facendo attenzione alla sincronizzazione
+         con l'aggiornamento temporizzato dell'allarme
+         */
         synchronized (lock) {
-            // Spengo LED e buzzer
             led.setValue(false);
             buzzer.setEnabled(false);
         }

@@ -156,10 +156,11 @@ public class DriverDWM {
      * Fa la richiesta di una API e controlla la risposta ricevuta.
      * Nel caso non ottenga una risposta corretta, ovvero ci sono dei problemi gravi,
      * probabilmente nell'hardware. Dunque lancia le relative eccezioni.
+     * Questo metodo è syncronized per evitare la sua sovrapposizione con il metodo close.
      *
      * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      */
-    public void checkDWM() throws IOException {
+    public synchronized void checkDWM() throws IOException {
         // Reset: caso SPI
         if (mySPI != null) {
             /*
@@ -198,8 +199,9 @@ public class DriverDWM {
     /**
      * Effettua la richiesta della API e con i relativi valori al modulo DWM e ritorna la rispota
      * ottenuta convertita in unsigned int.
-     * N.B. Questo metodo è bloccante e può richiedere fino a 50ms per essere completato.
-     * (Attenzione che la durata dipende anche da condizioni esterne al modulo)
+     * Questo metodo è syncronized per evitare la sua sovrapposizione con il metodo close.
+     * N.B. Questo metodo è bloccante e normalmente può richiedere fino 10ms per essere completato.
+     * La durata dipende anche da condizioni esterne al modulo.
      *
      * @param tag   byte relativo alla API da usare
      * @param value byte[] array di byte contente i valori da passare alla API.
@@ -208,7 +210,7 @@ public class DriverDWM {
      * @throws IOException              Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      * @throws IllegalArgumentException Lanciata se vengono passati parametri insensati
      */
-    public int[] requestAPI(byte tag, byte[] value) throws IOException, IllegalArgumentException {
+    public synchronized int[] requestAPI(byte tag, byte[] value) throws IOException, IllegalArgumentException {
         // Ottengo la lunghezza dell'array dei valori della API
         int L = value == null ? 0 : value.length;
 
@@ -409,10 +411,11 @@ public class DriverDWM {
 
     /**
      * Chiusura e rilascio della periferica SPI e UART se erano aperte
+     * Questo metodo è syncronized per evitare la sua sovrapposizione con i metodi requestAPI e checkDWM
      *
      * @throws IOException Lanciata se ci sono problemi nella chiusura della periferica
      */
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         if (mySPI != null) {
             // Chiusura SPI
             mySPI.close();
