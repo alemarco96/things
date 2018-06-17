@@ -282,6 +282,16 @@ public class MainActivity extends Activity {
                         }
                     }
                 }
+
+                @Override
+                public void onError(final String shortDescription, final IOException e) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(), shortDescription, Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
             });
         }
     }
@@ -439,6 +449,11 @@ public class MainActivity extends Activity {
 
                 //mostro distanza rilevata
                 setDistanceText(tagDistance, distanceView);
+            }
+
+            @Override
+            public void onError(String shortDescription, IOException e) {
+
             }
         };
 

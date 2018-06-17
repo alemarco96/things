@@ -6,8 +6,10 @@ import java.util.List;
 public interface AllTagsListener
 {
     void onTagHasConnected(final List<DistanceController.Entry> tags);
+
     void onTagHasDisconnected(final List<DistanceController.Entry> tags);
+
     void onTagDataAvailable(final List<DistanceController.Entry> tags);
 
-    void onError(final IOException e);
+    void onError(final String shortDescription, final IOException e);
 }

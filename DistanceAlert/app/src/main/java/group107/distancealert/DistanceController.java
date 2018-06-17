@@ -1,6 +1,5 @@
 package group107.distancealert;
 
-import android.os.SystemClock;
 import android.util.Log;
 import android.util.Pair;
 
@@ -168,12 +167,6 @@ public class DistanceController
     //il polling del modulo DWM per ottenere le distanze
     private ScheduledThreadPoolExecutor updateDataTimer;
 
-    //periodo in millisecondi con cui avviene l'aggiornamento
-    private long period;
-
-    //TODO:togliere
-    private long lastTime;
-    private int counter = 0;
 
     /**
      * Oggetto che definisce la routine di aggiornamento periodica
@@ -188,22 +181,6 @@ public class DistanceController
                         "Prossimo tentativo tra: " + (dwmBugTimer + DWM_BUG_PAUSE - System.currentTimeMillis()) + "ms");
                 return;
             }
-
-            //TODO:togliere
-            long time = SystemClock.elapsedRealtime();
-
-            long elapsed = time - lastTime;
-            lastTime = time;
-            Log.v("ABCD", "Invocazione: " + (++counter) + " Tempo impiegato dalla scorsa esecuzione: " + elapsed);
-
-            /*
-            //necessario per verificare che il periodo di aggiornamento sia rispettato
-            if (elapsed < period)
-            {
-                Log.w("ABCD", "Invocazione: " + (++counter) + "Sleep necessario di: " + (period - elapsed) + " ms.");
-                SleepHelper.sleepMillis(period - elapsed);
-            }
-            */
 
             synchronized (workingLock)
             {
@@ -234,28 +211,12 @@ public class DistanceController
                         } catch (IOException e2)
                         {
                             dwmBugTimer = System.currentTimeMillis();
+
+                            notifyError("Periferica non funzionante.\n" +
+                                    "Nuovo tentativo tra " + (DWM_BUG_PAUSE / 1000L) + " secondi.", e2);
+
                             Log.e(TAG, "Aggiornamento distanza in pausa per un problema sul modulo DWM.\n" +
                                     "Prossimo tentativo tra: " + (dwmBugTimer + DWM_BUG_PAUSE - System.currentTimeMillis()) + "ms", e2);
-                            /*
-                            List<Entry> data;
-                            synchronized (dataLock)
-                            {
-                                data = cloneList(actualData);
-                                actualData = new ArrayList<>();
-                            }
-                            synchronized (listenersLock)
-                            {
-                                //notifica a tutti i listeners che tutti i tag che erano connessi all'ultimo aggiornamento si sono disconnessi
-
-                                notifyToAllTagsListeners(null, data, null);
-                                notifyToTagsListeners(null, data, null);
-                            }
-
-                            stopUpdate();
-
-                            Log.e(TAG, "*** Troppi errori di comunicazione avvenuti. Tutti i tag sono stati dichiarati disconnessi. ***");
-                            Log.e(TAG, "*** Bus di comunicazione non funzionante. Stop aggiornamenti. ***", e2);
-                            */
                         }
                     }
                 }
@@ -559,6 +520,30 @@ public class DistanceController
         }
     }
 
+    private void notifyError(final String shortDescription, final IOException e) {
+        for (int i = 0; i < allListeners.size(); i++) {
+            final AllTagsListener listener = allListeners.get(i);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onError(shortDescription, e);
+                }
+            }).start();
+        }
+
+        for (int i = 0; i < tagListeners.size(); i++) {
+            final Pair<Integer, TagListener> pair = tagListeners.get(i);
+            final TagListener listener = pair.second;
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onError(shortDescription, e);
+                }
+            }).start();
+        }
+    }
+
     /**
      * Imposta il controller. Non avvia il polling con il modulo, che deve essere fatto manualmente tramite il metodo startUpdate()
      * @param busName Il nome del pin a cui è collegato fisicamente il modulo
@@ -702,10 +687,6 @@ public class DistanceController
             throw new IllegalArgumentException("Il periodo di aggiornamento deve essere positivo. Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
         else if (period < MINIMUM_UPDATE_PERIOD)
             throw new IllegalArgumentException("Il periodo di aggiornamento è troppo basso. Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
-
-        //TODO:togliere
-        lastTime = SystemClock.elapsedRealtime();
-        this.period = period;
 
         synchronized (workingLock) {
             if (updateDataTimer == null)
