@@ -59,6 +59,7 @@ public class DriverDWM {
      * @param busName stringa relativa al bus SPI o UART a cui è connesso il modulo,
      *                ovvero, per la raspberry: "SPI0.0" o "SPI0.1" o "MINIUART".
      * @throws IOException Lanciata se ci sono problemi di accesso alla periferica
+     * @throws IllegalArgumentException Lanciata se il parametro non busName non è valido
      */
     @SuppressWarnings("WeakerAccess")
     public DriverDWM(String busName) throws IOException {
