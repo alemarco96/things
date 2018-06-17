@@ -26,9 +26,9 @@ public class DistanceAlarm {
     private Pwm buzzer;
 
     /**
-     * Periodi di aggiornamento temporizzato dell'allarme (durata dei toni e del lampeggio del LED)
+     * Periodo di aggiornamento temporizzato dell'allarme (durata dei toni e del lampeggio del LED)
      */
-    private static final long ALARM_BUZZER_PERIOD = 250L;
+    private static final long ALARM_PERIOD = 250L;
 
     /**
      * Oggetto usato per la sincronizzazione tra il thread della UI
@@ -119,7 +119,7 @@ public class DistanceAlarm {
                     }
                 }
             }
-        }, 0L, ALARM_BUZZER_PERIOD, TimeUnit.MILLISECONDS);
+        }, 0L, ALARM_PERIOD, TimeUnit.MILLISECONDS);
 
         // Abilito la periferica PWM
         buzzer.setEnabled(true);
