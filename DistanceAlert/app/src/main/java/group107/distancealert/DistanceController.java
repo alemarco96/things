@@ -96,7 +96,7 @@ public class DistanceController
         @Override
         public String toString()
         {
-            return "ID: " + tagID + "  Distanza: " + tagDistance / 1000 + "." + tagDistance % 1000;
+            return "ID: " + tagID + "  Distanza: " + tagDistance + "mm";
         }
     }
 
