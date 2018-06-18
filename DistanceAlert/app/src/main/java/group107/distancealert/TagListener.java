@@ -10,5 +10,5 @@ public interface TagListener
 
     void onTagDataAvailable(final int tagDistance);
 
-    void onError(final String shortDescription, final IOException e);
+    void onError(final String shortDescription, final Exception e);
 }

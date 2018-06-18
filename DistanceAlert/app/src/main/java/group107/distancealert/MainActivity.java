@@ -284,7 +284,7 @@ public class MainActivity extends Activity {
                 }
 
                 @Override
-                public void onError(final String shortDescription, final IOException e) {
+                public void onError(final String shortDescription, final Exception e) {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -452,7 +452,7 @@ public class MainActivity extends Activity {
             }
 
             @Override
-            public void onError(String shortDescription, IOException e) {
+            public void onError(String shortDescription, Exception e) {
 
             }
         };

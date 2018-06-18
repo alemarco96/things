@@ -11,5 +11,5 @@ public interface AllTagsListener
 
     void onTagDataAvailable(final List<DistanceController.Entry> tags);
 
-    void onError(final String shortDescription, final IOException e);
+    void onError(final String shortDescription, final Exception e);
 }
