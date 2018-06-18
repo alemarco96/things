@@ -228,15 +228,20 @@ public class DriverDWM {
             System.arraycopy(value, 0, buffer, 2, L);
         }
 
-        // Caso SPI
+        Log.i(TAG, "Request:\n" + Arrays.toString(buffer));
+
+        int[] response;
         if (mySPI != null) {
-            return requestViaSPI(buffer);
+            // Caso SPI
+            response = requestViaSPI(buffer);
+        }
+        else {
+            // Caso UART
+            response = requestViaUART(buffer);
         }
 
-        // Caso UART
-        else {
-            return requestViaUART(buffer);
-        }
+        Log.i(TAG, "Response:\n" + Arrays.toString(response));
+        return response;
     }
 
     /**
@@ -417,6 +422,8 @@ public class DriverDWM {
      * @throws IOException Lanciata se ci sono problemi nella chiusura della periferica
      */
     public synchronized void close() throws IOException {
+        Log.i(TAG, "Closing");
+
         if (mySPI != null) {
             // Chiusura SPI
             mySPI.close();
