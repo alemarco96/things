@@ -1,5 +1,6 @@
 package group107.distancealert;
 
+import android.os.SystemClock;
 import android.util.Log;
 import android.util.Pair;
 
@@ -166,9 +167,9 @@ public class DistanceController
         @Override
         public void run()
         {
-            if (System.currentTimeMillis() - dwmBugTimer < DWM_BUG_PAUSE && dwmBugTimer != 0) {
+            if (SystemClock.uptimeMillis() - dwmBugTimer < DWM_BUG_PAUSE && dwmBugTimer != 0) {
                 Log.v(TAG, "Aggiornamento distanza in pausa. Prossimo tentativo tra: "
-                        + (dwmBugTimer + DWM_BUG_PAUSE - System.currentTimeMillis()) + "ms");
+                        + (dwmBugTimer + DWM_BUG_PAUSE - SystemClock.uptimeMillis()) + "ms");
                 return;
             }
 
@@ -197,7 +198,7 @@ public class DistanceController
                             connectionErrors = 0;
                         } catch (IOException e2)
                         {
-                            dwmBugTimer = System.currentTimeMillis();
+                            dwmBugTimer = SystemClock.uptimeMillis();
 
                             String text = "Periferica non funzionante.\n" +
                                     "Nuovo tentativo tra " + (DWM_BUG_PAUSE / 1000L) + " secondi.";
@@ -566,7 +567,8 @@ public class DistanceController
 
             connectionErrors = 0;
 
-            if (System.currentTimeMillis() - dwmBugTimer < DWM_BUG_PAUSE && dwmBugTimer != 0) {
+            if (SystemClock.uptimeMillis() - dwmBugTimer < DWM_BUG_PAUSE && dwmBugTimer != 0) {
+                Log.v(TAG, "Controllo della connessione non effettuato.");
                 return;
             }
 
