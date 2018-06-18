@@ -21,8 +21,8 @@ public class DistanceController
     private static final int BYTES_PER_ENTRY = 20;
     //numero di volte per cui ricevendo gli stessi dati dal modulo DWM, un tag viene dichiarato disconnesso
     private static final int COUNTER_FOR_DISCONNECTED = 4;
-    //numero di volte per cui avvenendo un errore nella comunicazione con il modulo DWM, dichiara disconnessi tutti i tag e stoppa il polling
-    private static final int COUNTER_FOR_CONNECTION_ERRORS = COUNTER_FOR_DISCONNECTED;
+    //numero di volte per cui avvenendo un errore nella comunicazione con il modulo DWM TODO
+    private static final int COUNTER_FOR_CONNECTION_ERRORS = 3;
     //periodo minimo di aggiornamento a cui può essere settato il controller (<= 10 Hz)
     private static final long MINIMUM_UPDATE_PERIOD = 100L;
 
@@ -177,8 +177,8 @@ public class DistanceController
         public void run()
         {
             if (System.currentTimeMillis() - dwmBugTimer < DWM_BUG_PAUSE && dwmBugTimer != 0) {
-                Log.i(TAG, "Aggiornamento distanza in pausa per un problema sul modulo DWM.\n" +
-                        "Prossimo tentativo tra: " + (dwmBugTimer + DWM_BUG_PAUSE - System.currentTimeMillis()) + "ms");
+                Log.v(TAG, "Aggiornamento distanza in pausa. Prossimo tentativo tra: "
+                        + (dwmBugTimer + DWM_BUG_PAUSE - System.currentTimeMillis()) + "ms");
                 return;
             }
 
@@ -195,8 +195,8 @@ public class DistanceController
                     connectionErrors = 0;
                 } catch (IOException e)
                 {
-                    Log.e(TAG, "Avvenuta eccezione in updateDataTask", e);
                     connectionErrors++;
+                    Log.w(TAG, "Avvenuta " + connectionErrors + "^ eccezione in updateDataTask", e);
                     if (connectionErrors >= COUNTER_FOR_CONNECTION_ERRORS)
                     {
                         //ritesta la connessione per valutare se è ancora attiva
@@ -212,11 +212,12 @@ public class DistanceController
                         {
                             dwmBugTimer = System.currentTimeMillis();
 
-                            notifyError("Periferica non funzionante.\n" +
-                                    "Nuovo tentativo tra " + (DWM_BUG_PAUSE / 1000L) + " secondi.", e2);
+                            String text = "Periferica non funzionante.\n" +
+                                    "Nuovo tentativo tra " + (DWM_BUG_PAUSE / 1000L) + " secondi.";
 
-                            Log.e(TAG, "Aggiornamento distanza in pausa per un problema sul modulo DWM.\n" +
-                                    "Prossimo tentativo tra: " + (dwmBugTimer + DWM_BUG_PAUSE - System.currentTimeMillis()) + "ms", e2);
+                            notifyError(text, e2);
+
+                            Log.e(TAG, text, e2);
                         }
                     }
                 }
