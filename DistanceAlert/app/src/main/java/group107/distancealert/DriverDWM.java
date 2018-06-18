@@ -31,6 +31,11 @@ public class DriverDWM {
     private UartDevice myUART;
 
     /**
+     * Nome del bus della periferica scelta
+     */
+    private String myBus;
+
+    /**
      * Parametri costanti usati per gestire la temporizzazione durante le comunicazioni SPI e UART,
      * indicano il limite massimo di attesa di una risposta espresso in millisecondi
      */
@@ -77,6 +82,8 @@ public class DriverDWM {
 
             // Se il busName è un bus SPI, prova ad ottenere un'istanza della periferica SPI.
             if (busName.contains("SPI")) {
+                myBus = busName;
+
                 try {
                     mySPI = manager.openSpiDevice(busName);
                 } catch (IOException e) {
@@ -93,6 +100,8 @@ public class DriverDWM {
 
             // Se invece il busName è un bus UART, prova ad ottenere un'istanza della periferica UART.
             else if (busName.contains("UART")) {
+                myBus = busName;
+
                 try {
                     myUART = manager.openUartDevice(busName);
                 } catch (IOException e) {
@@ -160,6 +169,7 @@ public class DriverDWM {
      * Questo metodo è syncronized per evitare la sua sovrapposizione con il metodo close.
      *
      * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
+     * @throws IllegalStateException Lanciata se non si ha l'accesso ad alcuna periferica
      */
     public synchronized void checkDWM() throws IOException {
         // Reset: caso SPI
@@ -181,9 +191,12 @@ public class DriverDWM {
         }
 
         // Reset: caso UART
-        else {
+        else if (myUART != null) {
             // La semplice pulizia dei buffer di input e di output è sufficiente
             myUART.flush(UartDevice.FLUSH_IN_OUT);
+        } else {
+            // Nel caso il metodo fosse stato invocato senza aver ottenuto l'accasso a una periferica
+            throw new IllegalStateException("No peripherals opened.");
         }
 
         /*
@@ -210,6 +223,7 @@ public class DriverDWM {
      * @return array int[] contenente il pacchetto di byte ricevuti in risposta dal modulo DWM
      * @throws IOException              Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      * @throws IllegalArgumentException Lanciata se vengono passati parametri insensati
+     * @throws IllegalStateException Lanciata se non si ha l'accesso ad alcuna periferica
      */
     public synchronized int[] requestAPI(byte tag, byte[] value) throws IOException, IllegalArgumentException {
         // Ottengo la lunghezza dell'array dei valori della API
@@ -234,10 +248,17 @@ public class DriverDWM {
         if (mySPI != null) {
             // Caso SPI
             response = requestViaSPI(buffer);
-        }
-        else {
+        } else if (myUART != null) {
             // Caso UART
             response = requestViaUART(buffer);
+        } else {
+            // Nel caso il metodo fosse stato invocato senza aver ottenuto l'accasso a una periferica
+            throw new IllegalStateException("No peripherals opened.");
+        }
+
+        // Se il modulo ha inviato una risposta non conforme lancia un'eccezione
+        if (response.length < 3 || (response[0] == 0xff && response[1] == 0xff && response[2] == 0xff)) {
+            throw new IOException("Invalid response received.");
         }
 
         Log.i(TAG, "Response:\n" + Arrays.toString(response));
@@ -413,6 +434,13 @@ public class DriverDWM {
         if (myUART == null) {
             throw new IOException("Communication error via UART: communication interrupted");
         }
+    }
+
+    /**
+     * @return Stringa corrispondete al bus della periferica scelta
+     */
+    public String getMyBus() {
+        return myBus;
     }
 
     /**
