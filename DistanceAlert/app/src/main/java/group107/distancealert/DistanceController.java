@@ -12,7 +12,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Classe che rappresenta un sensore di distanza.
+ * Classe thread-safe che rappresenta un sensore di distanza.
  */
 public class DistanceController
 {
@@ -148,15 +148,10 @@ public class DistanceController
     //memorizza tutti i listeners associati ad uno specifico tag
     private List<Pair<Integer, TagListener>> tagListeners;
 
-    //TODO:serve davvero?
-    //oggetto usato per impedire la chiusura del controller mentre è in corso la comunicazione a basso livello
-    private final Object workingLock = new Object();
-
-    //contatore degli errori di comunicazione con il modulo DWM
-    private int connectionErrors = 0;
-
     //oggetto che gestisce la comunicazione a basso livello con il modulo DWM
     private DriverDWM driverDWM;
+    //contatore degli errori di comunicazione con il modulo DWM
+    private int connectionErrors = 0;
 
     //oggetto che, usando un thread secondario che autogestisce la sua schedulazione periodica, si occupa di effettuare
     //il polling del modulo DWM per ottenere le distanze
@@ -164,7 +159,7 @@ public class DistanceController
 
 
     /**
-     * Oggetto che definisce la routine di aggiornamento periodica
+     * Oggetto che definisce la routine di aggiornamento periodica del controller
      */
     private final Runnable updateDataTask = new Runnable()
     {
@@ -177,7 +172,7 @@ public class DistanceController
                 return;
             }
 
-            synchronized (workingLock)
+            synchronized (this)
             {
                 try
                 {
@@ -223,7 +218,7 @@ public class DistanceController
      * @return La lista di coppie id-distanza dei tag
      * @throws IllegalArgumentException Se i dati ricevuti dal modulo DWM non sono validi
      */
-    private List<Entry> getDataFromDWMResponse(int[] dwmResponse) throws IllegalArgumentException
+    private synchronized List<Entry> getDataFromDWMResponse(int[] dwmResponse) throws IllegalArgumentException
     {
         if (dwmResponse == null || dwmResponse.length < 21 || dwmResponse[2] != 0)
         {
@@ -259,7 +254,7 @@ public class DistanceController
      * @return I nuovi dati dal modulo DWM
      * @throws IOException Se avviene un errore di comunicazione con il modulo DWM
      */
-    private List<Entry> updateData() throws IOException
+    private synchronized List<Entry> updateData() throws IOException
     {
         int[] dwmResponse = driverDWM.requestAPI((byte) 0x0C, null);
 
@@ -311,7 +306,7 @@ public class DistanceController
      * Classifica i dati ottenuti dal modulo DWM e notifica ai listener
      * @param newData I nuovi dati ottenuti dal modulo
      */
-    private void classifyDataAndNotify(List<Entry> newData)
+    private synchronized void classifyDataAndNotify(List<Entry> newData)
     {
         List<Entry> updated;
         List<Entry> connected = new ArrayList<>();
@@ -560,7 +555,7 @@ public class DistanceController
     @SuppressWarnings("WeakerAccess")
     public DistanceController(String busName) throws IllegalArgumentException, IOException
     {
-        synchronized (workingLock)
+        synchronized (this)
         {
             driverDWM = new DriverDWM(busName);
             tagListeners = new ArrayList<>();
@@ -605,15 +600,12 @@ public class DistanceController
      * @param tagID L'ID del tag a cui viene associato il listener
      * @param listener Il listener
      */
-    public void addTagListener(int tagID, TagListener listener)
+    public synchronized void addTagListener(int tagID, TagListener listener)
     {
-        synchronized (workingLock)
-        {
-            if (tagListeners == null)
-                return;
+        if (tagListeners == null)
+            return;
 
-            tagListeners.add(new Pair<>(tagID, listener));
-        }
+        tagListeners.add(new Pair<>(tagID, listener));
     }
 
     /**
@@ -621,21 +613,18 @@ public class DistanceController
      * @param listener Il listener da rimuovere
      */
     @SuppressWarnings("unused")
-    public void removeTagListener(TagListener listener)
+    public synchronized void removeTagListener(TagListener listener)
     {
-        synchronized (workingLock)
+        if (tagListeners == null)
+            return;
+
+        for (int i = 0; i < tagListeners.size(); i++)
         {
-            if (tagListeners == null)
-                return;
+            Pair<Integer, TagListener> pair = tagListeners.get(i);
 
-            for (int i = 0; i < tagListeners.size(); i++)
+            if (pair.second.equals(listener))
             {
-                Pair<Integer, TagListener> pair = tagListeners.get(i);
-
-                if (pair.second.equals(listener))
-                {
-                    tagListeners.remove(i);
-                }
+                tagListeners.remove(i);
             }
         }
     }
@@ -644,15 +633,12 @@ public class DistanceController
      * Aggiunge un listener che risponde agli eventi per tutti i tag
      * @param listener Il listener da aggiungere
      */
-    public void addAllTagsListener(AllTagsListener listener)
+    public synchronized void addAllTagsListener(AllTagsListener listener)
     {
-        synchronized (workingLock)
-        {
-            if (allListeners == null)
-                return;
+        if (allListeners == null)
+            return;
 
-            allListeners.add(listener);
-        }
+        allListeners.add(listener);
     }
 
     /**
@@ -660,15 +646,12 @@ public class DistanceController
      * @param listener Il listener da rimuovere
      */
     @SuppressWarnings("unused")
-    public void removeAllTagsListener(AllTagsListener listener)
+    public synchronized void removeAllTagsListener(AllTagsListener listener)
     {
-        synchronized (workingLock)
-        {
-            if (allListeners == null)
-                return;
+        if (allListeners == null)
+            return;
 
-            allListeners.remove(listener);
-        }
+        allListeners.remove(listener);
     }
 
     /**
@@ -676,87 +659,76 @@ public class DistanceController
      * @param period Il tempo che trascorre tra un update e il successivo
      */
     @SuppressWarnings("WeakerAccess")
-    public void startUpdate(long period) throws IllegalArgumentException, IllegalStateException
+    public synchronized void startUpdate(long period) throws IllegalArgumentException, IllegalStateException
     {
         if (period < 0)
             throw new IllegalArgumentException("Il periodo di aggiornamento deve essere positivo. Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
         else if (period < MINIMUM_UPDATE_PERIOD)
             throw new IllegalArgumentException("Il periodo di aggiornamento è troppo basso. Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
 
-        synchronized (workingLock) {
-            if (updateDataTimer == null)
-            {
-                updateDataTimer = new ScheduledThreadPoolExecutor(1);
-                updateDataTimer.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
-                updateDataTimer.scheduleAtFixedRate(updateDataTask, period, period, TimeUnit.MILLISECONDS);
-            } else
-                throw new IllegalStateException("Timer già avviato");
-        }
+        if (updateDataTimer == null)
+        {
+            updateDataTimer = new ScheduledThreadPoolExecutor(1);
+            updateDataTimer.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
+            updateDataTimer.scheduleAtFixedRate(updateDataTask, period, period, TimeUnit.MILLISECONDS);
+        } else
+            throw new IllegalStateException("Timer già avviato");
     }
 
     /**
      * Termina il polling del modulo
      * */
     @SuppressWarnings("WeakerAccess")
-    public void stopUpdate()
+    public synchronized void stopUpdate()
     {
-        synchronized (workingLock)
+        if (updateDataTimer != null)
         {
-            if (updateDataTimer != null)
-            {
-                updateDataTimer.shutdown();
-                updateDataTimer = null;
-            }
+            updateDataTimer.shutdown();
+            updateDataTimer = null;
         }
     }
 
     /**
      * Chiude il DistanceController e rilascia le risorse
      */
-    public void close()
+    public synchronized void close()
     {
-        synchronized (workingLock)
+        //stop update
+        if (updateDataTimer != null)
         {
-            //stop update
-            if (updateDataTimer != null)
-            {
 
-                updateDataTimer.shutdown();
-                updateDataTimer = null;
-            }
-
-            if (driverDWM != null)
-            {
-                try
-                {
-                    driverDWM.close();
-                } catch (IOException e)
-                {
-                    Log.e(TAG, "Eccezione in chiusura del driver DWM", e);
-                }
-                driverDWM = null;
-            }
-
-            allListeners = null;
-            tagListeners = null;
+            updateDataTimer.shutdown();
+            updateDataTimer = null;
         }
+
+        if (driverDWM != null)
+        {
+            try
+            {
+                driverDWM.close();
+            } catch (IOException e)
+            {
+                Log.e(TAG, "Eccezione in chiusura del driver DWM", e);
+            }
+            driverDWM = null;
+        }
+
+        allListeners = null;
+        tagListeners = null;
     }
 
     /**
      * Restituisce una lista con gli ID dei tag connessi al modulo DWM. E' da usare una tantum.
      * @return una lista contenente i tag connessi
      */
-    public List<Integer> getTagIDs()
+    public synchronized List<Integer> getTagIDs()
     {
-        synchronized (workingLock)
+        List<Integer> tags = new ArrayList<>(actualData.size());
+        for (int i = 0; i < actualData.size(); i++)
         {
-            List<Integer> tags = new ArrayList<>(actualData.size());
-            for (int i = 0; i < actualData.size(); i++)
-            {
-                tags.add(actualData.get(i).tagID);
-            }
-
-            return tags;
+            tags.add(actualData.get(i).tagID);
         }
+
+        return tags;
     }
 }
