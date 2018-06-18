@@ -121,7 +121,6 @@ public class DistanceController
      * @param separator Una stringa usata per separare visivamente i dati
      * @param data Lista con le entry da loggare
      */
-    @SuppressWarnings({"ResultOfMethodCallIgnored", "SameParameterValue"})
     private static void logEntryData(String tag, String message, String separator, List<Entry> data)
     {
         if (data == null || data.size() == 0)
@@ -133,7 +132,7 @@ public class DistanceController
         String result = "" + message;
 
         for (int i = 0; i < data.size(); i++)
-            result.concat(data.get(i).toString() + separator);
+            result = result.concat(data.get(i).toString() + separator);
 
         Log.d(tag, result);
     }
