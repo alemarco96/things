@@ -23,12 +23,14 @@ public class DistanceController
     //numero di volte per cui ricevendo gli stessi dati dal modulo DWM, un tag viene dichiarato disconnesso
     private static final int COUNTER_FOR_DISCONNECTED = 4;
     //numero di errori nella comunicazione con il modulo DWM prima di intervenire
-    private static final int COUNTER_FOR_CONNECTION_ERRORS = 3;
+    private static final int COUNTER_FOR_CONNECTION_ERRORS = 2;
     //periodo minimo di aggiornamento a cui può essere settato il controller (<= 10 Hz)
     private static final long MINIMUM_UPDATE_PERIOD = 100L;
+    // Periodo di sospensione delle comunicazioni in caso di problemi (in ms)
+    private static final long COMMUNICATION_PAUSE_TIME = 30000L;
 
-    private static long dwmBugTimer = 0;
-    private static final long DWM_BUG_PAUSE = 30000L;
+    // Variabile usata per salvare il momento in cui sono state sospese le comunicazioni
+    private static long communicationPauseTimer = 0;
 
     /**
      * Oggetto che serve per ordinare in ordine crescente per tagID le entry
@@ -167,9 +169,9 @@ public class DistanceController
         @Override
         public void run()
         {
-            if (SystemClock.uptimeMillis() - dwmBugTimer < DWM_BUG_PAUSE && dwmBugTimer != 0) {
+            if (SystemClock.uptimeMillis() - communicationPauseTimer < COMMUNICATION_PAUSE_TIME && communicationPauseTimer != 0) {
                 Log.v(TAG, "Aggiornamento distanza in pausa. Prossimo tentativo tra: "
-                        + (dwmBugTimer + DWM_BUG_PAUSE - SystemClock.uptimeMillis()) + "ms");
+                        + (communicationPauseTimer + COMMUNICATION_PAUSE_TIME - SystemClock.uptimeMillis()) + "ms");
                 return;
             }
 
@@ -181,31 +183,50 @@ public class DistanceController
                     classifyDataAndNotify(data);
                     actualData = data;
                     connectionErrors = 0;
-                } catch (IOException e)
+                } catch (Exception e)
                 {
                     connectionErrors++;
                     Log.w(TAG, "Avvenuta " + connectionErrors + "^ eccezione in updateDataTask", e);
+
+                    /*
+                     Nel caso sia stato raggiunto il limite di errori di comunicazione consecutivi,
+                     si procede tentando di risolverli
+                     */
                     if (connectionErrors >= COUNTER_FOR_CONNECTION_ERRORS)
                     {
-                        //ritesta la connessione per valutare se è ancora attiva
                         try
                         {
-                            SleepHelper.sleepMillis(MINIMUM_UPDATE_PERIOD);
+                            /*
+                             Nel caso sia stato perso l'accesso alla periferica,
+                             bisogna ricreate l'oggetto DriverDWM
+                             */
+                            if (e instanceof IllegalStateException) {
+                                String bus = driverDWM.getMyBus();
+                                driverDWM.close();
+                                driverDWM = new DriverDWM(bus);
+                            }
 
+                            // Dopo aver aspettato un tempo minimo, si controlla la connesione
+                            SleepHelper.sleepMillis(MINIMUM_UPDATE_PERIOD);
                             driverDWM.checkDWM();
 
-                            //canale di aggiornamento funzionante. Riprova a far funzionare il controller
+                            /*
+                             Arrivati a questo punto, la connesione è funzionante.
+                             Viene azzerato il contatore degli errori.
+                             */
                             connectionErrors = 0;
-                        } catch (IOException e2)
+                        } catch (Exception e1)
                         {
-                            dwmBugTimer = SystemClock.uptimeMillis();
+                            /*
+                            Nel caso ci siano stati ancora problemi, si sospende l'aggiornamento
+                            per un lasso di tempo, così da permettere al modulo di sistemarsi.
+                            */
+                            communicationPauseTimer = SystemClock.uptimeMillis();
 
                             String text = "Periferica non funzionante.\n" +
-                                    "Nuovo tentativo tra " + (DWM_BUG_PAUSE / 1000L) + " secondi.";
-
-                            notifyError(text, e2);
-
-                            Log.e(TAG, text, e2);
+                                    "Nuovo tentativo tra " + (COMMUNICATION_PAUSE_TIME / 1000L) + " secondi.";
+                            notifyError(text, e1);
+                            Log.e(TAG, text, e1);
                         }
                     }
                 }
@@ -517,7 +538,7 @@ public class DistanceController
         }
     }
 
-    private void notifyError(final String shortDescription, final IOException e)
+    private void notifyError(final String shortDescription, final Exception e)
     {
         for (int i = 0; i < allListeners.size(); i++) {
             final AllTagsListener listener = allListeners.get(i);
@@ -567,7 +588,7 @@ public class DistanceController
 
             connectionErrors = 0;
 
-            if (SystemClock.uptimeMillis() - dwmBugTimer < DWM_BUG_PAUSE && dwmBugTimer != 0) {
+            if (SystemClock.uptimeMillis() - communicationPauseTimer < COMMUNICATION_PAUSE_TIME && communicationPauseTimer != 0) {
                 Log.v(TAG, "Controllo della connessione non effettuato.");
                 return;
             }
@@ -575,7 +596,7 @@ public class DistanceController
             //controlla lo stato della connessione del modulo
             try {
                 driverDWM.checkDWM();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 //connessione non funzionante. Rilascia risorse
                 driverDWM.close();
                 throw e;
