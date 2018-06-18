@@ -152,11 +152,6 @@ public class DistanceController
     //oggetto usato per impedire la chiusura del controller mentre è in corso la comunicazione a basso livello
     private final Object workingLock = new Object();
 
-    //oggetto usato per gestire l'accesso in mutua esclusione ai dati
-    private final Object dataLock = new Object();
-    //oggetto usato per gestire l'accesso in mutua esclusione ai listeners
-    private final Object listenersLock = new Object();
-
     //contatore degli errori di comunicazione con il modulo DWM
     private int connectionErrors = 0;
 
@@ -188,10 +183,7 @@ public class DistanceController
                 {
                     List<Entry> data = updateData();
                     classifyDataAndNotify(data);
-                    synchronized (dataLock)
-                    {
-                        actualData = data;
-                    }
+                    actualData = data;
                     connectionErrors = 0;
                 } catch (IOException e)
                 {
@@ -325,83 +317,76 @@ public class DistanceController
         List<Entry> connected = new ArrayList<>();
         List<Entry> disconnected = new ArrayList<>();
 
-        synchronized (dataLock)
+        updated = new ArrayList<>(newData.size() > actualData.size() ? newData.size() : actualData.size());
+
+        for (int i = 0; i < newData.size(); i++)
         {
-            updated = new ArrayList<>(newData.size() > actualData.size() ? newData.size() : actualData.size());
+            Entry newEntry = newData.get(i);
 
-            for (int i = 0; i < newData.size(); i++)
+            String toLog = "classifyDataAndNotify() -> Esaminando tag: " + Integer.toHexString(newEntry.tagID);
+
+            //ricerca di entry in actualData con lo stesso tagID
+            int result = Collections.binarySearch(actualData, newEntry, MATCHING_ID_ENTRY_COMPARATOR);
+            if (result >= 0)
             {
-                Entry newEntry = newData.get(i);
+                Entry actualEntry = actualData.get(result);
 
-                String toLog = "classifyDataAndNotify() -> Esaminando tag: " + Integer.toHexString(newEntry.tagID);
-
-                //ricerca di entry in actualData con lo stesso tagID
-                int result = Collections.binarySearch(actualData, newEntry, MATCHING_ID_ENTRY_COMPARATOR);
-                if (result >= 0)
+                if (newEntry.tagDistance == actualEntry.tagDistance)
                 {
-                    Entry actualEntry = actualData.get(result);
+                    //tag appena disconnesso
+                    newEntry.counter = actualEntry.counter + 1;
 
-                    if (newEntry.tagDistance == actualEntry.tagDistance)
+                    if (newEntry.counter >= COUNTER_FOR_DISCONNECTED)
                     {
-                        //tag appena disconnesso
-                        newEntry.counter = actualEntry.counter + 1;
-
-                        if (newEntry.counter >= COUNTER_FOR_DISCONNECTED)
-                        {
-                            toLog += " appena disconnesso.";
-                            disconnected.add(new Entry(newEntry));
-                            disconnectedData.add(new Entry(newEntry));
-                        }
-                        else
-                        {
-                            toLog += (" potrebbe essere disconnesso, con counter: " + newEntry.counter + ".");
-                            updated.add(new Entry(newEntry));
-                        }
-                    } else
+                        toLog += " appena disconnesso.";
+                        disconnected.add(new Entry(newEntry));
+                        disconnectedData.add(new Entry(newEntry));
+                    }
+                    else
                     {
-                        newEntry.counter = 0;
-                        toLog += " tag aggiornato.";
+                        toLog += (" potrebbe essere disconnesso, con counter: " + newEntry.counter + ".");
                         updated.add(new Entry(newEntry));
                     }
                 } else
                 {
-                    //tag appena connesso
                     newEntry.counter = 0;
-                    toLog += " appena connesso.";
-                    connected.add(new Entry(newEntry));
+                    toLog += " tag aggiornato.";
+                    updated.add(new Entry(newEntry));
                 }
-
-                Log.v(TAG, toLog);
-            }
-
-            //ricerca di entry relative a tag che "scompaiono" nell'ultimo aggiornamento
-            for (int i = 0; i < actualData.size(); i++)
+            } else
             {
-                Entry actualEntry = actualData.get(i);
-
-                int result = Collections.binarySearch(newData, actualEntry, MATCHING_ID_ENTRY_COMPARATOR);
-                if (result < 0)
-                {
-                    //tag presente nei dati vecchi ma non più nei nuovi => tag disconnesso
-                    disconnected.add(new Entry(actualEntry.tagID, actualEntry.tagDistance));
-
-                    Log.v(TAG, "classifyDataAndNotify() -> Esaminando vecchio tag: " + Integer.toHexString(actualEntry.tagID) + ": appena disconnesso.");
-                }
+                //tag appena connesso
+                newEntry.counter = 0;
+                toLog += " appena connesso.";
+                connected.add(new Entry(newEntry));
             }
 
-            Collections.sort(disconnectedData, MATCHING_ID_ENTRY_COMPARATOR);
-
-            logEntryData(TAG, "\nTag appena connessi: " + connected.size() + "\n", "\n", connected);
-            logEntryData(TAG, "\nTag appena disconnessi: " + disconnected.size() + "\n", "\n", disconnected);
-            logEntryData(TAG, "\nTag ancora connessi: " + updated.size() + "\n", "\n", updated);
+            Log.v(TAG, toLog);
         }
 
-        synchronized (listenersLock)
+        //ricerca di entry relative a tag che "scompaiono" nell'ultimo aggiornamento
+        for (int i = 0; i < actualData.size(); i++)
         {
-            notifyToAllTagsListeners(connected, disconnected, updated);
+            Entry actualEntry = actualData.get(i);
 
-            notifyToTagsListeners(connected, disconnected, updated);
+            int result = Collections.binarySearch(newData, actualEntry, MATCHING_ID_ENTRY_COMPARATOR);
+            if (result < 0)
+            {
+                //tag presente nei dati vecchi ma non più nei nuovi => tag disconnesso
+                disconnected.add(new Entry(actualEntry.tagID, actualEntry.tagDistance));
+
+                Log.v(TAG, "classifyDataAndNotify() -> Esaminando vecchio tag: " + Integer.toHexString(actualEntry.tagID) + ": appena disconnesso.");
+            }
         }
+
+        Collections.sort(disconnectedData, MATCHING_ID_ENTRY_COMPARATOR);
+
+        logEntryData(TAG, "\nTag appena connessi: " + connected.size() + "\n", "\n", connected);
+        logEntryData(TAG, "\nTag appena disconnessi: " + disconnected.size() + "\n", "\n", disconnected);
+        logEntryData(TAG, "\nTag ancora connessi: " + updated.size() + "\n", "\n", updated);
+
+        notifyToAllTagsListeners(connected, disconnected, updated);
+        notifyToTagsListeners(connected, disconnected, updated);
     }
 
     /**
@@ -536,24 +521,30 @@ public class DistanceController
         }
     }
 
-    private void notifyError(final String shortDescription, final IOException e) {
+    private void notifyError(final String shortDescription, final IOException e)
+    {
         for (int i = 0; i < allListeners.size(); i++) {
             final AllTagsListener listener = allListeners.get(i);
-            new Thread(new Runnable() {
+            new Thread(new Runnable()
+            {
                 @Override
-                public void run() {
+                public void run()
+                {
                     listener.onError(shortDescription, e);
                 }
             }).start();
         }
 
-        for (int i = 0; i < tagListeners.size(); i++) {
+        for (int i = 0; i < tagListeners.size(); i++)
+        {
             final Pair<Integer, TagListener> pair = tagListeners.get(i);
             final TagListener listener = pair.second;
 
-            new Thread(new Runnable() {
+            new Thread(new Runnable()
+            {
                 @Override
-                public void run() {
+                public void run()
+                {
                     listener.onError(shortDescription, e);
                 }
             }).start();
@@ -618,13 +609,10 @@ public class DistanceController
     {
         synchronized (workingLock)
         {
-            synchronized (listenersLock)
-            {
-                if (tagListeners == null)
-                    return;
+            if (tagListeners == null)
+                return;
 
-                tagListeners.add(new Pair<>(tagID, listener));
-            }
+            tagListeners.add(new Pair<>(tagID, listener));
         }
     }
 
@@ -637,19 +625,16 @@ public class DistanceController
     {
         synchronized (workingLock)
         {
-            synchronized (listenersLock)
+            if (tagListeners == null)
+                return;
+
+            for (int i = 0; i < tagListeners.size(); i++)
             {
-                if (tagListeners == null)
-                    return;
+                Pair<Integer, TagListener> pair = tagListeners.get(i);
 
-                for (int i = 0; i < tagListeners.size(); i++)
+                if (pair.second.equals(listener))
                 {
-                    Pair<Integer, TagListener> pair = tagListeners.get(i);
-
-                    if (pair.second.equals(listener))
-                    {
-                        tagListeners.remove(i);
-                    }
+                    tagListeners.remove(i);
                 }
             }
         }
@@ -663,13 +648,10 @@ public class DistanceController
     {
         synchronized (workingLock)
         {
-            synchronized (listenersLock)
-            {
-                if (allListeners == null)
-                    return;
+            if (allListeners == null)
+                return;
 
-                allListeners.add(listener);
-            }
+            allListeners.add(listener);
         }
     }
 
@@ -682,13 +664,10 @@ public class DistanceController
     {
         synchronized (workingLock)
         {
-            synchronized (listenersLock)
-            {
-                if (allListeners == null)
-                    return;
+            if (allListeners == null)
+                return;
 
-                allListeners.remove(listener);
-            }
+            allListeners.remove(listener);
         }
     }
 
@@ -743,13 +722,6 @@ public class DistanceController
             {
 
                 updateDataTimer.shutdown();
-                /*
-                try {
-                    updateDataTimer.awaitTermination(365, TimeUnit.DAYS);
-                } catch (InterruptedException e) {
-                    Log.e(TAG, "timer.awaitTermination() interrotto.");
-                }
-                */
                 updateDataTimer = null;
             }
 
@@ -765,11 +737,8 @@ public class DistanceController
                 driverDWM = null;
             }
 
-            synchronized (listenersLock)
-            {
-                allListeners = null;
-                tagListeners = null;
-            }
+            allListeners = null;
+            tagListeners = null;
         }
     }
 
@@ -781,16 +750,13 @@ public class DistanceController
     {
         synchronized (workingLock)
         {
-            synchronized (dataLock)
+            List<Integer> tags = new ArrayList<>(actualData.size());
+            for (int i = 0; i < actualData.size(); i++)
             {
-                List<Integer> tags = new ArrayList<>(actualData.size());
-                for (int i = 0; i < actualData.size(); i++)
-                {
-                    tags.add(actualData.get(i).tagID);
-                }
-
-                return tags;
+                tags.add(actualData.get(i).tagID);
             }
+
+            return tags;
         }
     }
 }
