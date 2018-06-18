@@ -1,7 +1,5 @@
 package group107.distancealert;
 
-import java.io.IOException;
-
 public interface TagListener
 {
     void onTagHasConnected(final int tagDistance);

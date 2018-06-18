@@ -285,6 +285,7 @@ public class MainActivity extends Activity {
 
                 @Override
                 public void onError(final String shortDescription, final Exception e) {
+                    // Segnalazione del problema sulla UI tramite un toast
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -453,7 +454,7 @@ public class MainActivity extends Activity {
 
             @Override
             public void onError(String shortDescription, Exception e) {
-
+                // Non serve far nulla poiché già gestito nel metodo onError di AllTagsListener
             }
         };
 
@@ -488,6 +489,9 @@ public class MainActivity extends Activity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Toast t = Toast.makeText(getApplicationContext(), R.string.alarm_toast,
+                        Toast.LENGTH_LONG);
+                t.show();
                 Log.d(MainActivityTAG, "distanceAlarm: running");
                 try {
                     if (myAlarm == null || pulsante == null) {

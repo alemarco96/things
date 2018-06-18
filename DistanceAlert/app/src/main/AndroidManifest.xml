@@ -7,8 +7,7 @@
     <!-- Permesso necessario per usare le periferiche hardware come SPI, UART e GPIO -->
     <uses-permission android:name="com.google.android.things.permission.USE_PERIPHERAL_IO" />
 
-    <application
-        tools:ignore="GoogleAppIndexingWarning">
+    <application tools:ignore="GoogleAppIndexingWarning,MissingApplicationIcon">
         <uses-library android:name="com.google.android.things" />
 
         <activity

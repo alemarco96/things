@@ -1,6 +1,5 @@
 package group107.distancealert;
 
-import java.io.IOException;
 import java.util.List;
 
 public interface AllTagsListener

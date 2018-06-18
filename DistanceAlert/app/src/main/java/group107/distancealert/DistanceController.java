@@ -538,30 +538,32 @@ public class DistanceController
         }
     }
 
-    private void notifyError(final String shortDescription, final Exception e)
-    {
+    /**
+     * Segnala a tutti i listener un errore nell'aggiornamento
+     *
+     * @param shortDescription Breve descrizione del problema
+     * @param e                Eccezzione avvenuta
+     */
+    private void notifyError(final String shortDescription, final Exception e) {
+        // Segnalazione a tutti gli AllTagsListener
         for (int i = 0; i < allListeners.size(); i++) {
             final AllTagsListener listener = allListeners.get(i);
-            new Thread(new Runnable()
-            {
+            new Thread(new Runnable() {
                 @Override
-                public void run()
-                {
+                public void run() {
                     listener.onError(shortDescription, e);
                 }
             }).start();
         }
 
-        for (int i = 0; i < tagListeners.size(); i++)
-        {
+        // Segnalazione a tutti i TagListener
+        for (int i = 0; i < tagListeners.size(); i++) {
             final Pair<Integer, TagListener> pair = tagListeners.get(i);
             final TagListener listener = pair.second;
 
-            new Thread(new Runnable()
-            {
+            new Thread(new Runnable() {
                 @Override
-                public void run()
-                {
+                public void run() {
                     listener.onError(shortDescription, e);
                 }
             }).start();
