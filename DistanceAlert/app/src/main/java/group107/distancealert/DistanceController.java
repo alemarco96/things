@@ -121,6 +121,7 @@ public class DistanceController
      * @param separator Una stringa usata per separare visivamente i dati
      * @param data Lista con le entry da loggare
      */
+    @SuppressWarnings("SameParameterValue")
     private static void logEntryData(String tag, String message, String separator, List<Entry> data)
     {
         if (data == null || data.size() == 0)
@@ -371,6 +372,21 @@ public class DistanceController
                 }
 
                 Log.v(TAG, toLog);
+            }
+
+            //ricerca di entry relative a tag che "scompaiono" nell'ultimo aggiornamento
+            for (int i = 0; i < actualData.size(); i++)
+            {
+                Entry actualEntry = actualData.get(i);
+
+                int result = Collections.binarySearch(newData, actualEntry, MATCHING_ID_ENTRY_COMPARATOR);
+                if (result < 0)
+                {
+                    //tag presente nei dati vecchi ma non più nei nuovi => tag disconnesso
+                    disconnected.add(new Entry(actualEntry.tagID, actualEntry.tagDistance));
+
+                    Log.v(TAG, "classifyDataAndNotify() -> Esaminando vecchio tag: " + Integer.toHexString(actualEntry.tagID) + ": appena disconnesso.");
+                }
             }
 
             Collections.sort(disconnectedData, MATCHING_ID_ENTRY_COMPARATOR);
