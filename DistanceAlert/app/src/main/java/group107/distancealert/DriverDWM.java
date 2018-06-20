@@ -257,7 +257,9 @@ public class DriverDWM {
         }
 
         // Se il modulo ha inviato una risposta non conforme lancia un'eccezione
-        if (response.length < 3 || (response[0] == 0xff && response[1] == 0xff && response[2] == 0xff)) {
+        if (response.length < 3
+                || (response[0] == 0xff && response[1] == 0xff && response[2] == 0xff)
+                || (response[0] == 0x00 && response[1] == 0x00 && response[2] == 0x00)) {
             throw new IOException("Invalid response received.");
         }
 
