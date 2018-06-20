@@ -3,6 +3,7 @@ package group107.distancealert;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -289,7 +290,8 @@ public class MainActivity extends Activity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(getApplicationContext(), shortDescription, Toast.LENGTH_LONG).show();
+                            Toast.makeText(getApplicationContext(), shortDescription,
+                                    Toast.LENGTH_LONG).show();
                         }
                     });
                 }
@@ -323,6 +325,8 @@ public class MainActivity extends Activity {
                     final int singleId = ids.get(i);
                     final String idText = Integer.toHexString(singleId);
                     item.get(i).setText(idText);
+                    item.get(i).setTextSize(TypedValue.COMPLEX_UNIT_SP, 24);
+                    item.get(i).setTextColor(connectedToId.getTextColors());
 
                     //Click specifico di ogni singolo RadioButton
                     item.get(i).setOnClickListener(new View.OnClickListener() {
