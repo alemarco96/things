@@ -4,6 +4,7 @@ package group107.distancealert;
  * Interfaccia utile per gestire in maniera asincrona i dati ricevuti dal DistanceController.
  * Questo listener gestisce uno specifico tag.
  */
+@SuppressWarnings("WeakerAccess")
 public interface TagListener
 {
     /**
@@ -16,6 +17,7 @@ public interface TagListener
      * Callback usata nel caso in cui il tag si è appena disconnesso dal modulo DWM.
      * @param tagLastKnownDistance Ultima distanza nota del tag.
      */
+    @SuppressWarnings("unused")
     void onTagHasDisconnected(final int tagLastKnownDistance);
 
     /**
@@ -29,5 +31,6 @@ public interface TagListener
      * @param shortDescription Descrizione sintetica dell'errore.
      * @param error Eccezione relativa all'errore.
      */
+    @SuppressWarnings({"EmptyMethod", "unused"})
     void onError(final String shortDescription, final Exception error);
 }

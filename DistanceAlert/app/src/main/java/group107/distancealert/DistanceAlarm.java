@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
  * Quando si ha finito di usare un oggetto di questa classe è importante invocare il metodo close
  * per rilasciare le periferiche hardware utilizzate.
  */
+@SuppressWarnings("WeakerAccess")
 public class DistanceAlarm {
     /**
      * Stringa utile per log della classe DistanceAlarm
@@ -79,7 +80,7 @@ public class DistanceAlarm {
 
         /*
          Prova ad ottenere un'istanza della periferica PWM relativa al
-         pin desiderato, la inizializza adegutamente e la lascia spenta.
+         pin desiderato, la inizializza adeguatamente e la lascia spenta.
          */
         buzzer = manager.openPwm(pwmBuzzer);
         buzzer.setPwmFrequencyHz(tone[toneIndex]);
@@ -160,7 +161,7 @@ public class DistanceAlarm {
     }
 
     /**
-     * Terminazione della programmazione temportizzata sul timer e
+     * Terminazione della programmazione temporizzata sul timer e
      * rilascio delle periferiche relative al led e al buzzer.
      *
      * @throws IOException Lanciata se ci sono problemi nella chiusura delle periferiche

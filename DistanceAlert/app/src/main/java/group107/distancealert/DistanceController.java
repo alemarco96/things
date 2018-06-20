@@ -70,6 +70,7 @@ public class DistanceController
      * Classe che rappresenta una coppia id-distanza.
      * E' implementata in modo tale da essere un oggetto immutabile.
      */
+    @SuppressWarnings("WeakerAccess")
     public static class Entry
     {
         public final int tagID;

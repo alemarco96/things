@@ -6,6 +6,7 @@ import android.util.Log;
 /**
  * Classe ausiliaria che si occupa di gestire lo sleep dei thread
  */
+@SuppressWarnings("WeakerAccess")
 public final class SleepHelper
 {
     /**

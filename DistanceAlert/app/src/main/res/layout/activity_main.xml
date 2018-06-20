@@ -15,7 +15,7 @@
         android:orientation="vertical"
         android:padding="20sp"
         app:layout_constraintStart_toStartOf="@+id/connectedTo"
-        app:layout_constraintTop_toBottomOf="@id/connectedTo"></LinearLayout>
+        app:layout_constraintTop_toBottomOf="@id/connectedTo"/>
 
     <TextView
         android:id="@+id/distance_measured_is"

@@ -21,6 +21,7 @@ import static java.lang.Byte.toUnsignedInt;
  * Quando si ha finito di usare un oggetto di questa classe è importante invocare il metodo close
  * per rilasciare le periferiche hardware utilizzate.
  */
+@SuppressWarnings("WeakerAccess")
 public class DriverDWM {
     /**
      * Stringa utile per log del DriverDWM
@@ -216,7 +217,7 @@ public class DriverDWM {
     }
 
     /**
-     * Effettua la richiesta della API e con i relativi valori al modulo DWM e ritorna la rispota
+     * Effettua la richiesta della API e con i relativi valori al modulo DWM e ritorna la risposta
      * ottenuta convertita in unsigned int.
      * Questo metodo è synchronized per evitare la sua sovrapposizione con il metodo close.
      * N.B. Questo metodo è bloccante e normalmente può richiedere fino a 10ms per essere completato.
@@ -240,7 +241,7 @@ public class DriverDWM {
             throw new IllegalArgumentException("Bad parameters");
         }
 
-        // Prapara il pacchetto TLV da inviare al modulo
+        // Prepara il pacchetto TLV da inviare al modulo
         byte[] buffer = new byte[L + 2];
         buffer[0] = tag;
         buffer[1] = (byte) L;
@@ -284,11 +285,11 @@ public class DriverDWM {
      * Se non riceve alcuna risposta entro MAX_SPI_WAIT lancia la relativa eccezione.
      *
      * @param transmit Array contenete i byte da inviare via UART
-     * @return int[] Contentente i valori ricevuti convertiti in unsigned int
+     * @return int[] Contenente i valori ricevuti convertiti in unsigned int
      * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      */
     private int[] requestViaSPI(byte[] transmit) throws IOException {
-        // Trasferisce pacchetto a DWM contentente la richiesta
+        // Trasferisce pacchetto a DWM contenente la richiesta
         transferViaSPI(transmit, false);
 
         /*
@@ -319,7 +320,7 @@ public class DriverDWM {
      *
      * @param transmit Array contenete i byte da inviare via SPI
      * @param autoFill L'opzione autoFill è abilitata riempie il buffer di 0xff
-     * @return int[] Contentente i valori ricevuti convertiti in unsigned int
+     * @return int[] Contenente i valori ricevuti convertiti in unsigned int
      * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      */
     private int[] transferViaSPI(byte[] transmit, boolean autoFill) throws IOException {
@@ -352,7 +353,7 @@ public class DriverDWM {
      * Se non riceve alcuna risposta entro MAX_UART_WAIT lancia la relativa eccezione.
      *
      * @param transmit Array contenete i byte da inviare via UART
-     * @return int[] Contentente i valori ricevuti convertiti in unsigned int
+     * @return int[] Contenente i valori ricevuti convertiti in unsigned int
      * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      */
     private int[] requestViaUART(byte[] transmit) throws IOException {
@@ -410,6 +411,7 @@ public class DriverDWM {
      * @param maxTimeWait_millis Tempo d'attesa massimo
      * @throws IOException Lanciata se ci sono problemi di accesso alla periferica
      */
+    @SuppressWarnings("SameParameterValue")
     private void waitUART(long maxTimeWait_millis) throws IOException {
         // Crea un thread separato su cui svolgere la callback della UART
         myThread = new HandlerThread("UartCallbackThread");

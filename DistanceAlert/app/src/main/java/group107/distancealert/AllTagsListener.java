@@ -6,6 +6,7 @@ import java.util.List;
  * Interfaccia utile per gestire in maniera asincrona i dati ricevuti dal DistanceController.
  * Gestisce i dati relativi a tutti i tag connessi con il controller.
  */
+@SuppressWarnings("WeakerAccess")
 public interface AllTagsListener
 {
     /**
@@ -31,5 +32,6 @@ public interface AllTagsListener
      * @param shortDescription Descrizione sintetica dell'errore.
      * @param error Eccezione relativa all'errore.
      */
+    @SuppressWarnings("unused")
     void onError(final String shortDescription, final Exception error);
 }
