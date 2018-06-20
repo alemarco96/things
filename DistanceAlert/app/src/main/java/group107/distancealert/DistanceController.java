@@ -191,7 +191,6 @@ public class DistanceController
      */
     private ScheduledThreadPoolExecutor updateDataTimer;
 
-
     /**
      * Oggetto che definisce la routine di aggiornamento periodica del controller
      */
@@ -265,6 +264,110 @@ public class DistanceController
             }
         }
     };
+
+    /**
+     * Imposta il controller. Non avvia il polling con il modulo,
+     * che deve essere fatto manualmente tramite il metodo startUpdate()
+     *
+     * @param busName Il nome del pin a cui è collegato fisicamente il modulo
+     * @throws IllegalArgumentException Se il busName non è valido
+     * @throws IOException Se avviene un errore nella creazione del driver DWM
+     */
+    @SuppressWarnings("WeakerAccess")
+    public DistanceController(String busName) throws IllegalArgumentException, IOException
+    {
+        synchronized (this)
+        {
+            driverDWM = new DriverDWM(busName);
+            tagListeners = new ArrayList<>();
+            allListeners = new ArrayList<>();
+
+            actualData = new ArrayList<>();
+            disconnectedData = new ArrayList<>();
+
+            connectionErrors = 0;
+
+            // Evita di effettuare il check della connessione se il controller è stato messo in pausa
+            if (SystemClock.uptimeMillis() - communicationPauseTimer < COMMUNICATION_PAUSE_TIME
+                    && communicationPauseTimer != 0) {
+                Log.v(TAG, "Controllo della connessione non effettuato.");
+                return;
+            }
+
+            // Controlla lo stato della connessione del modulo
+            try {
+                driverDWM.checkDWM();
+            } catch (Exception e) {
+                // Connessione non funzionante. Rilascia risorse
+                driverDWM.close();
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * Imposta il controller. Avvio automatico dell'aggiornamento, con periodo impostabile
+     *
+     * @param busName Il nome del pin a cui è collegato fisicamente il modulo
+     * @param period Il periodo di aggiornamento
+     * @throws IllegalArgumentException Se il busName non è valido, oppure il periodo è negativo
+     * @throws IOException Se avviene un errore nella creazione del driver DWM
+     */
+    @SuppressWarnings({"unused", "WeakerAccess"})
+    public DistanceController(String busName, long period) throws IllegalArgumentException, IOException
+    {
+        this(busName);
+        startUpdate(period);
+    }
+
+    /**
+     * Restituisce una lista con gli ID dei tag connessi al modulo DWM.
+     *
+     * @return una lista contenente i tag connessi
+     */
+    public synchronized List<Integer> getTagIDs()
+    {
+        List<Integer> tags = new ArrayList<>(actualData.size());
+        for (int i = 0; i < actualData.size(); i++)
+        {
+            tags.add(actualData.get(i).tagID);
+        }
+
+        return tags;
+    }
+
+    /**
+     * Inizia l'aggiornamento del modulo con un periodo impostabile come parametro
+     *
+     * @param period Il tempo che trascorre tra un update e il successivo
+     * @throws IllegalArgumentException Se il periodo di aggiornamento è troppo basso
+     * @throws IllegalStateException Se l'aggiornamento è già avviato
+     */
+    @SuppressWarnings("WeakerAccess")
+    public synchronized void startUpdate(long period) throws IllegalArgumentException, IllegalStateException
+    {
+        if (period < 0)
+            throw new IllegalArgumentException("Il periodo di aggiornamento deve essere positivo. " +
+                    "Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
+
+        else if (period < MINIMUM_UPDATE_PERIOD)
+            throw new IllegalArgumentException("Il periodo di aggiornamento è troppo basso. " +
+                    "Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
+
+        // Avvio aggiornamento temporizzato
+        if (updateDataTimer == null)
+        {
+            updateDataTimer = new ScheduledThreadPoolExecutor(1);
+
+            /*
+             Impostazione necessaria per spegnere correttamente il timer completando l'esecuzione del
+             relativo task già avviato prima dello spegnimento
+             */
+            updateDataTimer.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
+            updateDataTimer.scheduleAtFixedRate(updateDataTask, period, period, TimeUnit.MILLISECONDS);
+        } else
+            throw new IllegalStateException("Timer già avviato");
+    }
 
     /**
      * Recupera le informazioni dal pacchetto di risposta del modulo DWM
@@ -629,58 +732,16 @@ public class DistanceController
     }
 
     /**
-     * Imposta il controller. Non avvia il polling con il modulo,
-     * che deve essere fatto manualmente tramite il metodo startUpdate()
+     * Aggiunge un listener che risponde agli eventi per tutti i tag
      *
-     * @param busName Il nome del pin a cui è collegato fisicamente il modulo
-     * @throws IllegalArgumentException Se il busName non è valido
-     * @throws IOException Se avviene un errore nella creazione del driver DWM
+     * @param listener Il listener da aggiungere
      */
-    @SuppressWarnings("WeakerAccess")
-    public DistanceController(String busName) throws IllegalArgumentException, IOException
+    public synchronized void addAllTagsListener(AllTagsListener listener)
     {
-        synchronized (this)
-        {
-            driverDWM = new DriverDWM(busName);
-            tagListeners = new ArrayList<>();
-            allListeners = new ArrayList<>();
+        if (allListeners == null)
+            return;
 
-            actualData = new ArrayList<>();
-            disconnectedData = new ArrayList<>();
-
-            connectionErrors = 0;
-
-            // Evita di effettuare il check della connessione se il controller è stato messo in pausa
-            if (SystemClock.uptimeMillis() - communicationPauseTimer < COMMUNICATION_PAUSE_TIME
-                    && communicationPauseTimer != 0) {
-                Log.v(TAG, "Controllo della connessione non effettuato.");
-                return;
-            }
-
-            // Controlla lo stato della connessione del modulo
-            try {
-                driverDWM.checkDWM();
-            } catch (Exception e) {
-                // Connessione non funzionante. Rilascia risorse
-                driverDWM.close();
-                throw e;
-            }
-        }
-    }
-
-    /**
-     * Imposta il controller. Avvio automatico dell'aggiornamento, con periodo impostabile
-     *
-     * @param busName Il nome del pin a cui è collegato fisicamente il modulo
-     * @param period Il periodo di aggiornamento
-     * @throws IllegalArgumentException Se il busName non è valido, oppure il periodo è negativo
-     * @throws IOException Se avviene un errore nella creazione del driver DWM
-     */
-    @SuppressWarnings({"unused", "WeakerAccess"})
-    public DistanceController(String busName, long period) throws IllegalArgumentException, IOException
-    {
-        this(busName);
-        startUpdate(period);
+        allListeners.add(listener);
     }
 
     /**
@@ -703,6 +764,20 @@ public class DistanceController
      * @param listener Il listener da rimuovere
      */
     @SuppressWarnings("unused")
+    public synchronized void removeAllTagsListener(AllTagsListener listener)
+    {
+        if (allListeners == null)
+            return;
+
+        allListeners.remove(listener);
+    }
+
+    /**
+     * Rimuove il listener, se presente
+     *
+     * @param listener Il listener da rimuovere
+     */
+    @SuppressWarnings("unused")
     public synchronized void removeTagListener(TagListener listener)
     {
         if (tagListeners == null)
@@ -717,66 +792,6 @@ public class DistanceController
                 tagListeners.remove(i);
             }
         }
-    }
-
-    /**
-     * Aggiunge un listener che risponde agli eventi per tutti i tag
-     *
-     * @param listener Il listener da aggiungere
-     */
-    public synchronized void addAllTagsListener(AllTagsListener listener)
-    {
-        if (allListeners == null)
-            return;
-
-        allListeners.add(listener);
-    }
-
-    /**
-     * Rimuove il listener, se presente
-     *
-     * @param listener Il listener da rimuovere
-     */
-    @SuppressWarnings("unused")
-    public synchronized void removeAllTagsListener(AllTagsListener listener)
-    {
-        if (allListeners == null)
-            return;
-
-        allListeners.remove(listener);
-    }
-
-    /**
-     * Inizia l'aggiornamento del modulo con un periodo impostabile come parametro
-     *
-     * @param period Il tempo che trascorre tra un update e il successivo
-     * @throws IllegalArgumentException Se il periodo di aggiornamento è troppo basso
-     * @throws IllegalStateException Se l'aggiornamento è già avviato
-     */
-    @SuppressWarnings("WeakerAccess")
-    public synchronized void startUpdate(long period) throws IllegalArgumentException, IllegalStateException
-    {
-        if (period < 0)
-            throw new IllegalArgumentException("Il periodo di aggiornamento deve essere positivo. " +
-                    "Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
-
-        else if (period < MINIMUM_UPDATE_PERIOD)
-            throw new IllegalArgumentException("Il periodo di aggiornamento è troppo basso. " +
-                    "Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
-
-        // Avvio aggiornamento temporizzato
-        if (updateDataTimer == null)
-        {
-            updateDataTimer = new ScheduledThreadPoolExecutor(1);
-
-            /*
-             Impostazione necessaria per spegnere correttamente il timer completando l'esecuzione del
-             relativo task già avviato prima dello spegnimento
-             */
-            updateDataTimer.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
-            updateDataTimer.scheduleAtFixedRate(updateDataTask, period, period, TimeUnit.MILLISECONDS);
-        } else
-            throw new IllegalStateException("Timer già avviato");
     }
 
     /**
@@ -816,21 +831,5 @@ public class DistanceController
         // Cancella i listener
         allListeners = null;
         tagListeners = null;
-    }
-
-    /**
-     * Restituisce una lista con gli ID dei tag connessi al modulo DWM.
-     *
-     * @return una lista contenente i tag connessi
-     */
-    public synchronized List<Integer> getTagIDs()
-    {
-        List<Integer> tags = new ArrayList<>(actualData.size());
-        for (int i = 0; i < actualData.size(); i++)
-        {
-            tags.add(actualData.get(i).tagID);
-        }
-
-        return tags;
     }
 }
