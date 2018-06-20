@@ -15,7 +15,6 @@ import java.util.Arrays;
 import static java.lang.Byte.toUnsignedInt;
 
 /**
- * Classe "Model" del design pattern Model-View-Controller.
  * Questa classe ha lo scopo di gestire completamente la comunicazione con il modulo DWM1001-DEV,
  * sia che esso sia collegato via UART o via SPI.
  * Quando si ha finito di usare un oggetto di questa classe è importante invocare il metodo close
