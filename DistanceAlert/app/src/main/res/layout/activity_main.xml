@@ -5,47 +5,50 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity"
-    android:padding="40sp">
+    android:layout_margin="40sp">
 
     <LinearLayout
         android:id="@+id/idLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:orientation="vertical"
         android:padding="20sp"
-        app:layout_constraintTop_toBottomOf="@id/connectedTo">
-    </LinearLayout>
-
+        app:layout_constraintStart_toStartOf="@+id/connectedTo"
+        app:layout_constraintTop_toBottomOf="@id/connectedTo"></LinearLayout>
 
     <TextView
         android:id="@+id/distance_measured_is"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/distance_measured_is"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toTopOf="@id/distance"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:textSize="36sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.65999997" />
 
     <TextView
         android:id="@+id/distance"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:textSize="36sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/distance_measured_is" />
+        app:layout_constraintEnd_toEndOf="@+id/distance_measured_is"
+        app:layout_constraintStart_toStartOf="@+id/distance_measured_is"
+        app:layout_constraintTop_toBottomOf="@+id/distance_measured_is" />
 
     <TextView
         android:id="@+id/connectedTo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
         android:text="@string/connected_to"
         android:textSize="24sp"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/connectedTo_id"
@@ -60,81 +63,99 @@
         android:id="@+id/maxDistanceIs"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
         android:text="@string/max_distance_is"
         android:textSize="24sp"
-        android:layout_margin="15sp"
-        app:layout_constraintBottom_toTopOf="@id/maxDistance"
-        app:layout_constraintLeft_toRightOf="@id/maxDistance"
-        app:layout_constraintRight_toLeftOf="@id/maxDistance"
-        app:layout_constraintTop_toTopOf="@id/connectedTo_id" />
-
+        app:layout_constraintEnd_toStartOf="@+id/plusMaxDistance"
+        app:layout_constraintStart_toEndOf="@+id/minusMaxDistance"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/plusMaxDistance"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
         android:text="@string/plus"
         android:textSize="24sp"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/maxDistanceIs" />
-
-
-    <TextView
-        android:id="@+id/maxDistance"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toBottomOf="@id/plusMaxDistance"
-        app:layout_constraintRight_toLeftOf="@id/plusMaxDistance"
-        app:layout_constraintTop_toBottomOf="@id/maxDistanceIs"
-        app:layout_constraintTop_toTopOf="@id/plusMaxDistance" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/maxDistanceIs" />
 
     <Button
         android:id="@+id/minusMaxDistance"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
         android:text="@string/minus"
         android:textSize="24sp"
-        app:layout_constraintRight_toLeftOf="@id/maxDistance"
-        app:layout_constraintTop_toBottomOf="@id/maxDistanceIs" />
+        app:layout_constraintBottom_toBottomOf="@+id/plusMaxDistance"
+        app:layout_constraintEnd_toStartOf="@+id/maxDistance"
+        app:layout_constraintTop_toTopOf="@+id/plusMaxDistance" />
 
     <TextView
-        android:id="@+id/info"
+        android:id="@+id/maxDistance"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
         android:textSize="24sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintRight_toRightOf="parent"/>
-
+        app:layout_constraintBottom_toBottomOf="@+id/plusMaxDistance"
+        app:layout_constraintEnd_toStartOf="@+id/plusMaxDistance"
+        app:layout_constraintTop_toTopOf="@+id/plusMaxDistance" />
 
     <TextView
         android:id="@+id/spi"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="40dp"
+        android:layout_marginTop="16dp"
         android:text="@string/spi"
-        android:layout_margin="20sp"
         android:textSize="24sp"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/maxDistance" />
+        app:layout_constraintEnd_toEndOf="@+id/plusMaxDistance"
+        app:layout_constraintTop_toBottomOf="@+id/cambio_bus" />
 
 
     <Switch
         android:id="@+id/switchMethod"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="20sp"
-        app:layout_constraintTop_toBottomOf="@id/maxDistance"
-        app:layout_constraintLeft_toRightOf="@id/maxDistance"
-        app:layout_constraintRight_toLeftOf="@id/maxDistance"
-        />
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintBottom_toBottomOf="@+id/spi"
+        app:layout_constraintEnd_toStartOf="@+id/spi"
+        app:layout_constraintStart_toEndOf="@+id/uart"
+        app:layout_constraintTop_toTopOf="@+id/spi" />
 
     <TextView
         android:id="@+id/uart"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:layout_marginStart="46dp"
+        android:layout_marginTop="16dp"
         android:text="@string/uart"
-        android:layout_margin="20sp"
         android:textSize="24sp"
-        app:layout_constraintRight_toLeftOf="@id/switchMethod"
-        app:layout_constraintTop_toBottomOf="@id/maxDistance" />
+        app:layout_constraintBottom_toBottomOf="@+id/spi"
+        app:layout_constraintStart_toStartOf="@+id/minusMaxDistance"
+        app:layout_constraintTop_toTopOf="@+id/spi" />
+
+    <TextView
+        android:id="@+id/cambio_bus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="32dp"
+        android:text="@string/cambio_bus"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="@+id/spi"
+        app:layout_constraintStart_toStartOf="@+id/uart"
+        app:layout_constraintTop_toBottomOf="@+id/plusMaxDistance" />
 </android.support.constraint.ConstraintLayout>

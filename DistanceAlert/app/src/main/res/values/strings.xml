@@ -1,14 +1,15 @@
 <resources>
     <string name="app_name">DistanceAlert</string>
-    <string name="distance_measured_is">Distanza rilevata in metri: </string>
-    <string name="alarm_toast">Attenzione! Distanza superata!</string>
-    <string name="connected_to">Connesso a modulo: </string>
-    <string name="noConnection">Nessuna connessione.</string>
-    <string name="noDwm">Problemi di comunicazione con la periferica DWM.</string>
-    <string name="max_distance_is">Allerta:</string>
+    <string name="distance_measured_is">Distanza rilevata:</string>
+    <string name="alarm_toast">Attenzione: superata la distanza di allerta!</string>
+    <string name="connected_to">Connesso a tag:</string>
+    <string name="noConnection">Nessuna connessione</string>
+    <string name="noDwm">Problemi di comunicazione con la periferica.</string>
+    <string name="max_distance_is">Distanza di allerta:</string>
     <string name="plus">+</string>
     <string name="minus">-</string>
-    <string name="physical_button_problem">Problema riguardo il bottone fisico rilevato.</string>
+    <string name="physical_button_problem">Problema nel pulsante fisico.</string>
     <string name="uart">UART</string>
     <string name="spi">SPI</string>
+    <string name="cambio_bus">Cambio bus:</string>
 </resources>
