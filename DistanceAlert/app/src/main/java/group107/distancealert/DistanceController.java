@@ -17,19 +17,41 @@ import java.util.concurrent.TimeUnit;
  */
 public class DistanceController
 {
+    /**
+     * Stringa utile per log del DistanceController
+     */
     private static final String TAG = "DistanceController";
-    //numero di byte usati dal modulo DWM per descrivere i dati relativi a ciascun tag
+
+    /**
+     * Numero di byte usati dal modulo DWM per descrivere i dati relativi a ciascun tag
+     */
     private static final int BYTES_PER_ENTRY = 20;
-    //numero di volte per cui ricevendo gli stessi dati dal modulo DWM, un tag viene dichiarato disconnesso
+
+    /**
+     * Numero di volte per cui ricevendo gli stessi dati dal modulo DWM, un tag viene dichiarato
+     * disconnesso. Questo serve perché il modulo DWM continua ad includere i dati relativi
+     * a tag fuori portata, riportando l'ultima distanza nota.
+     */
     private static final int COUNTER_FOR_DISCONNECTED = 4;
-    //numero di errori nella comunicazione con il modulo DWM prima di intervenire
+
+    /**
+     * Numero di errori nella comunicazione con il modulo DWM prima di intervenire
+     */
     private static final int COUNTER_FOR_CONNECTION_ERRORS = 2;
-    //periodo minimo di aggiornamento a cui può essere settato il controller (<= 10 Hz)
+
+    /**
+     * Periodo minimo di aggiornamento a cui può essere settato il controller (<= 10 Hz)
+     */
     private static final long MINIMUM_UPDATE_PERIOD = 100L;
-    // Periodo di sospensione delle comunicazioni in caso di problemi (in ms)
+
+    /**
+     * Periodo di sospensione delle comunicazioni in caso di problemi (in ms)
+     */
     private static final long COMMUNICATION_PAUSE_TIME = 30000L;
 
-    // Variabile usata per salvare il momento in cui sono state sospese le comunicazioni
+    /**
+     * Variabile usata per salvare il momento in cui sono state sospese le comunicazioni
+     */
     private static long communicationPauseTimer = 0;
 
     /**
@@ -45,7 +67,8 @@ public class DistanceController
     };
 
     /**
-     * Classe che rappresenta una coppia id-distanza. E' implementata in modo tale da essere un oggetto immutabile
+     * Classe che rappresenta una coppia id-distanza.
+     * E' implementata in modo tale da essere un oggetto immutabile.
      */
     public static class Entry
     {
@@ -55,6 +78,7 @@ public class DistanceController
 
         /**
          * Crea una nuova entry con id del tag e distanza specificata per parametro
+         *
          * @param id L'id del tag a cui è associata l'entry
          * @param distance La distanza misurata
          */
@@ -67,6 +91,7 @@ public class DistanceController
 
         /**
          * Crea una copia dell'entry passata per parametro
+         *
          * @param e Entry da copiare
          */
         private Entry(Entry e)
@@ -77,7 +102,9 @@ public class DistanceController
         }
 
         /**
-         * Effettua un confronto per stabilire se l'entry passata per parametro è uguale, sia come id del tag che come distanza misurata
+         * Effettua un confronto per stabilire se l'entry passata per parametro è uguale,
+         * sia come id del tag che come distanza misurata.
+         *
          * @param obj L'altra entry con cui effettuare il confronto
          * @return true se le due entry sono uguali, altrimenti false
          */
@@ -93,6 +120,7 @@ public class DistanceController
 
         /**
          * Ottiene una rappresentazione testuale dell'entry
+         *
          * @return Una stringa che rappresenta l'entry
          */
         @Override
@@ -103,22 +131,8 @@ public class DistanceController
     }
 
     /**
-     * Clona la lista di entry id-distanza passata per argomento. Viene effettuata una copia dei dati
-     * @param source La lista con i dati da copiare
-     * @return Una lista copia di quella passata per parametro
-     */
-    private static List<Entry> cloneList(List<Entry> source)
-    {
-        List<Entry> dest = new ArrayList<>(source.size());
-        for (int i = 0; i < source.size(); i++)
-        {
-            dest.add(new Entry(source.get(i)));
-        }
-        return dest;
-    }
-
-    /**
      * Logga tutte le entry presenti nella lista, anteponendoci un messaggio
+     *
      * @param tag Il tag con cui fare il log
      * @param message Il messaggio da anteporre ai dati
      * @param separator Una stringa usata per separare visivamente i dati
@@ -133,7 +147,7 @@ public class DistanceController
             return;
         }
 
-        String result = "" + message;
+        String result = message;
 
         for (int i = 0; i < data.size(); i++)
             result = result.concat(data.get(i).toString() + separator);
@@ -141,23 +155,40 @@ public class DistanceController
         Log.d(tag, result);
     }
 
-    //memorizza i dati attuali
+    /**
+     * Memorizza i dati attuali
+     */
     private List<Entry> actualData;
-    //memorizza i dati dei tag che sono disconnessi
+
+    /**
+     * Memorizza i dati dei tag che sono disconnessi
+     */
     private List<Entry> disconnectedData;
 
-    //memorizza tutti i listeners associati a tutti i tag
+    /**
+     * Memorizza tutti i listeners associati a tutti i tag
+     */
     private List<AllTagsListener> allListeners;
-    //memorizza tutti i listeners associati ad uno specifico tag
+
+    /**
+     * Memorizza tutti i listeners associati ad uno specifico tag
+     */
     private List<Pair<Integer, TagListener>> tagListeners;
 
-    //oggetto che gestisce la comunicazione a basso livello con il modulo DWM
+    /**
+     * Oggetto che gestisce la comunicazione a basso livello con il modulo DWM
+     */
     private DriverDWM driverDWM;
-    //contatore degli errori di comunicazione con il modulo DWM
+
+    /**
+     * Contatore degli errori di comunicazione con il modulo DWM
+     */
     private int connectionErrors = 0;
 
-    //oggetto che, usando un thread secondario che autogestisce la sua schedulazione periodica, si occupa di effettuare
-    //il polling del modulo DWM per ottenere le distanze
+    /**
+     * oggetto che, usando un thread secondario che autogestisce la sua schedulazione periodica,
+     * si occupa di effettuare il polling del modulo DWM per ottenere le distanze.
+     */
     private ScheduledThreadPoolExecutor updateDataTimer;
 
 
@@ -169,7 +200,8 @@ public class DistanceController
         @Override
         public void run()
         {
-            if (SystemClock.uptimeMillis() - communicationPauseTimer < COMMUNICATION_PAUSE_TIME && communicationPauseTimer != 0) {
+            if ((SystemClock.uptimeMillis() - communicationPauseTimer < COMMUNICATION_PAUSE_TIME)
+                    && communicationPauseTimer != 0) {
                 Log.v(TAG, "Aggiornamento distanza in pausa. Prossimo tentativo tra: "
                         + (communicationPauseTimer + COMMUNICATION_PAUSE_TIME - SystemClock.uptimeMillis()) + "ms");
                 return;
@@ -198,7 +230,7 @@ public class DistanceController
                         {
                             /*
                              Nel caso sia stato perso l'accesso alla periferica,
-                             bisogna ricreate l'oggetto DriverDWM
+                             deve ricreare l'oggetto DriverDWM
                              */
                             if (e instanceof IllegalStateException) {
                                 String bus = driverDWM.getMyBus();
@@ -206,21 +238,21 @@ public class DistanceController
                                 driverDWM = new DriverDWM(bus);
                             }
 
-                            // Dopo aver aspettato un tempo minimo, si controlla la connesione
+                            // Dopo aver aspettato un tempo minimo, controlla la connessione
                             SleepHelper.sleepMillis(MINIMUM_UPDATE_PERIOD);
                             driverDWM.checkDWM();
 
                             /*
-                             Arrivati a questo punto, la connesione è funzionante.
+                             Arrivati a questo punto, la connessione è funzionante.
                              Viene azzerato il contatore degli errori.
                              */
                             connectionErrors = 0;
                         } catch (Exception e1)
                         {
                             /*
-                            Nel caso ci siano stati ancora problemi, si sospende l'aggiornamento
-                            per un lasso di tempo, così da permettere al modulo di sistemarsi.
-                            */
+                             Nel caso ci siano stati ancora problemi, sospende l'aggiornamento
+                             per un lasso di tempo, così da permettere al modulo di sistemarsi.
+                             */
                             communicationPauseTimer = SystemClock.uptimeMillis();
 
                             String text = "Periferica non funzionante.\n" +
@@ -236,6 +268,7 @@ public class DistanceController
 
     /**
      * Recupera le informazioni dal pacchetto di risposta del modulo DWM
+     *
      * @param dwmResponse Il pacchetto di risposta del modulo DWM
      * @return La lista di coppie id-distanza dei tag
      * @throws IllegalArgumentException Se i dati ricevuti dal modulo DWM non sono validi
@@ -244,27 +277,30 @@ public class DistanceController
     {
         if (dwmResponse == null || dwmResponse.length < 21 || dwmResponse[2] != 0)
         {
-            //dati non validi
+            // Dati non validi
             throw new IllegalArgumentException("Dati ricevuti dal modulo non validi.");
         }
 
+        // Ottiene il numero di tag inclusi nella risposta
         int numberOfValues = dwmResponse[20];
 
         List<Entry> newData = new ArrayList<>(numberOfValues);
         int startIndex = 21;
 
-        //Nota che il modulo DWM usa notazione Little Endian!
+        // Si noti che il modulo DWM usa la notazione Little Endian
         for (int i = 0; i < numberOfValues; i++, startIndex += BYTES_PER_ENTRY)
         {
+            // Decodifica dell'id del tag
             int id = (dwmResponse[startIndex + 1] << 8) + dwmResponse[startIndex];
 
+            // Decodifica della distanza relativa al tag
             int d1 = dwmResponse[startIndex + 2];
             int d2 = dwmResponse[startIndex + 3];
             int d3 = dwmResponse[startIndex + 4];
             int d4 = dwmResponse[startIndex + 5];
-
             int distance = (d4 << 24) + (d3 << 16) + (d2 << 8) + d1;
 
+            // Aggiunge i dati alla lista delle Entry
             newData.add(new Entry(id, distance));
         }
 
@@ -273,49 +309,55 @@ public class DistanceController
 
     /**
      * Ottiene i nuovi dati dal modulo DWM
+     *
      * @return I nuovi dati dal modulo DWM
      * @throws IOException Se avviene un errore di comunicazione con il modulo DWM
      */
     private synchronized List<Entry> updateData() throws IOException
     {
+        // Richiede i dati al driverDVM
         int[] dwmResponse = driverDWM.requestAPI((byte) 0x0C, null);
 
+        // Ottiene una lista di Entry dai dati ricevuti dal modulo
         List<Entry> newData = getDataFromDWMResponse(dwmResponse);
 
         logEntryData(TAG, "\nDati dal modulo:\n", "\n", newData);
 
-        //ordina gli elementi per tagID crescente, in modo tale da velocizzare le operazioni successive
+        // Ordina gli elementi per tagID crescente, in modo tale da velocizzare le operazioni successive
         Collections.sort(newData, MATCHING_ID_ENTRY_COMPARATOR);
 
-        //elimina i dati dei tag disconnessi
+        // Elimina i dati dei tag disconnessi
         for (int i = 0; i < disconnectedData.size(); i++)
         {
             Entry discEntry = disconnectedData.get(i);
 
             String toLog = "updateData() -> Esaminando tag disconnesso: " + Integer.toHexString(discEntry.tagID);
 
+            // Ricerca di dati relativi al tag disconnesso in esame nei dati ricevuti dal modulo
             int result = Collections.binarySearch(newData, discEntry, MATCHING_ID_ENTRY_COMPARATOR);
             if (result >= 0)
             {
-                //dato dello stesso tag presente
+                // Dato dello stesso tag presente
                 Entry newEntry = newData.get(result);
 
                 if(newEntry.tagDistance == discEntry.tagDistance)
                 {
-                    //tag disconnesso. eliminare entry dai dati attuali
+                    // Tag disconnesso. Eliminare entry dai dati attuali
                     toLog += " rimossa entry dalla lista.";
                     newData.remove(result);
                 } else
                 {
-                    //tag prima disconnesso, ed ora si è riconnesso. rimuovere dalla lista dei tag disconnessi
-                    //la sua riconnessione verrà riconosciuta al prossimo passo
+                    /*
+                     Tag che prima era disconnesso e ora si è riconnesso. Rimuovere dalla lista dei
+                     tag disconnessi; la sua riconnessione verrà riconosciuta al prossimo passo.
+                     */
                     toLog += " tag si è riconnesso.";
                     disconnectedData.remove(i);
                     i--;
                 }
             }
             else
-                //newData non presente in disconnectedData
+                // Dati del tag disconnesso in esame non presenti nei dati ricevuti dal modulo
                 toLog += " tag non è presente.";
 
             Log.v(TAG, toLog);
@@ -326,15 +368,14 @@ public class DistanceController
 
     /**
      * Classifica i dati ottenuti dal modulo DWM e notifica ai listener
+     *
      * @param newData I nuovi dati ottenuti dal modulo
      */
     private synchronized void classifyDataAndNotify(List<Entry> newData)
     {
-        List<Entry> updated;
+        List<Entry> updated = new ArrayList<>();
         List<Entry> connected = new ArrayList<>();
         List<Entry> disconnected = new ArrayList<>();
-
-        updated = new ArrayList<>(newData.size() > actualData.size() ? newData.size() : actualData.size());
 
         for (int i = 0; i < newData.size(); i++)
         {
@@ -342,7 +383,7 @@ public class DistanceController
 
             String toLog = "classifyDataAndNotify() -> Esaminando tag: " + Integer.toHexString(newEntry.tagID);
 
-            //ricerca di entry in actualData con lo stesso tagID
+            // Ricerca di Entry nei dati precedenti con lo stesso tagID
             int result = Collections.binarySearch(actualData, newEntry, MATCHING_ID_ENTRY_COMPARATOR);
             if (result >= 0)
             {
@@ -350,29 +391,36 @@ public class DistanceController
 
                 if (newEntry.tagDistance == actualEntry.tagDistance)
                 {
-                    //tag appena disconnesso
+                    // Tag appena disconnesso
                     newEntry.counter = actualEntry.counter + 1;
 
+                    /*
+                     Controlla se il tag è andato fuori portata,
+                     ovvero se ha ricevuto troppi dati uguali consecutivi
+                     */
                     if (newEntry.counter >= COUNTER_FOR_DISCONNECTED)
                     {
+                        // Dichiara disconnessione
                         toLog += " appena disconnesso.";
                         disconnected.add(new Entry(newEntry));
                         disconnectedData.add(new Entry(newEntry));
                     }
                     else
                     {
+                        // Incrementa contatore dati uguali consecutivi
                         toLog += (" potrebbe essere disconnesso, con counter: " + newEntry.counter + ".");
                         updated.add(new Entry(newEntry));
                     }
                 } else
                 {
+                    // Ricevuti nuovi dati, azzera contatore
                     newEntry.counter = 0;
                     toLog += " tag aggiornato.";
                     updated.add(new Entry(newEntry));
                 }
             } else
             {
-                //tag appena connesso
+                // Tag appena connesso
                 newEntry.counter = 0;
                 toLog += " appena connesso.";
                 connected.add(new Entry(newEntry));
@@ -381,7 +429,7 @@ public class DistanceController
             Log.v(TAG, toLog);
         }
 
-        //ricerca di entry relative a tag che "scompaiono" nell'ultimo aggiornamento
+        // Ricerca di Entry relative a tag che "scompaiono" nell'ultimo aggiornamento
         for (int i = 0; i < actualData.size(); i++)
         {
             Entry actualEntry = actualData.get(i);
@@ -389,32 +437,36 @@ public class DistanceController
             int result = Collections.binarySearch(newData, actualEntry, MATCHING_ID_ENTRY_COMPARATOR);
             if (result < 0)
             {
-                //tag presente nei dati vecchi ma non più nei nuovi => tag disconnesso
+                // Tag presente nei dati vecchi ma non più nei nuovi => tag disconnesso
                 disconnected.add(new Entry(actualEntry.tagID, actualEntry.tagDistance));
 
-                Log.v(TAG, "classifyDataAndNotify() -> Esaminando vecchio tag: " + Integer.toHexString(actualEntry.tagID) + ": appena disconnesso.");
+                Log.v(TAG, "classifyDataAndNotify() -> Esaminando vecchio tag: " +
+                        Integer.toHexString(actualEntry.tagID) + ": appena disconnesso.");
             }
         }
 
+        // Ordina i dati relativi ai tag disconnessi. Necessario per velocizzare le operazioni.
         Collections.sort(disconnectedData, MATCHING_ID_ENTRY_COMPARATOR);
 
         logEntryData(TAG, "\nTag appena connessi: " + connected.size() + "\n", "\n", connected);
         logEntryData(TAG, "\nTag appena disconnessi: " + disconnected.size() + "\n", "\n", disconnected);
         logEntryData(TAG, "\nTag ancora connessi: " + updated.size() + "\n", "\n", updated);
 
+        // Notifica i nuovi dati a tutti i listener
         notifyToAllTagsListeners(connected, disconnected, updated);
         notifyToTagsListeners(connected, disconnected, updated);
     }
 
     /**
      * Notifica a tutti i listener globali
+     *
      * @param connected Lista di entry dei tag appena connessi
      * @param disconnected Lista di entry dei tag appena disconnessi
      * @param updated Lista di entry dei tag con dati aggiornati
      */
     private void notifyToAllTagsListeners(final List<Entry> connected, final List<Entry> disconnected, final List<Entry> updated)
     {
-        //lock già ottenuto
+        // Lock già ottenuto
 
         for (int i = 0; i < allListeners.size(); i++)
         {
@@ -422,13 +474,13 @@ public class DistanceController
 
             if (connected != null && connected.size() > 0)
             {
-                //presenti tags connessi nell'ultimo aggiornamento dei dati
+                // Presenti tags connessi nell'ultimo aggiornamento dei dati
                 new Thread(new Runnable()
                 {
                     @Override
                     public void run()
                     {
-                        //notifica su thread separato
+                        // Notifica su thread separato
                         listener.onTagHasConnected(connected);
                     }
                 }).start();
@@ -436,13 +488,13 @@ public class DistanceController
 
             if (disconnected != null && disconnected.size() > 0)
             {
-                //presenti tags disconnessi nell'ultimo aggiornamento dei dati
+                // Presenti tags disconnessi nell'ultimo aggiornamento dei dati
                 new Thread(new Runnable()
                 {
                     @Override
                     public void run()
                     {
-                        //notifica su thread separato
+                        // Notifica su thread separato
                         listener.onTagHasDisconnected(disconnected);
                     }
                 }).start();
@@ -450,13 +502,13 @@ public class DistanceController
 
             if (updated != null && updated.size() > 0)
             {
-                //notifica i nuovi valori
+                // Presenti tags aggiornati nell'ultimo aggiornamento dei dati
                 new Thread(new Runnable()
                 {
                     @Override
                     public void run()
                     {
-                        //notifica su thread separato
+                        // Notifica su thread separato
                         listener.onTagDataAvailable(updated);
                     }
                 }).start();
@@ -466,13 +518,14 @@ public class DistanceController
 
     /**
      * Notifica a tutti i listener specifici per un tag, se sono avvenuti degli eventi su quel tag
+     *
      * @param connected Lista di entry dei tag appena connessi
      * @param disconnected Lista di entry dei tag appena disconnessi
      * @param updated Lista di entry dei tag con dati aggiornati
      */
     private void notifyToTagsListeners(final List<Entry> connected, final List<Entry> disconnected, final List<Entry> updated)
     {
-        //lock già ottenuto
+        // Lock già ottenuto
 
         for (int i = 0; i < tagListeners.size(); i++)
         {
@@ -482,16 +535,17 @@ public class DistanceController
 
             if (connected != null && connected.size() > 0)
             {
-                //connected, disconnected e data sono ordinati, per costruzione
+                // connected, disconnected e data sono ordinati, per costruzione
                 final int r1 = Collections.binarySearch(connected, new Entry(ID, -1), MATCHING_ID_ENTRY_COMPARATOR);
                 if (r1 >= 0)
                 {
-                    //il tag si è appena connesso
+                    // Il tag si è appena connesso
                     new Thread(new Runnable()
                     {
                         @Override
                         public void run()
                         {
+                            // Notifica su thread separato
                             listener.onTagHasConnected(connected.get(r1).tagDistance);
                         }
                     }).start();
@@ -505,12 +559,13 @@ public class DistanceController
                 final int r2 = Collections.binarySearch(disconnected, new Entry(ID, -1), MATCHING_ID_ENTRY_COMPARATOR);
                 if (r2 >= 0)
                 {
-                    //il tag si è appena disconnesso
+                    // Il tag si è appena disconnesso
                     new Thread(new Runnable()
                     {
                         @Override
                         public void run()
                         {
+                            // Notifica su thread separato
                             listener.onTagHasDisconnected(disconnected.get(r2).tagDistance);
                         }
                     }).start();
@@ -524,12 +579,13 @@ public class DistanceController
                 final int r3 = Collections.binarySearch(updated, new Entry(ID, -1), MATCHING_ID_ENTRY_COMPARATOR);
                 if (r3 >= 0)
                 {
-                    //il tag è ancora connesso e si notifica la nuova posizione
+                    // Il tag è ancora connesso e si notifica la nuova posizione
                     new Thread(new Runnable()
                     {
                         @Override
                         public void run()
                         {
+                            // Notifica su thread separato
                             listener.onTagDataAvailable(updated.get(r3).tagDistance);
                         }
                     }).start();
@@ -542,7 +598,7 @@ public class DistanceController
      * Segnala a tutti i listener un errore nell'aggiornamento
      *
      * @param shortDescription Breve descrizione del problema
-     * @param e                Eccezzione avvenuta
+     * @param e Eccezzione avvenuta
      */
     private void notifyError(final String shortDescription, final Exception e) {
         // Segnalazione a tutti gli AllTagsListener
@@ -551,6 +607,7 @@ public class DistanceController
             new Thread(new Runnable() {
                 @Override
                 public void run() {
+                    // Notifica su thread separato
                     listener.onError(shortDescription, e);
                 }
             }).start();
@@ -564,6 +621,7 @@ public class DistanceController
             new Thread(new Runnable() {
                 @Override
                 public void run() {
+                    // Notifica su thread separato
                     listener.onError(shortDescription, e);
                 }
             }).start();
@@ -571,7 +629,9 @@ public class DistanceController
     }
 
     /**
-     * Imposta il controller. Non avvia il polling con il modulo, che deve essere fatto manualmente tramite il metodo startUpdate()
+     * Imposta il controller. Non avvia il polling con il modulo,
+     * che deve essere fatto manualmente tramite il metodo startUpdate()
+     *
      * @param busName Il nome del pin a cui è collegato fisicamente il modulo
      * @throws IllegalArgumentException Se il busName non è valido
      * @throws IOException Se avviene un errore nella creazione del driver DWM
@@ -590,16 +650,18 @@ public class DistanceController
 
             connectionErrors = 0;
 
-            if (SystemClock.uptimeMillis() - communicationPauseTimer < COMMUNICATION_PAUSE_TIME && communicationPauseTimer != 0) {
+            // Evita di effettuare il check della connessione se il controller è stato messo in pausa
+            if (SystemClock.uptimeMillis() - communicationPauseTimer < COMMUNICATION_PAUSE_TIME
+                    && communicationPauseTimer != 0) {
                 Log.v(TAG, "Controllo della connessione non effettuato.");
                 return;
             }
 
-            //controlla lo stato della connessione del modulo
+            // Controlla lo stato della connessione del modulo
             try {
                 driverDWM.checkDWM();
             } catch (Exception e) {
-                //connessione non funzionante. Rilascia risorse
+                // Connessione non funzionante. Rilascia risorse
                 driverDWM.close();
                 throw e;
             }
@@ -607,7 +669,8 @@ public class DistanceController
     }
 
     /**
-     * Imposta il controller. Avvio automatico del polling, con un ritardo iniziale e periodo impostabile
+     * Imposta il controller. Avvio automatico dell'aggiornamento, con periodo impostabile
+     *
      * @param busName Il nome del pin a cui è collegato fisicamente il modulo
      * @param period Il periodo di aggiornamento
      * @throws IllegalArgumentException Se il busName non è valido, oppure il periodo è negativo
@@ -622,6 +685,7 @@ public class DistanceController
 
     /**
      * Aggiunge un listener per uno specifico tag
+     *
      * @param tagID L'ID del tag a cui viene associato il listener
      * @param listener Il listener
      */
@@ -635,6 +699,7 @@ public class DistanceController
 
     /**
      * Rimuove il listener, se presente
+     *
      * @param listener Il listener da rimuovere
      */
     @SuppressWarnings("unused")
@@ -656,6 +721,7 @@ public class DistanceController
 
     /**
      * Aggiunge un listener che risponde agli eventi per tutti i tag
+     *
      * @param listener Il listener da aggiungere
      */
     public synchronized void addAllTagsListener(AllTagsListener listener)
@@ -668,6 +734,7 @@ public class DistanceController
 
     /**
      * Rimuove il listener, se presente
+     *
      * @param listener Il listener da rimuovere
      */
     @SuppressWarnings("unused")
@@ -680,20 +747,32 @@ public class DistanceController
     }
 
     /**
-     * Inizia il polling del modulo con un periodo impostabile come parametro
+     * Inizia l'aggiornamento del modulo con un periodo impostabile come parametro
+     *
      * @param period Il tempo che trascorre tra un update e il successivo
+     * @throws IllegalArgumentException Se il periodo di aggiornamento è troppo basso
+     * @throws IllegalStateException Se l'aggiornamento è già avviato
      */
     @SuppressWarnings("WeakerAccess")
     public synchronized void startUpdate(long period) throws IllegalArgumentException, IllegalStateException
     {
         if (period < 0)
-            throw new IllegalArgumentException("Il periodo di aggiornamento deve essere positivo. Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
-        else if (period < MINIMUM_UPDATE_PERIOD)
-            throw new IllegalArgumentException("Il periodo di aggiornamento è troppo basso. Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
+            throw new IllegalArgumentException("Il periodo di aggiornamento deve essere positivo. " +
+                    "Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
 
+        else if (period < MINIMUM_UPDATE_PERIOD)
+            throw new IllegalArgumentException("Il periodo di aggiornamento è troppo basso. " +
+                    "Il periodo deve essere di almeno: " + MINIMUM_UPDATE_PERIOD + " ms.");
+
+        // Avvio aggiornamento temporizzato
         if (updateDataTimer == null)
         {
             updateDataTimer = new ScheduledThreadPoolExecutor(1);
+
+            /*
+             Impostazione necessaria per spegnere correttamente il timer completando l'esecuzione del
+             relativo task già avviato prima dello spegnimento
+             */
             updateDataTimer.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
             updateDataTimer.scheduleAtFixedRate(updateDataTask, period, period, TimeUnit.MILLISECONDS);
         } else
@@ -701,9 +780,9 @@ public class DistanceController
     }
 
     /**
-     * Termina il polling del modulo
-     * */
-    @SuppressWarnings("WeakerAccess")
+     * Termina l'aggiornamento del modulo
+     */
+    @SuppressWarnings({"WeakerAccess"})
     public synchronized void stopUpdate()
     {
         if (updateDataTimer != null)
@@ -718,14 +797,10 @@ public class DistanceController
      */
     public synchronized void close()
     {
-        //stop update
-        if (updateDataTimer != null)
-        {
+        // Termina l'aggiornamento
+        stopUpdate();
 
-            updateDataTimer.shutdown();
-            updateDataTimer = null;
-        }
-
+        // Chiude il driverDWM
         if (driverDWM != null)
         {
             try
@@ -738,12 +813,14 @@ public class DistanceController
             driverDWM = null;
         }
 
+        // Cancella i listener
         allListeners = null;
         tagListeners = null;
     }
 
     /**
-     * Restituisce una lista con gli ID dei tag connessi al modulo DWM. E' da usare una tantum.
+     * Restituisce una lista con gli ID dei tag connessi al modulo DWM.
+     *
      * @return una lista contenente i tag connessi
      */
     public synchronized List<Integer> getTagIDs()
