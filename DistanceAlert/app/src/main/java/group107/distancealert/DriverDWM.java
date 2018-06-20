@@ -2,6 +2,7 @@ package group107.distancealert;
 
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.google.android.things.pio.PeripheralManager;
@@ -16,23 +17,15 @@ import static java.lang.Byte.toUnsignedInt;
 
 /**
  * Questa classe ha lo scopo di gestire completamente la comunicazione con il modulo DWM1001-DEV,
- * sia che esso sia collegato via UART o via SPI.
+ * sia collegato via UART che via SPI.
  * Quando si ha finito di usare un oggetto di questa classe è importante invocare il metodo close
  * per rilasciare le periferiche hardware utilizzate.
  */
 public class DriverDWM {
+    /**
+     * Stringa utile per log del DriverDWM
+     */
     private static final String TAG = "DriverDWM";
-
-    /**
-     * Oggetti riferiti alle periferiche SPI e UART
-     */
-    private SpiDevice mySPI;
-    private UartDevice myUART;
-
-    /**
-     * Nome del bus della periferica scelta
-     */
-    private String myBus;
 
     /**
      * Parametri costanti usati per gestire la temporizzazione durante le comunicazioni SPI e UART,
@@ -48,7 +41,18 @@ public class DriverDWM {
     private static final long RETRY_OPEN_DELAY = 20L;
 
     /**
-     * Oggetto usato per la sincronizzazione tra il thread principale e il thread della callback
+     * Oggetti riferiti alle periferiche SPI e UART
+     */
+    private SpiDevice mySPI;
+    private UartDevice myUART;
+
+    /**
+     * Nome del bus della periferica scelta
+     */
+    private String myBus;
+
+    /**
+     * Oggetto usato per la sincronizzazione tra il thread principale e il thread della callback UART
      */
     private final Object lock = new Object();
 
@@ -58,23 +62,23 @@ public class DriverDWM {
     private HandlerThread myThread;
 
     /**
-     * Costruttore: verica la validità del busName richiesto e configura la comunicazione
+     * Costruttore: verifica la validità del busName richiesto e configura la comunicazione
      *
      * @param busName stringa relativa al bus SPI o UART a cui è connesso il modulo,
      *                ovvero, per la raspberry: "SPI0.0" o "SPI0.1" o "MINIUART".
      * @throws IOException Lanciata se ci sono problemi di accesso alla periferica
-     * @throws IllegalArgumentException Lanciata se il parametro non busName non è valido
+     * @throws IllegalArgumentException Lanciata se il parametro busName non è valido
      */
     @SuppressWarnings("WeakerAccess")
     public DriverDWM(String busName) throws IOException {
-        // Ottengo istanza di PeripheralManager per poter gestire le periferiche
+        // Ottiene istanza di PeripheralManager per poter gestire le periferiche
         PeripheralManager manager = PeripheralManager.getInstance();
 
         /*
-        Prova a ottiene l'accesso alla periferica selezionata finché non lo ottiene e finché il
-        numero di tentativi è minore di quello limite.
-        Questo serve perché a volte Android Things da degli errori che dopo pochi millisecondi
-        si risolvono automaticamente.
+         Prova a ottenere l'accesso alla periferica selezionata finché non lo ottiene e finché il
+         numero di tentativi è minore di quello limite.
+         Questo serve perché a volte Android Things da degli errori che dopo pochi millisecondi
+         si risolvono automaticamente.
          */
         int retryCounter = 0;
         while (mySPI == null && myUART == null) {
@@ -86,12 +90,12 @@ public class DriverDWM {
                 try {
                     mySPI = manager.openSpiDevice(busName);
                 } catch (IOException e) {
-                    // Se ci sono stati troppi fallimenti lanca un'eccezione
+                    // Se ci sono stati troppi fallimenti lancia un'eccezione
                     if (++retryCounter > RETRY_OPEN_NUMBER) {
                         throw e;
                     }
 
-                    // Se c'è stato un'eccezione, riprova ancora
+                    // Se c'è stata un'eccezione, riprova ancora
                     Log.d(TAG, "Failed to open SPI. Trying to to reopen it.", e);
                     SleepHelper.sleepMillis(RETRY_OPEN_DELAY);
                 }
@@ -104,12 +108,12 @@ public class DriverDWM {
                 try {
                     myUART = manager.openUartDevice(busName);
                 } catch (IOException e) {
-                    // Se ci sono stati troppi fallimenti lanca un'eccezione
+                    // Se ci sono stati troppi fallimenti lancia un'eccezione
                     if (++retryCounter > RETRY_OPEN_NUMBER) {
                         throw e;
                     }
 
-                    // Se c'è stato un'eccezione, aspetta un po' e poi riprova
+                    // Se c'è stata un'eccezione, aspetta un po' e poi riprova
                     Log.d(TAG, "Failed to open UART. Trying to to reopen it soon.", e);
                     SleepHelper.sleepMillis(RETRY_OPEN_DELAY);
                 }
@@ -121,7 +125,7 @@ public class DriverDWM {
             }
         }
 
-        // Configurazione dei parametri della comunicazione per il modulo DWM
+        // Configura i parametri della comunicazione per il modulo DWM
         configureCommunication();
     }
 
@@ -163,20 +167,20 @@ public class DriverDWM {
     /**
      * Fa il reset dello stato della comunicazione del modulo DWM.
      * Fa la richiesta di una API e controlla la risposta ricevuta.
-     * Nel caso non ottenga una risposta corretta, ovvero ci sono dei problemi gravi,
-     * probabilmente nell'hardware. Dunque lancia le relative eccezioni.
-     * Questo metodo è syncronized per evitare la sua sovrapposizione con il metodo close.
+     * Nel caso non ottenga una risposta corretta, ovvero ci sono
+     * dei problemi hardware, lancia le relative eccezioni.
+     * Questo metodo è synchronized per evitare la sua sovrapposizione con il metodo close.
      *
      * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      * @throws IllegalStateException Lanciata se non si ha l'accesso ad alcuna periferica
      */
-    public synchronized void checkDWM() throws IOException {
+    public synchronized void checkDWM() throws IOException,IllegalStateException {
         // Reset: caso SPI
         if (mySPI != null) {
             /*
-            Per resettare lo stato della comunicazione SPI con in modulo DWM,
-            si inviano 3 byte 0xff in 3 trasferimenti separati
-            */
+             Per resettare lo stato della comunicazione SPI con in modulo DWM,
+             si inviano 3 byte 0xff in 3 trasferimenti separati
+             */
             transferViaSPI(new byte[1], true);
             transferViaSPI(new byte[1], true);
             int response = transferViaSPI(new byte[1], true)[0];
@@ -193,15 +197,17 @@ public class DriverDWM {
         else if (myUART != null) {
             // La semplice pulizia dei buffer di input e di output è sufficiente
             myUART.flush(UartDevice.FLUSH_IN_OUT);
-        } else {
-            // Nel caso il metodo fosse stato invocato senza aver ottenuto l'accasso a una periferica
+        }
+
+        // Nel caso il metodo fosse stato invocato senza aver ottenuto l'accesso a una periferica
+        else {
             throw new IllegalStateException("No peripherals opened.");
         }
 
         /*
-         Controllo che la comunicazione col modulo funzioni correttamente richiedendo l'API 0x04,
+         Controlla che la comunicazione col modulo funzioni correttamente richiedendo l'API 0x04,
          ovvero quella per ricevere le frequenze di aggiornamento del modulo.
-         Poi controllo che l'operazione sia andata a buon fine, se no lancia un'eccezione.
+         Poi controlla che l'operazione sia andata a buon fine, se no lancia un'eccezione.
          */
         int[] buffer = requestAPI((byte) 0x04, null);
         if (buffer[0] != 0x40 || buffer[1] != 0x01 || buffer[2] != 0x00) {
@@ -212,28 +218,29 @@ public class DriverDWM {
     /**
      * Effettua la richiesta della API e con i relativi valori al modulo DWM e ritorna la rispota
      * ottenuta convertita in unsigned int.
-     * Questo metodo è syncronized per evitare la sua sovrapposizione con il metodo close.
-     * N.B. Questo metodo è bloccante e normalmente può richiedere fino 10ms per essere completato.
+     * Questo metodo è synchronized per evitare la sua sovrapposizione con il metodo close.
+     * N.B. Questo metodo è bloccante e normalmente può richiedere fino a 10ms per essere completato.
      * La durata dipende anche da condizioni esterne al modulo.
      *
      * @param tag   byte relativo alla API da usare
      * @param value byte[] array di byte contente i valori da passare alla API.
      *              Può anche essere null nel caso non siano previsti valori da passare.
-     * @return array int[] contenente il pacchetto di byte ricevuti in risposta dal modulo DWM
-     * @throws IOException              Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
+     * @return int[] Contenente il pacchetto di byte ricevuti in risposta dal modulo DWM
+     * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      * @throws IllegalArgumentException Lanciata se vengono passati parametri insensati
      * @throws IllegalStateException Lanciata se non si ha l'accesso ad alcuna periferica
      */
-    public synchronized int[] requestAPI(byte tag, byte[] value) throws IOException, IllegalArgumentException {
-        // Ottengo la lunghezza dell'array dei valori della API
+    public synchronized int[] requestAPI(byte tag, byte[] value)
+                throws IOException, IllegalArgumentException, IllegalStateException {
+        // Ottiene la lunghezza dell'array dei valori della API
         int L = value == null ? 0 : value.length;
 
-        // Controllo che il tag richiesto e i relativi valori abbiano senso
+        // Controlla che il tag richiesto e i relativi valori abbiano senso
         if (tag != 0 && L > 255) {
             throw new IllegalArgumentException("Bad parameters");
         }
 
-        // Praparo il pacchetto TLV da inviare al modulo
+        // Prapara il pacchetto TLV da inviare al modulo
         byte[] buffer = new byte[L + 2];
         buffer[0] = tag;
         buffer[1] = (byte) L;
@@ -244,14 +251,19 @@ public class DriverDWM {
         Log.i(TAG, "Request:\n" + Arrays.toString(buffer));
 
         int[] response;
+
+        // Caso SPI
         if (mySPI != null) {
-            // Caso SPI
             response = requestViaSPI(buffer);
-        } else if (myUART != null) {
-            // Caso UART
+        }
+
+        // Caso UART
+        else if (myUART != null) {
             response = requestViaUART(buffer);
-        } else {
-            // Nel caso il metodo fosse stato invocato senza aver ottenuto l'accasso a una periferica
+        }
+
+        // Nel caso il metodo fosse stato invocato senza aver ottenuto l'accasso a una periferica
+        else {
             throw new IllegalStateException("No peripherals opened.");
         }
 
@@ -267,30 +279,30 @@ public class DriverDWM {
     }
 
     /**
-     * Gestisce le varie fasei dello scambio di dati via SPI, ovvero l'invio della richiesta,
+     * Gestisce le varie fasi dello scambio di dati via SPI, ovvero l'invio della richiesta,
      * l'attesa della preparazione della risposta dal modulo DWM e la ricezione della stessa.
      * Se non riceve alcuna risposta entro MAX_SPI_WAIT lancia la relativa eccezione.
      *
-     * @param transmit array contenete i byte da inviare via UART
-     * @return Array int[] contentente i valori ricevuti convertiti in unsigned int
+     * @param transmit Array contenete i byte da inviare via UART
+     * @return int[] Contentente i valori ricevuti convertiti in unsigned int
      * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      */
     private int[] requestViaSPI(byte[] transmit) throws IOException {
-        // Trasferimento pacchetto a DWM contentente la richiesta
+        // Trasferisce pacchetto a DWM contentente la richiesta
         transferViaSPI(transmit, false);
 
         /*
-        Attesa della costruzione della risposta da parte del modulo.
-        Finché non è pronta lui risponde sempre 0x00.
-        Quando è pronta, invece, comunica la lunghezza totale della risposta da leggere.
-        Se l'attesa va oltre il tempo massimo significa che ci sono dei problemi.
+         Attesa della costruzione della risposta da parte del modulo.
+         Finché non è pronta lui risponde sempre 0x00.
+         Quando è pronta, invece, comunica la lunghezza totale della risposta da leggere.
+         Se l'attesa va oltre il tempo massimo significa che ci sono dei problemi.
          */
         int length;
-        long timer = System.currentTimeMillis();
+        long timer = SystemClock.uptimeMillis();
         do {
-            // Ricezione del byte contente la lunghezza della risposta
+            // Riceve del byte contente la lunghezza della risposta
             length = transferViaSPI(new byte[1], true)[0];
-        } while ((length == 0x00) && ((System.currentTimeMillis() - timer) < MAX_SPI_WAIT));
+        } while ((length == 0x00) && ((SystemClock.uptimeMillis() - timer) < MAX_SPI_WAIT));
 
         // Nel caso ci siano stati problemi di comunicazione
         if (length == 0x00 || length == 0xff) {
@@ -305,27 +317,27 @@ public class DriverDWM {
      * Gestisce lo scambio di dati  via SPI, con l'opzione, utile per le specifiche del DWM, di
      * riempire automaticamente di 0xff l'array di byte da inviare.
      *
-     * @param transmit array contenete i byte da inviare via SPI
-     * @param autoFill l'opzione autoFill è abilitata riempie il buffer di 0xff
-     * @return Array int[] contentente i valori ricevuti convertiti in unsigned int
+     * @param transmit Array contenete i byte da inviare via SPI
+     * @param autoFill L'opzione autoFill è abilitata riempie il buffer di 0xff
+     * @return int[] Contentente i valori ricevuti convertiti in unsigned int
      * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      */
     private int[] transferViaSPI(byte[] transmit, boolean autoFill) throws IOException {
-        // Nel caso l'opzione autoFill sia true, riempio l'array trasmit di 0xff
+        // Nel caso l'opzione autoFill sia true, riempie l'array trasmit di 0xff
         if (autoFill) {
             Arrays.fill(transmit, (byte) 0xff);
         }
 
-        // Istanzio l'array receive di lunghezza pari a quella di trasmit
+        // Istanzia l'array receive di lunghezza pari a quella di trasmit
         byte[] receive = new byte[transmit.length];
 
         /*
-        Trasferimento dati via SPI, i dati da inviare sono nell'array trasmit,
-        i dati ricevuti vengono salvati nell'array receive
+         Trasferisce dati via SPI, i dati da inviare sono nell'array trasmit,
+         i dati ricevuti vengono salvati nell'array receive
          */
         mySPI.transfer(transmit, receive, transmit.length);
 
-        // Conversione dei dati ricevuti a unsigned int
+        // Converte i dati ricevuti a unsigned int
         int[] intReceive = new int[receive.length];
         for (int i = 0; i < receive.length; i++) {
             intReceive[i] = toUnsignedInt(receive[i]);
@@ -335,12 +347,12 @@ public class DriverDWM {
     }
 
     /**
-     * Gestisce le varie fasei dello scambio di dati via UART, ovvero l'invio della richiesta e
+     * Gestisce le varie fasi dello scambio di dati via UART, ovvero l'invio della richiesta e
      * l'attesa della risposta dal modulo DWM.
      * Se non riceve alcuna risposta entro MAX_UART_WAIT lancia la relativa eccezione.
      *
-     * @param transmit array contenete i byte da inviare via UART
-     * @return Array int[] contentente i valori ricevuti convertiti in unsigned int
+     * @param transmit Array contenete i byte da inviare via UART
+     * @return int[] Contentente i valori ricevuti convertiti in unsigned int
      * @throws IOException Lanciata se ci sono problemi di comunicazione o di accesso alla periferica
      */
     private int[] requestViaUART(byte[] transmit) throws IOException {
@@ -348,7 +360,7 @@ public class DriverDWM {
         myUART.flush(UartDevice.FLUSH_IN_OUT);
         myUART.write(transmit, transmit.length);
 
-        // Preparazione dei buffer e dei contatori usati per salvare la risposta
+        // Prepara i buffer e i contatori usati per salvare la risposta
         byte[] totalReceive = new byte[255];
         int totalCount = 0;
         byte[] tempReceive = new byte[20];
@@ -357,7 +369,7 @@ public class DriverDWM {
         // Aspetta che arrivi la risposta entro il tempo d'attesa massimo
         waitUART(MAX_UART_WAIT);
 
-        // Leggi i dati in arrivo
+        // Legge i dati in arrivo
         while ((tempCount = myUART.read(tempReceive, tempReceive.length)) > 0) {
             // Nel caso ci siano problemi di comunicazione, lancia eccezione
             if (totalCount + tempCount > 255) {
@@ -365,9 +377,9 @@ public class DriverDWM {
             }
 
             /*
-            Se ha letto qualche byte li trasferisce dall'array temporaneo all'array complessivo.
-            Questo perché i byte non vengono ricevuti tutti assieme, ma in gruppi di
-            lunghezza variabile. La lunghezza massima è di 20 byte per ogni gruppo.
+             Se ha letto qualche byte li trasferisce dall'array temporaneo all'array complessivo.
+             Questo perché i byte non vengono ricevuti tutti assieme, ma in gruppi di
+             lunghezza variabile. La lunghezza massima è di 20 byte per ogni gruppo.
              */
             System.arraycopy(tempReceive, 0, totalReceive, totalCount, tempCount);
             totalCount += tempCount;
@@ -379,8 +391,8 @@ public class DriverDWM {
         }
 
         /*
-        Ritaglia array tenendo solo la parte interessante e poi fa la
-        conversione dei dati ricevuti a unsigned int
+         Ritaglia array tenendo solo la parte interessante e poi fa la
+         conversione dei dati ricevuti a unsigned int
          */
         totalReceive = Arrays.copyOfRange(totalReceive, 0, totalCount);
         int[] intReceive = new int[totalReceive.length];
@@ -395,16 +407,16 @@ public class DriverDWM {
      * Aspetta che siano ricevuti dei dati dalla periferica UART.
      * Se l'attesa si protrae oltre il limite impostato viene comunque terminata
      *
-     * @param maxTimeWait_millis tempo d'attesa massimo
+     * @param maxTimeWait_millis Tempo d'attesa massimo
      * @throws IOException Lanciata se ci sono problemi di accesso alla periferica
      */
     private void waitUART(long maxTimeWait_millis) throws IOException {
-        // Creazione di un thread separato su cui svolgere la callback della UART
+        // Crea un thread separato su cui svolgere la callback della UART
         myThread = new HandlerThread("UartCallbackThread");
         myThread.start();
         Handler myHandler = new Handler(myThread.getLooper());
 
-        // Registrazione della callback
+        // Registra la callback
         myUART.registerUartDeviceCallback(myHandler, new UartDeviceCallback() {
             @Override
             public boolean onUartDeviceDataAvailable(UartDevice uartDevice) {
@@ -427,26 +439,26 @@ public class DriverDWM {
             }
         }
 
-        // Chiusura del thread della callback
+        // Chiude il thread della callback
         myThread.quitSafely();
         myThread = null;
 
-        // Nel caso durante l'attesa fosse stata chiusa la periferica, lancia la seguente ecezione
+        // Nel caso durante l'attesa fosse stata chiusa la periferica, lancia la seguente eccezione
         if (myUART == null) {
             throw new IOException("Communication error via UART: communication interrupted");
         }
     }
 
     /**
-     * @return Stringa corrispondete al bus della periferica scelta
+     * @return Stringa corrispondente al bus della periferica scelta
      */
     public String getMyBus() {
         return myBus;
     }
 
     /**
-     * Chiusura e rilascio della periferica SPI e UART se erano aperte
-     * Questo metodo è syncronized per evitare la sua sovrapposizione con i metodi requestAPI e checkDWM
+     * Chiude e rilascia le periferiche SPI e UART se erano aperte.
+     * Questo metodo è synchronized per evitare la sua sovrapposizione con i metodi requestAPI e checkDWM
      *
      * @throws IOException Lanciata se ci sono problemi nella chiusura della periferica
      */
@@ -454,17 +466,17 @@ public class DriverDWM {
         Log.i(TAG, "Closing");
 
         if (mySPI != null) {
-            // Chiusura SPI
+            // Chiude SPI
             mySPI.close();
             mySPI = null;
         }
 
         if (myUART != null) {
-            //Chiusura UART
+            // Chiude UART
             myUART.close();
             myUART = null;
 
-            // Eventuale terminazione del thread della callback e risveglio del thread principale
+            // Eventualmente termina il thread della callback UART e risveglia il thread principale
             if (myThread != null) {
                 synchronized (lock) {
                     lock.notify();
