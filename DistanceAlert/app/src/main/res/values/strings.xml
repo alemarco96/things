@@ -3,7 +3,7 @@
     <string name="distance_measured_is">Distanza rilevata:</string>
     <string name="alarm_toast">Attenzione: superata la distanza di allerta!</string>
     <string name="connected_to">Connesso a tag:</string>
-    <string name="noConnection">Nessuna connessione</string>
+    <string name="noConnection">Fuori portata</string>
     <string name="noDwm">Problemi di comunicazione con la periferica.</string>
     <string name="max_distance_is">Distanza di allerta:</string>
     <string name="plus">+</string>
