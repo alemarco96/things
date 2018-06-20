@@ -17,29 +17,15 @@ import java.util.concurrent.TimeUnit;
  * per rilasciare le periferiche hardware utilizzate.
  */
 public class DistanceAlarm {
-    private final static String TAG = "DistanceAlarm";
-
     /**
-     * Oggetti riferiti alle periferiche GPIO e PWM
+     * Stringa utile per log della classe DistanceAlarm
      */
-    private Gpio led;
-    private Pwm buzzer;
+    private final static String TAG = "DistanceAlarm";
 
     /**
      * Periodo di aggiornamento temporizzato dell'allarme (durata dei toni e del lampeggio del LED)
      */
     private static final long ALARM_PERIOD = 250L;
-
-    /**
-     * Oggetto usato per la sincronizzazione tra il thread della UI
-     * e il thread dell'aggiornamneto temporizzato dell'allarme
-     */
-    private final Object lock = new Object();
-
-    /**
-     * Oggetto ScheduledThreadPoolExecutor usato per gestire la programmazione temporizzata dell'allarme
-     */
-    private ScheduledThreadPoolExecutor timer;
 
     /**
      * Sequenza di frequenze del segnale PWM utilizzate per realizzare il motivetto musicale
@@ -56,6 +42,23 @@ public class DistanceAlarm {
     private int toneIndex;
 
     /**
+     * Oggetti riferiti alle periferiche GPIO e PWM
+     */
+    private Gpio led;
+    private Pwm buzzer;
+
+    /**
+     * Oggetto usato per la sincronizzazione tra il thread della UI
+     * e il thread dell'aggiornamneto temporizzato dell'allarme
+     */
+    private final Object lock = new Object();
+
+    /**
+     * Oggetto ScheduledThreadPoolExecutor usato per gestire la programmazione temporizzata dell'allarme
+     */
+    private ScheduledThreadPoolExecutor timer;
+
+    /**
      * Costruttore: ottiene accesso alle periferiche e le inizializza
      *
      * @throws IOException Lanciata se ci sono problemi di accesso alle periferiche
@@ -66,17 +69,17 @@ public class DistanceAlarm {
         PeripheralManager manager = PeripheralManager.getInstance();
 
         /*
-        Prova ad ottenere un'istanza della periferica GPIO relativa al
-        pin desiderato, la inizializza come uscita inizialmente a 0V e
-        ne associa il livello logico alto al livello di tensione alto.
+         Prova ad ottenere un'istanza della periferica GPIO relativa al
+         pin desiderato, la inizializza come uscita inizialmente a 0V e
+         ne associa il livello logico alto al livello di tensione alto.
          */
         led = manager.openGpio(gpioLed);
         led.setDirection(Gpio.DIRECTION_OUT_INITIALLY_LOW);
         led.setActiveType(Gpio.ACTIVE_HIGH);
 
         /*
-        Prova ad ottenere un'istanza della periferica PWM relativa al
-        pin desiderato, la inizializza adegutamente e la lascia spenta.
+         Prova ad ottenere un'istanza della periferica PWM relativa al
+         pin desiderato, la inizializza adegutamente e la lascia spenta.
          */
         buzzer = manager.openPwm(pwmBuzzer);
         buzzer.setPwmFrequencyHz(tone[toneIndex]);
@@ -85,12 +88,13 @@ public class DistanceAlarm {
     }
 
     /**
-     * Avvia l'allarme e avvia anche la programmazione temporizzata che permette di cambiare tono
+     * Avvia l'allarme e imposta la programmazione temporizzata che permette di cambiare tono
      * al buzzer e di far lampeggiare il LED.
      *
      * @throws IOException Lanciata se ci sono problemi di accesso alle periferiche
      */
     public void start() throws IOException {
+        // Controlla che l'allarme non sia già avviato
         if (timer != null) {
             return;
         }
@@ -100,14 +104,19 @@ public class DistanceAlarm {
 
         // Avvio programmazione temporizzata
         timer = new ScheduledThreadPoolExecutor(1);
+
+        /*
+         Impostazione necessaria per spegnere correttamente il timer completando l'esecuzione del
+         relativo task già avviato prima dello spegnimento
+         */
         timer.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
         timer.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 /*
-                Cambio tono emesso dal buzzer e cambio stato al GPIO del LED
-                facendo in modo che un eventuale chiamata ai metodi stop e close
-                non si sovrapponga
+                 Cambia tono emesso dal buzzer e cambia stato al GPIO del LED.
+                 Usa synchronized (lock) per evitare l'esecuzione simultanea
+                 con eventuali chiamate ai metodi stop() e close().
                  */
                 synchronized (lock) {
                     toneIndex = (toneIndex + 1) % tone.length;
@@ -121,26 +130,27 @@ public class DistanceAlarm {
             }
         }, 0L, ALARM_PERIOD, TimeUnit.MILLISECONDS);
 
-        // Abilito la periferica PWM
+        // Abilita la periferica PWM
         buzzer.setEnabled(true);
     }
 
     /**
-     * Terminazione della programmazione temportizzata sul timer, oltre a spegnere il LED e il buzzer
+     * Terminazione della programmazione temporizzata sul timer, oltre a spegnere il LED e il buzzer
      *
      * @throws IOException Lanciata se ci sono problemi nella chiusura delle periferiche
      */
     public void stop() throws IOException {
+        // Controlla che l'allarme non sia già spento
         if (timer == null) {
             return;
         }
 
-        // Fermo timer
+        // Ferma timer
         timer.shutdown();
         timer = null;
 
         /*
-         Spengo LED e buzzer facendo attenzione alla sincronizzazione
+         Spegne LED e buzzer facendo attenzione alla sincronizzazione
          con l'aggiornamento temporizzato dell'allarme
          */
         synchronized (lock) {
@@ -156,10 +166,12 @@ public class DistanceAlarm {
      * @throws IOException Lanciata se ci sono problemi nella chiusura delle periferiche
      */
     public void close() throws IOException {
+        // Spegne l'allarme se è attivato
         if (timer != null) {
             stop();
         }
 
+        // Chiusura delle periferiche
         synchronized (lock) {
             if (led != null) {
                 led.close();

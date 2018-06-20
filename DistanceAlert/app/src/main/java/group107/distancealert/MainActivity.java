@@ -29,7 +29,7 @@ import java.util.List;
 public class MainActivity extends Activity {
 
     /**
-     * Stringhe utili per TAGs della MainActivity
+     * Stringa utile per log della MainActivity
      */
     private final String MainActivityTAG = "MainActivity";
 
