@@ -250,7 +250,8 @@ public class MainActivity extends Activity {
              Generata un'eccezione al momento della creazione dell'instanza DistanceController
              quindi lo notifica sullo schermo tramite toast
              */
-            Toast t = Toast.makeText(getApplicationContext(), R.string.noDwm, Toast.LENGTH_LONG);
+            Toast t = Toast.makeText(getApplicationContext(),
+                    R.string.noDwm, Toast.LENGTH_LONG);
             t.show();
             // Chiusura controller
             closeController();
@@ -573,8 +574,8 @@ public class MainActivity extends Activity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast t = Toast.makeText(getApplicationContext(), R.string.alarm_toast,
-                        Toast.LENGTH_LONG);
+                Toast t = Toast.makeText(getApplicationContext(),
+                        R.string.alarm_toast, Toast.LENGTH_LONG);
                 t.show();
                 Log.d(MainActivityTAG, "distanceAlarm: running");
                 try {

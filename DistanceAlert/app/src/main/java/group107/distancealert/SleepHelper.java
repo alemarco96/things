@@ -10,7 +10,7 @@ import android.util.Log;
 public final class SleepHelper
 {
     /**
-     * TAG usato per loggare esclusivamente le eccezioni lanciate in questa classe
+     * Stringa utile per log della classe SleepHelper
      */
     private static final String TAG = "SleepHelper";
 
@@ -23,9 +23,9 @@ public final class SleepHelper
     {
         long startTime = SystemClock.uptimeMillis();
 
-        //se lo sleep fallisce, viene fatto busy-waiting
+        // Se lo sleep fallisce, viene fatto busy-waiting
         do {
-            //equivalente a TimeUnit.MILLISECONDS.sleep(), ma ignora automaticamente l'interrupt del thread
+            // Equivalente a TimeUnit.MILLISECONDS.sleep(), ma ignora automaticamente l'interrupt del thread
             SystemClock.sleep(timeout - (SystemClock.uptimeMillis() - startTime));
         }while((SystemClock.uptimeMillis() - startTime) < timeout);
 
