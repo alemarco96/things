@@ -7,6 +7,7 @@
     tools:context=".MainActivity"
     android:layout_margin="40sp">
 
+    <!--Ospita il RadioGroup gestito programmaticamente contente la lista degli id disponibili-->
     <LinearLayout
         android:id="@+id/idLayout"
         android:layout_width="wrap_content"
@@ -17,6 +18,7 @@
         app:layout_constraintStart_toStartOf="@+id/connectedTo"
         app:layout_constraintTop_toBottomOf="@id/connectedTo"/>
 
+    <!--Introduce la distanza rilevata-->
     <TextView
         android:id="@+id/distance_measured_is"
         android:layout_width="wrap_content"
@@ -27,8 +29,9 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.65999997" />
+        app:layout_constraintVertical_bias="0.66" />
 
+    <!--Mostra la distanza rilevata-->
     <TextView
         android:id="@+id/distance"
         android:layout_width="wrap_content"
@@ -39,6 +42,7 @@
         app:layout_constraintStart_toStartOf="@+id/distance_measured_is"
         app:layout_constraintTop_toBottomOf="@+id/distance_measured_is" />
 
+    <!--Introduce il tag al quale si è connessi-->
     <TextView
         android:id="@+id/connectedTo"
         android:layout_width="wrap_content"
@@ -50,6 +54,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!--Mostra l'id del tag al quale si è connessi-->
     <TextView
         android:id="@+id/connectedTo_id"
         android:layout_width="wrap_content"
@@ -59,6 +64,7 @@
         app:layout_constraintStart_toEndOf="@+id/connectedTo"
         app:layout_constraintTop_toTopOf="@+id/connectedTo" />
 
+    <!--Introduce la distanza di allerta-->
     <TextView
         android:id="@+id/maxDistanceIs"
         android:layout_width="wrap_content"
@@ -72,6 +78,7 @@
         app:layout_constraintStart_toEndOf="@+id/minusMaxDistance"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!--Bottone che aumenta la distanza di allerta-->
     <Button
         android:id="@+id/plusMaxDistance"
         android:layout_width="wrap_content"
@@ -83,6 +90,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/maxDistanceIs" />
 
+    <!--Bottone che diminuisce la distanza di allerta-->
     <Button
         android:id="@+id/minusMaxDistance"
         android:layout_width="wrap_content"
@@ -96,6 +104,7 @@
         app:layout_constraintEnd_toStartOf="@+id/maxDistance"
         app:layout_constraintTop_toTopOf="@+id/plusMaxDistance" />
 
+    <!--Mostra la distanza di allerta-->
     <TextView
         android:id="@+id/maxDistance"
         android:layout_width="wrap_content"
@@ -108,6 +117,7 @@
         app:layout_constraintEnd_toStartOf="@+id/plusMaxDistance"
         app:layout_constraintTop_toTopOf="@+id/plusMaxDistance" />
 
+    <!--Indica che lo switch è su stato SPI-->
     <TextView
         android:id="@+id/spi"
         android:layout_width="wrap_content"
@@ -119,7 +129,7 @@
         app:layout_constraintEnd_toEndOf="@+id/plusMaxDistance"
         app:layout_constraintTop_toBottomOf="@+id/cambio_bus" />
 
-
+    <!--Switch che cambia lo stato da SPI a UART e viceversa-->
     <Switch
         android:id="@+id/switchMethod"
         android:layout_width="wrap_content"
@@ -133,6 +143,7 @@
         app:layout_constraintStart_toEndOf="@+id/uart"
         app:layout_constraintTop_toTopOf="@+id/spi" />
 
+    <!--Indica che lo switch è su stato UART-->
     <TextView
         android:id="@+id/uart"
         android:layout_width="wrap_content"
@@ -146,6 +157,7 @@
         app:layout_constraintStart_toStartOf="@+id/minusMaxDistance"
         app:layout_constraintTop_toTopOf="@+id/spi" />
 
+    <!--Introduce la possibilità di cambiare bus di comunicazione-->
     <TextView
         android:id="@+id/cambio_bus"
         android:layout_width="wrap_content"
