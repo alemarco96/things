@@ -7,7 +7,7 @@
     tools:context=".MainActivity"
     android:layout_margin="40sp">
 
-    <!--Ospita il RadioGroup gestito programmaticamente contente la lista degli id disponibili-->
+    <!--Ospita il RadioGroup gestito programmaticamente contenente la lista degli id disponibili-->
     <LinearLayout
         android:id="@+id/idLayout"
         android:layout_width="wrap_content"
