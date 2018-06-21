@@ -249,7 +249,7 @@ public class DriverDWM {
             System.arraycopy(value, 0, buffer, 2, L);
         }
 
-        Log.v(TAG, "Request:\n" + Arrays.toString(buffer));
+        Log.d(TAG, "Request:\n" + Arrays.toString(buffer));
 
         int[] response;
 
@@ -275,7 +275,7 @@ public class DriverDWM {
             throw new IOException("Invalid response received.");
         }
 
-        Log.v(TAG, "Response:\n" + Arrays.toString(response));
+        Log.d(TAG, "Response:\n" + Arrays.toString(response));
         return response;
     }
 
@@ -465,7 +465,7 @@ public class DriverDWM {
      * @throws IOException Lanciata se ci sono problemi nella chiusura della periferica
      */
     public synchronized void close() throws IOException {
-        Log.v(TAG, "Closing");
+        Log.d(TAG, "Closing");
 
         if (mySPI != null) {
             // Chiude SPI
