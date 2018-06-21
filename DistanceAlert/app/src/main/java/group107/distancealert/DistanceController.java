@@ -562,7 +562,8 @@ public class DistanceController
     }
 
     /**
-     * Notifica a tutti i listener globali
+     * Notifica a tutti i listener globali.
+     * Questo metodo non è synchronized poiché viene invocato solamente all'interno di metodi synchronized.
      *
      * @param connected Lista di entry dei tag appena connessi
      * @param disconnected Lista di entry dei tag appena disconnessi
@@ -570,8 +571,6 @@ public class DistanceController
      */
     private void notifyToAllTagsListeners(final List<Entry> connected, final List<Entry> disconnected, final List<Entry> updated)
     {
-        // Lock già ottenuto
-
         for (int i = 0; i < allListeners.size(); i++)
         {
             final AllTagsListener listener = allListeners.get(i);
