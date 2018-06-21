@@ -95,6 +95,11 @@ public class DistanceAlarm {
      * @throws IOException Lanciata se ci sono problemi di accesso alle periferiche
      */
     public void start() throws IOException {
+        // Controlla che sia stato ottenuto l'accesso ad almeno una delle due periferiche di allarme
+        if(led == null && buzzer == null) {
+            return;
+        }
+
         // Controlla che l'allarme non sia già avviato
         if (timer != null) {
             return;
@@ -122,8 +127,13 @@ public class DistanceAlarm {
                 synchronized (lock) {
                     toneIndex = (toneIndex + 1) % tone.length;
                     try {
-                        buzzer.setPwmFrequencyHz(tone[toneIndex]);
-                        led.setValue((!led.getValue()) && (timer != null));
+                        if(buzzer != null){
+                            buzzer.setPwmFrequencyHz(tone[toneIndex]);
+                        }
+
+                        if(led != null){
+                            led.setValue((!led.getValue()) && (timer != null));
+                        }
                     } catch (IOException e) {
                         Log.w(TAG, "Exception updating alarm state", e);
                     }
@@ -132,7 +142,9 @@ public class DistanceAlarm {
         }, 0L, ALARM_PERIOD, TimeUnit.MILLISECONDS);
 
         // Abilita la periferica PWM
-        buzzer.setEnabled(true);
+        if(buzzer != null){
+            buzzer.setEnabled(true);
+        }
     }
 
     /**
@@ -155,8 +167,13 @@ public class DistanceAlarm {
          con l'aggiornamento temporizzato dell'allarme
          */
         synchronized (lock) {
-            led.setValue(false);
-            buzzer.setEnabled(false);
+            if(led != null) {
+                led.setValue(false);
+            }
+
+            if(buzzer != null){
+                buzzer.setEnabled(false);
+            }
         }
     }
 
