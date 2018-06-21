@@ -239,7 +239,7 @@ public class DistanceController
                             }
 
                             // Dopo aver aspettato un tempo minimo, controlla la connessione
-                            SleepHelper.sleepMillis(MINIMUM_UPDATE_PERIOD);
+                            SystemClock.sleep(MINIMUM_UPDATE_PERIOD);
                             driverDWM.checkDWM();
 
                             /*

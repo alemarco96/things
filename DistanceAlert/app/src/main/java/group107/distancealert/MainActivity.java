@@ -2,6 +2,7 @@ package group107.distancealert;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -209,7 +210,7 @@ public class MainActivity extends Activity {
                 Log.v(MainActivityTAG,"onCreate -> switchMethodView -> onClick");
                 closeController();
                 // Attesa per favorire la chiusura di DistanceController
-                SleepHelper.sleepMillis(BUS_DELAY);
+                SystemClock.sleep(BUS_DELAY);
                 // Imposta comunicazione sull'altro bus
                 setupCommunication(!nextSpi);
             }

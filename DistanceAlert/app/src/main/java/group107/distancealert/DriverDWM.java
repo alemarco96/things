@@ -98,7 +98,7 @@ public class DriverDWM {
 
                     // Se c'è stata un'eccezione, riprova ancora
                     Log.d(TAG, "Failed to open SPI. Trying to to reopen it.", e);
-                    SleepHelper.sleepMillis(RETRY_OPEN_DELAY);
+                    SystemClock.sleep(RETRY_OPEN_DELAY);
                 }
             }
 
@@ -116,7 +116,7 @@ public class DriverDWM {
 
                     // Se c'è stata un'eccezione, aspetta un po' e poi riprova
                     Log.d(TAG, "Failed to open UART. Trying to to reopen it soon.", e);
-                    SleepHelper.sleepMillis(RETRY_OPEN_DELAY);
+                    SystemClock.sleep(RETRY_OPEN_DELAY);
                 }
             }
 
