@@ -107,12 +107,13 @@ public class MainActivity extends Activity {
                 if(myAlarm != null) {
                     myAlarm.stop();
                 }
-                pulsante.unregisterGpioCallback(pulsanteCallback);
                 alarmMuted = true;
             } catch (IOException e) {
                 Log.e(MainActivityTAG, "pulsanteCallback -> onGpioEdge -> " +
                         "Errore Pulsante:", e);
             }
+
+            // Callback viene eseguita solo una volta e poi si deregistra
             return false;
         }
     };
@@ -177,6 +178,10 @@ public class MainActivity extends Activity {
         // Inizializzazione pulsante fisico che silenzia l'allarme
         PeripheralManager manager = PeripheralManager.getInstance();
         try {
+            /*
+             GPIO relativo al pulsante impostato come input attivo a livello alto e con la
+             possibilità di generare delle callback quando passa da livello basso a livello alto.
+             */
             pulsante = manager.openGpio(GPIO_PULSANTE);
             pulsante.setActiveType(Gpio.ACTIVE_HIGH);
             pulsante.setDirection(Gpio.DIRECTION_IN);
@@ -216,6 +221,7 @@ public class MainActivity extends Activity {
 
     /**
      * Imposta la comunicazione con il modulo tramite il bus specificato dal parametro nextSpi
+     *
      * @param isNextSpi Se TRUE: SPI, altrimenti: UART
      */
     private void setupCommunication(boolean isNextSpi)
@@ -464,7 +470,7 @@ public class MainActivity extends Activity {
                         "addTagListener -> onTagHasDisconnected: disconnesso id = " +
                         Integer.toHexString(id) + " --> suono allarme");
 
-                // Tag disconnesso quindi suona allarme
+                // Tag disconnesso, ovvero fuori portata, quindi suona allarme.
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -490,6 +496,7 @@ public class MainActivity extends Activity {
                             "(tagDistance == " + tagDistance +
                             ") > (maxDistance == " + maxDistance + "), " +
                             "(alarmMuted == false), (alarmStatus == false)");
+
                     alarmStatus = true;
                     distanceAlarm();
                 }
@@ -505,12 +512,19 @@ public class MainActivity extends Activity {
                                 "(tagDistance == " + tagDistance +
                                 ") <= (maxDistance == " + maxDistance + "), " +
                                 "(alarmStatus == true)");
+
                         alarmMuted = false;
                         alarmStatus = false;
+
                         if(myAlarm != null) {
+                            // Spegne allarme
                             myAlarm.stop();
                         }
-                        pulsante.unregisterGpioCallback(pulsanteCallback);
+
+                        if(pulsante != null){
+                            // Deregistra la callback della pressione del pulsante fisico
+                            pulsante.unregisterGpioCallback(pulsanteCallback);
+                        }
                     } catch (IOException e) {
                         Log.e(MainActivityTAG, "Errore nella chiusura dell'allarme", e);
                     }
@@ -564,14 +578,15 @@ public class MainActivity extends Activity {
                 t.show();
                 Log.d(MainActivityTAG, "distanceAlarm: running");
                 try {
-                    if (myAlarm == null || pulsante == null) {
-                        return;
+                    if(myAlarm != null) {
+                        // Avvia allarme
+                        myAlarm.start();
                     }
 
-                    myAlarm.start();
-
-                    pulsante.registerGpioCallback(pulsanteCallback);
-
+                    if(pulsante != null) {
+                        // Registra la callback della pressione del pulsante fisico
+                        pulsante.registerGpioCallback(pulsanteCallback);
+                    }
                 } catch (IOException e) {
                     Log.e(MainActivityTAG, "distanceAlarm -> Errore:", e);
                 }
@@ -585,7 +600,7 @@ public class MainActivity extends Activity {
     private void closeController()
     {
         synchronized (controllerLock) {
-            //Se istanza di DistanceController già creata allora deve essere chiusa
+            // Se istanza di DistanceController già creata allora deve essere chiusa
             if (myController == null) {
                 Log.v(MainActivityTAG, "closeController: myController == null: " +
                         "niente da chiudere");
